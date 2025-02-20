@@ -1,0 +1,27 @@
+﻿{
+  "PresetName": "Test Preset File",
+  "Splits" : [
+    {
+      "MaskImagePath": "foobar1.png",
+      "Name": "Escape",
+      "Threshold": 0.97,
+      "PauseTime": 1.5,
+      "SplitDelay": 0
+    },
+    {
+      "MaskImagePath": "foobar2.png",
+      "Name": "KakarikoDummy",
+      "Threshold": 0.97,
+      "PauseTime": 1.5,
+      "SplitDelay": 0,
+      "Dummy": true
+    },
+    {
+      "MaskImagePath": "foobar3.png",
+      "Name": "Kakariko",
+      "Threshold": 0.97,
+      "PauseTime": 1.5,
+      "SplitDelay": 50
+    }
+  ]
+}
