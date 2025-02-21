@@ -1,27 +1,92 @@
 ﻿{
-  "PresetName": "Test Preset File",
-  "Splits" : [
+  "PresetName": "Classic Kakariko route (Swordless)",
+  "Splits": [
     {
-      "MaskImagePath": "foobar1.png",
+      "MaskImagePath": "001.png",
       "Name": "Escape",
       "Threshold": 0.97,
       "PauseTime": 1.5,
-      "SplitDelay": 0
+      "SplitDelay": 150
     },
     {
-      "MaskImagePath": "foobar2.png",
+      "MaskImagePath": "002.png",
       "Name": "KakarikoDummy",
-      "Threshold": 0.97,
-      "PauseTime": 1.5,
+      "Threshold": 0.95,
+      "PauseTime": 7,
       "SplitDelay": 0,
       "Dummy": true
     },
     {
-      "MaskImagePath": "foobar3.png",
+      "MaskImagePath": "003.png",
       "Name": "Kakariko",
       "Threshold": 0.97,
-      "PauseTime": 1.5,
+      "PauseTime": 30,
       "SplitDelay": 50
+    },
+    {
+      "MaskImagePath": "004.png",
+      "Name": "Bottle",
+      "Threshold": 0.93,
+      "PauseTime": 35,
+      "SplitDelay": 1100,
+      "Inverted": true
+    },
+    {
+      "MaskImagePath": "005.png",
+      "Name": "DekuCSDummy",
+      "Threshold": 0.94,
+      "PauseTime": 6.5,
+      "Dummy": true
+    },
+    {
+      "MaskImagePath": "006.png",
+      "Name": "EnterDeku",
+      "Threshold": 0.92,
+      "PauseTime": 15,
+      "SplitDelay": 1000
+    },
+    {
+      "MaskImagePath": "007.png",
+      "Name": "Scrubs",
+      "Threshold": 0.95,
+      "SplitDelay": 1150
+    },
+    {
+      "MaskImagePath": "008.png",
+      "Name": "GohmaDummy",
+      "Threshold": 0.95,
+      "PauseTime": 1.5,
+      "Dummy": true
+    },
+    {
+      "MaskImagePath": "009.png",
+      "Name": "Ghoma",
+      "Threshold": 0.92,
+      "PauseTime": 30
+    },
+    {
+      "MaskImagePath": "010.png",
+      "Name": "Ganondoor",
+      "Threshold": 0.97,
+      "PauseTime": 30
+    },
+    {
+      "MaskImagePath": "011.png",
+      "Name": "Collapse",
+      "Threshold": 0.97,
+      "PauseTime": 60
+    },
+    {
+      "MaskImagePath": "012.png",
+      "Name": "CutsceneRNG",
+      "Threshold": 0.96,
+      "SplitDelay": 100,
+      "PauseTime": 130
+    },
+    {
+      "MaskImagePath": "013.png",
+      "Name": "Ganon",
+      "Threshold": 0.92
     }
   ]
 }

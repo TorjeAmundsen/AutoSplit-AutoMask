@@ -5,19 +5,20 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         ResizeMode="CanMinimize"
-        Title="AutoMask for AutoSplit" Height="300" Width="525">
+        Title="AutoMask for AutoSplit" Height="420" Width="686">
     <Grid>
-        <TextBlock Name="OutputDirectoryLabel" Text="Output folder:" Width="80" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10"/>
-        <TextBox Name="OutputDirectoryTextBox" Width="360" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True" Focusable="False" Margin="90, 10, 10, 10"/>
-            <Image Name="InputImageView" Width="240" Height="179" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10, 40, 10, 10"/>
-        <Image Name="OutputImageView" Width="240" Height="179" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="260, 40, 10, 10" />
+        <!--<TextBlock Name="OutputDirectoryLabel" Text="Output folder:" Width="80" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10"/>
+        <TextBox Name="OutputDirectoryTextBox" Width="360" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True" Focusable="False" Margin="90, 10, 10, 10"/>-->
+        <ComboBox Name="ComboBoxSelectPreset" Width="280" Height="22" ItemsSource="{Binding presetComboBoxItems}" SelectedIndex="{Binding  Mode=TwoWay, Path=SelectedItem}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10"></ComboBox>
+        <Image Name="InputImageView" Width="320" Height="240" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10, 72, 10, 10"/>
+        <Image Name="OutputImageView" Width="320" Height="240" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="340, 72, 10, 10" />
 
-        <Button Name="BtnLoadInputImage" Content="Select Input Image" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,229,0,0" Width="120" Click="BtnLoadInputImage_Click" />
-        <Button Name="BtnPrevAlphaImage" Content="&lt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="151,229,0,0" Width="20" Click="BtnNextAlphaImage_Click" />
-        <Button Name="BtnLoadAlphaImage" Content="Select Mask" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="170,229,0,0" Width="80" Click="BtnLoadAlphaImage_Click" />
-        <Button Name="BtnNextAlphaImage" Content="&gt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="249,229,0,0" Width="20" Click="BtnPrevAlphaImage_Click" />
-        <Button Name="BtnAutoSave" Content="Save Image" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,229,10,0" Width="120" Click="BtnAutoSave_Click" />
-        <Button Name="BtnSaveAs" Content="Save Image" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,229,10,0" Width="120" Click="BtnSaveImage_Click" />
-
+        <Button Name="BtnLoadInputImage" Content="Select input image" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,321,0,0" Width="120" Height="22" Click="BtnLoadInputImage_Click" />
+        <Button Name="BtnPrevAlphaImage" Content="&lt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="151,321,0,0" Width="20" Height="22" Click="BtnNextAlphaImage_Click" />
+        <Button Name="BtnLoadAlphaImage" Content="Select mask" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="170,321,0,0" Width="80" Height="22" Click="BtnLoadAlphaImage_Click" />
+        <Button Name="BtnNextAlphaImage" Content="&gt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="249,321,0,0" Width="20" Height="22" Click="BtnPrevAlphaImage_Click" />
+        <Button Name="BtnAutoSave" Content="Save image" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,321,10,0" Width="120" Height="22" Click="BtnAutoSave_Click" />
+        <Button Name="BtnSaveAs" Content="Save image as..." VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,321,10,0" Width="120" Height="22" Click="BtnSaveImage_Click" />
+        <Button Name="TestButton" Content="Open presets folder" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10, 351, 10, 0" Click="BtnOpenPresetsFolder_Click"></Button>
     </Grid>
 </Window>

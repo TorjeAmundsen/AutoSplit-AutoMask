@@ -6,6 +6,8 @@
         <RootNamespace>AutoSplit_AutoMask</RootNamespace>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <PublishSingleFile>true</PublishSingleFile>
+        <SelfContained>true</SelfContained>
         <UseWPF>true</UseWPF>
     </PropertyGroup>
 

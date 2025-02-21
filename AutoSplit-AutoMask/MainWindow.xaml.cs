@@ -1,7 +1,12 @@
-﻿using System.Drawing;
+﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Reflection;
+using System.Text.Json;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 
@@ -9,16 +14,74 @@ namespace AutoSplit_AutoMask;
 
 public partial class MainWindow : Window
 {
+        public ObservableCollection<ComboBoxItem> presetComboBoxItems { get; set; }
+        public ComboBoxItem selectedPreset { get; set; }
+        public int selectedPresetIndex { get; set; }
         private string? inputImagePath;
         private string? alphaImagePath;
         private Bitmap? maskedImage;
-        private List<SplitPreset>? splitPresets;
+        private List<SplitPreset> splitPresets;
 
         public MainWindow()
         {
             InitializeComponent();
-            var test = new FooBar();
-            test.BarFoo();
+            
+            DataContext = this;
+            
+            presetComboBoxItems = new ObservableCollection<ComboBoxItem>();
+            
+            var cbItem = new ComboBoxItem { Content = "Select preset..." };
+            selectedPreset = cbItem;
+
+            string currentPath = AppContext.BaseDirectory;
+
+            if (string.IsNullOrEmpty(currentPath))
+            {
+                throw new Exception("Could not find executable path");
+            }
+            
+            Directory.CreateDirectory(currentPath + "\\presets\\");
+
+            string[] presetPaths = Directory.GetFiles(currentPath + "\\presets\\", "*json");
+            
+            Console.WriteLine($"Found {presetPaths.Length} presets");
+            
+            splitPresets = new List<SplitPreset>();
+
+            foreach (string presetPath in presetPaths)
+            {
+                SplitPreset? preset = JsonSerializer.Deserialize<SplitPreset>(File.ReadAllText(presetPath));
+                
+                if (preset is not null)
+                {
+                    preset.PresetFileName = presetPath.Replace(".json", "");
+                    Console.WriteLine($"Adding preset: {presetPath}");
+                    splitPresets.Add(preset);
+                    presetComboBoxItems.Add(new ComboBoxItem { Content = preset.PresetName});
+                }
+            }
+
+            foreach (SplitPreset preset in splitPresets)
+            {
+                Console.WriteLine($"Found preset: {preset.PresetName}");
+                for (int i = 0; i < preset.Splits.Count; ++i)
+                {
+                    var cur = preset.Splits[i];
+                    Console.WriteLine($"{i + 1}. {cur.Name}, threshold: {cur.Threshold}, filename: {preset.PresetFileName}, enabled: {cur.Enabled}");
+                }
+            }
+            
+        }
+
+        private void OnSelected(object sender, RoutedEventArgs e)
+        {
+            
+        }
+
+        private void BtnOpenPresetsFolder_Click(object sender, RoutedEventArgs e)
+        {
+            Console.WriteLine("\"" + AppContext.BaseDirectory + "presets\\" + "\"");
+            Process.Start("explorer.exe", "\"" + AppContext.BaseDirectory + "presets\\" + "\"");
         }
 
         private void UpdateOutputPreview()
@@ -47,13 +110,15 @@ public partial class MainWindow : Window
         {
             var openFileDialog = new OpenFileDialog
             {
-                Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif|All Files|*.*"
+                Title = "Select Input Image",
+                Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;|All Files|*.*"
             };
 
             if (openFileDialog.ShowDialog() == true)
             {
                 inputImagePath = openFileDialog.FileName;
                 InputImageView.Source = new BitmapImage(new Uri(inputImagePath));
+                UpdateOutputPreview();
             }
         }
 
@@ -61,7 +126,8 @@ public partial class MainWindow : Window
         {
             var openFileDialog = new OpenFileDialog
             {
-                Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif|All Files|*.*"
+                Filter = "PNG Files|*.png",
+                Title = "Select Mask (Alpha Channel)",
             };
 
             if (openFileDialog.ShowDialog() == true)
@@ -82,12 +148,11 @@ public partial class MainWindow : Window
 
             var saveFileDialog = new SaveFileDialog
             {
+                Title = "Save Masked Image",
                 FileName = "masked_image",
                 DefaultExt = ".png",
                 Filter = "PNG Files|*.png",
             };
-
-            UpdateOutputPreview();
 
             maskedImage = ApplyScaledAlphaChannel();
 
