@@ -5,7 +5,7 @@ namespace AutoSplit_AutoMask;
 
 public class SplitPreset
 {
-    public string PresetName;
+    public string? PresetName;
     public IList<SingleSplit>? Splits { get; set; }
 }
 
@@ -13,7 +13,7 @@ public class FooBar
 {
     public void BarFoo()
     {
-        SplitPreset? splitPreset = JsonSerializer.Deserialize<SplitPreset>(File.ReadAllText("G:\\Torje Source\\C#\\AutoSplit-AutoMask\\AutoSplit-AutoMask\\SplitPresetTest.json"));
+        SplitPreset? splitPreset = JsonSerializer.Deserialize<SplitPreset>(File.ReadAllText("D:\\AutoSplit-AutoMask\\AutoSplit-AutoMask\\SplitPresetTest.json"));
 
         if (splitPreset is not null && splitPreset.Splits is not null)
         {
@@ -34,7 +34,7 @@ public record SingleSplit
     public uint SplitDelay { get; }
     public bool Dummy { get; }
     public bool Inverted { get; }
-    
+
     public SingleSplit(string maskImagePath, string name = "", float threshold = 0.95f, float pauseTime = 3.0f, uint splitDelay = 0,
         bool dummy = false, bool inverted = false)
     {

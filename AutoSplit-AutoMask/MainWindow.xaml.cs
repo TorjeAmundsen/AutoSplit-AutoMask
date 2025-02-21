@@ -12,6 +12,7 @@ public partial class MainWindow : Window
         private string? inputImagePath;
         private string? alphaImagePath;
         private Bitmap? maskedImage;
+        private List<SplitPreset>? splitPresets;
 
         public MainWindow()
         {
@@ -26,19 +27,19 @@ public partial class MainWindow : Window
             {
                 return;
             }
-            
-            var maskedImage = ApplyScaledAlphaChannel(inputImagePath, alphaImagePath);
 
-            BitmapImage bmpImage = new BitmapImage();
-            
-            MemoryStream memoryStream = new MemoryStream();
-            
+            var maskedImage = ApplyScaledAlphaChannel();
+
+            var bmpImage = new BitmapImage();
+
+            var memoryStream = new MemoryStream();
+
             maskedImage.Save(memoryStream, ImageFormat.Png);
             bmpImage.BeginInit();
             bmpImage.StreamSource = memoryStream;
             bmpImage.EndInit();
             bmpImage.Freeze();
-            
+
             OutputImageView.Source = bmpImage;
         }
 
@@ -66,7 +67,7 @@ public partial class MainWindow : Window
             if (openFileDialog.ShowDialog() == true)
             {
                 alphaImagePath = openFileDialog.FileName;
-                
+
                 UpdateOutputPreview();
             }
         }
@@ -86,19 +87,9 @@ public partial class MainWindow : Window
                 Filter = "PNG Files|*.png",
             };
 
-            var maskedImage = ApplyScaledAlphaChannel(inputImagePath, alphaImagePath);
+            UpdateOutputPreview();
 
-            BitmapImage bmpImage = new BitmapImage();
-            
-            MemoryStream memoryStream = new MemoryStream();
-            
-            maskedImage.Save(memoryStream, ImageFormat.Png);
-            bmpImage.BeginInit();
-            bmpImage.StreamSource = memoryStream;
-            bmpImage.EndInit();
-            bmpImage.Freeze();
-            
-            OutputImageView.Source = bmpImage;
+            maskedImage = ApplyScaledAlphaChannel();
 
             bool? result = saveFileDialog.ShowDialog();
 
@@ -109,17 +100,27 @@ public partial class MainWindow : Window
             }
         }
 
-        private void BtnAutoSaveImage_Click(object sender, RoutedEventArgs e)
+        private void BtnNextAlphaImage_Click(object sender, RoutedEventArgs e)
         {
-            
+            throw new NotImplementedException();
         }
 
-        private Bitmap ApplyScaledAlphaChannel(string? inputImagePath, string? alphaImagePath)
+        private void BtnPrevAlphaImage_Click(object sender, RoutedEventArgs e)
         {
-            using (Bitmap inputImage = new Bitmap(inputImagePath))
-            using (Bitmap alphaImage = new Bitmap(alphaImagePath))
+            throw new NotImplementedException();
+        }
+
+        private void BtnAutoSaveImage_Click(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private Bitmap ApplyScaledAlphaChannel()
+        {
+            using (var inputImage = new Bitmap(inputImagePath))
+            using (var alphaImage = new Bitmap(alphaImagePath))
             {
-                Bitmap scaledAlphaImage = new Bitmap(inputImage.Width, inputImage.Height);
+                var scaledAlphaImage = new Bitmap(inputImage.Width, inputImage.Height);
                 using (Graphics g = Graphics.FromImage(scaledAlphaImage))
                 {
                     g.DrawImage(alphaImage, 0, 0, inputImage.Width, inputImage.Height);
@@ -142,7 +143,7 @@ public partial class MainWindow : Window
                 return outputImage;
             }
         }
-        
+
         private void BtnAutoSave_Click(object sender, RoutedEventArgs e)
         {
             throw new NotImplementedException();
