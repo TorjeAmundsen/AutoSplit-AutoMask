@@ -16,8 +16,10 @@ public partial class MainWindow : Window
 {
         public ObservableCollection<ComboBoxItem> presetComboBoxItems { get; set; }
         public ComboBoxItem selectedPreset { get; set; }
-        public int selectedPresetIndex { get; set; }
+        public int? selectedPresetIndex { get; set; }
+        public int currentlySelectedSplitIndex { get; set; }
         private string? inputImagePath;
+        private string? outputDirectoryPath;
         private string? alphaImagePath;
         private Bitmap? maskedImage;
         private List<SplitPreset> splitPresets;
@@ -32,17 +34,16 @@ public partial class MainWindow : Window
             
             var cbItem = new ComboBoxItem { Content = "Select preset..." };
             selectedPreset = cbItem;
-
-            string currentPath = AppContext.BaseDirectory;
-
-            if (string.IsNullOrEmpty(currentPath))
-            {
-                throw new Exception("Could not find executable path");
-            }
             
-            Directory.CreateDirectory(currentPath + "\\presets\\");
+            Directory.CreateDirectory(AppContext.BaseDirectory + "\\presets\\");
+            
+            RefreshPresets();
+            
+        }
 
-            string[] presetPaths = Directory.GetFiles(currentPath + "\\presets\\", "*json");
+        private void RefreshPresets()
+        {
+            string[] presetPaths = Directory.GetFiles(AppContext.BaseDirectory + "\\presets\\", "*json");
             
             Console.WriteLine($"Found {presetPaths.Length} presets");
             
@@ -70,18 +71,32 @@ public partial class MainWindow : Window
                     Console.WriteLine($"{i + 1}. {cur.Name}, threshold: {cur.Threshold}, filename: {preset.PresetFileName}, enabled: {cur.Enabled}");
                 }
             }
+        }
+
+        private void ComboBoxGetSelectedIndex_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            selectedPresetIndex = ComboBoxSelectPreset.SelectedIndex;
+            currentlySelectedSplitIndex = 0;
             
         }
 
-        private void OnSelected(object sender, RoutedEventArgs e)
+        private void BtnSelectOutputDirectory_Click(object sender, RoutedEventArgs e)
         {
-            
+            var folderDialog = new OpenFolderDialog
+            {
+                Title = "Select output directory"
+            };
+
+            if (folderDialog.ShowDialog() == true)
+            {
+                outputDirectoryPath = folderDialog.FolderName;
+                OutputDirectoryTextBox.Text = outputDirectoryPath;
+            }
         }
 
         private void BtnOpenPresetsFolder_Click(object sender, RoutedEventArgs e)
         {
-            Console.WriteLine("\"" + AppContext.BaseDirectory + "presets\\" + "\"");
-            Process.Start("explorer.exe", "\"" + AppContext.BaseDirectory + "presets\\" + "\"");
+            Process.Start("explorer.exe", "\"" + AppContext.BaseDirectory + "presets\\\"");
         }
 
         private void UpdateOutputPreview()
@@ -117,6 +132,7 @@ public partial class MainWindow : Window
             if (openFileDialog.ShowDialog() == true)
             {
                 inputImagePath = openFileDialog.FileName;
+                InputImageLabel.Text = inputImagePath.Substring(inputImagePath.LastIndexOf('\\') + 1);
                 InputImageView.Source = new BitmapImage(new Uri(inputImagePath));
                 UpdateOutputPreview();
             }

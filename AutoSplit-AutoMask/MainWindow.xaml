@@ -5,12 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         ResizeMode="CanMinimize"
-        Title="AutoMask for AutoSplit" Height="420" Width="686">
+        Title="AutoMask for AutoSplit" Height="420" Width="706">
     <Grid>
-        <!--<TextBlock Name="OutputDirectoryLabel" Text="Output folder:" Width="80" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10"/>
-        <TextBox Name="OutputDirectoryTextBox" Width="360" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True" Focusable="False" Margin="90, 10, 10, 10"/>-->
-        <ComboBox Name="ComboBoxSelectPreset" Width="280" Height="22" ItemsSource="{Binding presetComboBoxItems}" SelectedIndex="{Binding  Mode=TwoWay, Path=SelectedItem}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10"></ComboBox>
-        <Image Name="InputImageView" Width="320" Height="240" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10, 72, 10, 10"/>
+        <TextBox Name="OutputDirectoryTextBox" Width="200" Height="22" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True" Focusable="True"  Margin="350, 10, 10, 10"/>
+        <Button Name="BtnSetOutputDirectory" Content="Set output directory" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,10,10,0" Width="120" Height="22" Click="BtnSelectOutputDirectory_Click" />
+        <ComboBox Name="ComboBoxSelectPreset" Width="280" Height="22" ItemsSource="{Binding presetComboBoxItems}" SelectionChanged="ComboBoxGetSelectedIndex_SelectionChanged" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10"></ComboBox>
+        <TextBlock Name="InputImageLabel" Width="330" Height="22" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Margin="10, 42, 10, 10"></TextBlock>
+        <Border BorderBrush="DimGray" BorderThickness="1" Width="330" Height="250" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10, 62, 10, 10" Background="LightGray">
+            <Image Name="InputImageView" Width="320" Height="240" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5"/>
+        </Border>
+        <Border BorderBrush="DimGray" BorderThickness="1" Width="330" Height="250" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="350, 62, 10, 10" Background="LightGray"></Border>
         <Image Name="OutputImageView" Width="320" Height="240" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="340, 72, 10, 10" />
 
         <Button Name="BtnLoadInputImage" Content="Select input image" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,321,0,0" Width="120" Height="22" Click="BtnLoadInputImage_Click" />
@@ -19,6 +23,6 @@
         <Button Name="BtnNextAlphaImage" Content="&gt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="249,321,0,0" Width="20" Height="22" Click="BtnPrevAlphaImage_Click" />
         <Button Name="BtnAutoSave" Content="Save image" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,321,10,0" Width="120" Height="22" Click="BtnAutoSave_Click" />
         <Button Name="BtnSaveAs" Content="Save image as..." VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,321,10,0" Width="120" Height="22" Click="BtnSaveImage_Click" />
-        <Button Name="TestButton" Content="Open presets folder" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10, 351, 10, 0" Click="BtnOpenPresetsFolder_Click"></Button>
+        <Button Name="TestButton" Content="Open presets folder" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10, 351, 10, 0" Width="120" Height="22" Click="BtnOpenPresetsFolder_Click"></Button>
     </Grid>
 </Window>
