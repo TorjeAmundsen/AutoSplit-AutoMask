@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
+using Size = System.Drawing.Size;
 
 namespace AutoSplit_AutoMask;
 
@@ -157,18 +158,20 @@ public partial class MainWindow : Window
         
         maskedImage = ApplyScaledAlphaChannel();
 
+        var previewImage = new Bitmap(maskedImage, new Size(Convert.ToInt32(InputImageView.ActualWidth), Convert.ToInt32(InputImageView.ActualHeight)));
+
         var bmpImage = new BitmapImage();
 
         var memoryStream = new MemoryStream();
 
-        maskedImage.Save(memoryStream, ImageFormat.Png);
+        previewImage.Save(memoryStream, ImageFormat.Png);
         bmpImage.BeginInit();
         bmpImage.StreamSource = memoryStream;
         bmpImage.EndInit();
         bmpImage.Freeze();
 
         OutputImageView.Source = bmpImage;
-
+        
         createdFilename = CreateCurrentFilename();
 
         PreviewImageLabel.Text = createdFilename;
@@ -190,7 +193,6 @@ public partial class MainWindow : Window
             ComboBoxSelectInputImage.SelectedIndex = 0;
             InputImageLabel.Text = selectedInputImagePath.Substring(selectedInputImagePath.LastIndexOf('\\') + 1);
             InputImageView.Source = new BitmapImage(new Uri(selectedInputImagePath));
-            UpdateOutputPreview();
 
             inputImagesComboBoxItems.Clear();
 
@@ -199,6 +201,11 @@ public partial class MainWindow : Window
                 Console.WriteLine($"Adding ComboBoxItem: {path.Substring(selectedInputImagePath.LastIndexOf('\\') + 1)}");
                 inputImagesComboBoxItems.Add(new ComboBoxItem { Content =  path.Substring(selectedInputImagePath.LastIndexOf('\\') + 1)});
                 Console.WriteLine(inputImagesComboBoxItems.Count);
+            }
+
+            if (inputImagesComboBoxItems.Count > 0)
+            {
+                ComboBoxSelectInputImage.SelectedIndex = 0;
             }
         }
     }
@@ -417,9 +424,25 @@ public partial class MainWindow : Window
 
     private void ComboBoxSelectInputImage_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (ComboBoxSelectInputImage.SelectedIndex == -1)
+        {
+            return;
+        }
         selectedInputImagePath = inputImagePaths[ComboBoxSelectInputImage.SelectedIndex];
         InputImageLabel.Text = selectedInputImagePath.Substring(selectedInputImagePath.LastIndexOf('\\') + 1);
         InputImageView.Source = new BitmapImage(new Uri(selectedInputImagePath));
         UpdateOutputPreview();
+    }
+
+    private void BtnShowOutput_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(outputDirectoryPath))
+        {
+            MessageBox.Show("Please select an output directory below.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+        
+        Process.Start("explorer.exe", outputDirectoryPath);
+        
     }
 }

@@ -8,17 +8,18 @@
         Title="AutoMask for AutoSplit" Height="422" Width="706">
     <Grid>
         <Button Name="BtnLoadInputImage" Content="Load input image(s)" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,10,0,0" Width="120" Height="22" Click="BtnLoadInputImages_Click" />
-        <Button Name="BtnOpenOutputFolder" Content="Open presets folder" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="220, 10, 10, 0" Width="120" Height="22" Click="BtnOpenPresetsFolder_Click"></Button>
+        <Button Name="BtnOpenOutputFolder" Content="Show presets" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="250, 10, 10, 0" Width="90" Height="22" Click="BtnOpenPresetsFolder_Click"></Button>
+        <Button Content="Show output" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="140, 10, 10, 0" Width="100" Height="22" Click="BtnShowOutput_Click"></Button>
         <ComboBox Name="ComboBoxSelectPreset" Width="281" Height="22" ItemsSource="{Binding presetComboBoxItems}" SelectedItem="{Binding selectedPreset}" SelectedIndex="{Binding selectedPresetIndex}" SelectionChanged="ComboBoxSelectPreset_SelectionChanged" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="350, 10, 10, 10"></ComboBox>
         <Button Name="BtnRefreshPresets" Content="Refresh" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="630,10,10,0" Width="50" Height="22" Click="BtnRefreshPresets_Click" />
         
         <TextBlock Text="Foobar_TestImage.png" Name="InputImageLabel" Width="330" Height="22" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Margin="10, 42, 10, 10"></TextBlock>
         <TextBlock Text="Foobar_TestImage.png" Name="PreviewImageLabel" Width="330" Height="22" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Margin="350, 42, 10, 10"></TextBlock>
         <Border BorderBrush="DimGray" BorderThickness="1" Width="330" Height="250" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10, 62, 10, 10" Background="LightGray">
-            <Image Name="InputImageView" Width="320" Height="240" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5"/>
+            <Image Name="InputImageView" Width="320" Height="240" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4, 4, 0, 0"/>
         </Border>
         <Border BorderBrush="DimGray" BorderThickness="1" Width="330" Height="250" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="350, 62, 10, 10" Background="LightGray">
-            <Image Name="OutputImageView" Width="320" Height="240" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5" />
+            <Image Stretch="None" Name="OutputImageView" Width="320" Height="240" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4, 4, 0, 0" />
         </Border>
         
         <TextBox Name="OutputDirectoryTextBox" Width="231" Height="22" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True" Focusable="True"  Margin="10, 351, 10, 10"/>
