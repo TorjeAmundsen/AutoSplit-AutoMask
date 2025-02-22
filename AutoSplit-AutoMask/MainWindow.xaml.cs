@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Reflection;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -14,219 +13,413 @@ namespace AutoSplit_AutoMask;
 
 public partial class MainWindow : Window
 {
-        public ObservableCollection<ComboBoxItem> presetComboBoxItems { get; set; }
-        public ComboBoxItem selectedPreset { get; set; }
-        public int? selectedPresetIndex { get; set; }
-        public int currentlySelectedSplitIndex { get; set; }
-        private string? inputImagePath;
-        private string? outputDirectoryPath;
-        private string? alphaImagePath;
-        private Bitmap? maskedImage;
-        private List<SplitPreset> splitPresets;
+    public ObservableCollection<ComboBoxItem> presetComboBoxItems { get; set; }
+    public ObservableCollection<ComboBoxItem> splitsComboBoxItems { get; set; }
+    
+    public ObservableCollection<ComboBoxItem> inputImagesComboBoxItems { get; set; }
+    public int selectedPresetIndex { get; set; }
+    public int selectedSplitIndex { get; set; }
+    private List<string> inputImagePaths;
+    private string? selectedInputImagePath;
+    private string? outputDirectoryPath;
+    private string? alphaImagePath;
+    private Bitmap? maskedImage;
+    private List<SplitPreset>? splitPresets;
+    private bool allowMasksDropdown;
+    private string createdFilename;
+    
 
-        public MainWindow()
+    public MainWindow()
+    {
+        InitializeComponent();
+        
+        DataContext = this;
+
+        ComboBoxSelectSplit.AllowDrop = false;
+        
+        presetComboBoxItems = new ObservableCollection<ComboBoxItem>();
+        splitsComboBoxItems = new ObservableCollection<ComboBoxItem>();
+        inputImagesComboBoxItems = new ObservableCollection<ComboBoxItem>();
+        
+        Directory.CreateDirectory(AppContext.BaseDirectory + "\\presets\\");
+        
+        RefreshPresets();
+    }
+
+    private void RefreshPresets()
+    {
+        string[] presetPaths = Directory.GetFiles(AppContext.BaseDirectory + "presets\\", "*json");
+        
+        Console.WriteLine($"Found {presetPaths.Length} presets");
+        
+        var foundPresets = new List<SplitPreset>();
+
+        foreach (string presetPath in presetPaths)
         {
-            InitializeComponent();
+            SplitPreset? preset = JsonSerializer.Deserialize<SplitPreset>(File.ReadAllText(presetPath));
             
-            DataContext = this;
-            
-            presetComboBoxItems = new ObservableCollection<ComboBoxItem>();
-            
-            var cbItem = new ComboBoxItem { Content = "Select preset..." };
-            selectedPreset = cbItem;
-            
-            Directory.CreateDirectory(AppContext.BaseDirectory + "\\presets\\");
-            
-            RefreshPresets();
-            
+            if (preset is not null)
+            {
+                preset.PresetFileName = presetPath.Replace(".json", "");
+                Console.WriteLine($"Adding preset: {presetPath}");
+                foundPresets.Add(preset);
+            }
         }
 
-        private void RefreshPresets()
+        if (splitPresets is null)
         {
-            string[] presetPaths = Directory.GetFiles(AppContext.BaseDirectory + "\\presets\\", "*json");
-            
-            Console.WriteLine($"Found {presetPaths.Length} presets");
-            
             splitPresets = new List<SplitPreset>();
+        }
 
-            foreach (string presetPath in presetPaths)
+        if (splitPresets.Count > 0 && foundPresets.SequenceEqual(splitPresets))
+        {
+            Console.WriteLine("No changes were detected");
+            return;
+        }
+
+        splitPresets = foundPresets;
+        presetComboBoxItems.Clear();
+        selectedPresetIndex = -1;
+        selectedSplitIndex = 0;
+
+        foreach (SplitPreset preset in foundPresets)
+        {
+            presetComboBoxItems.Add(new ComboBoxItem { Content = preset.PresetName});
+            Console.WriteLine($"Found preset: {preset.PresetName}");
+            for (int i = 0; i < preset.Splits.Count; ++i)
             {
-                SplitPreset? preset = JsonSerializer.Deserialize<SplitPreset>(File.ReadAllText(presetPath));
-                
-                if (preset is not null)
-                {
-                    preset.PresetFileName = presetPath.Replace(".json", "");
-                    Console.WriteLine($"Adding preset: {presetPath}");
-                    splitPresets.Add(preset);
-                    presetComboBoxItems.Add(new ComboBoxItem { Content = preset.PresetName});
-                }
+                var cur = preset.Splits[i];
+                Console.WriteLine($"{i + 1}. {cur.Name}, threshold: {cur.Threshold}, filename: {preset.PresetFileName}, enabled: {cur.Enabled}");
             }
-
-            foreach (SplitPreset preset in splitPresets)
-            {
-                Console.WriteLine($"Found preset: {preset.PresetName}");
-                for (int i = 0; i < preset.Splits.Count; ++i)
-                {
-                    var cur = preset.Splits[i];
-                    Console.WriteLine($"{i + 1}. {cur.Name}, threshold: {cur.Threshold}, filename: {preset.PresetFileName}, enabled: {cur.Enabled}");
-                }
-            }
-        }
-
-        private void ComboBoxGetSelectedIndex_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            selectedPresetIndex = ComboBoxSelectPreset.SelectedIndex;
-            currentlySelectedSplitIndex = 0;
-            
-        }
-
-        private void BtnSelectOutputDirectory_Click(object sender, RoutedEventArgs e)
-        {
-            var folderDialog = new OpenFolderDialog
-            {
-                Title = "Select output directory"
-            };
-
-            if (folderDialog.ShowDialog() == true)
-            {
-                outputDirectoryPath = folderDialog.FolderName;
-                OutputDirectoryTextBox.Text = outputDirectoryPath;
-            }
-        }
-
-        private void BtnOpenPresetsFolder_Click(object sender, RoutedEventArgs e)
-        {
-            Process.Start("explorer.exe", "\"" + AppContext.BaseDirectory + "presets\\\"");
-        }
-
-        private void UpdateOutputPreview()
-        {
-            if (String.IsNullOrEmpty(inputImagePath) || String.IsNullOrEmpty(alphaImagePath))
-            {
-                return;
-            }
-
-            var maskedImage = ApplyScaledAlphaChannel();
-
-            var bmpImage = new BitmapImage();
-
-            var memoryStream = new MemoryStream();
-
-            maskedImage.Save(memoryStream, ImageFormat.Png);
-            bmpImage.BeginInit();
-            bmpImage.StreamSource = memoryStream;
-            bmpImage.EndInit();
-            bmpImage.Freeze();
-
-            OutputImageView.Source = bmpImage;
-        }
-
-        private void BtnLoadInputImage_Click(object sender, RoutedEventArgs e)
-        {
-            var openFileDialog = new OpenFileDialog
-            {
-                Title = "Select Input Image",
-                Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;|All Files|*.*"
-            };
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                inputImagePath = openFileDialog.FileName;
-                InputImageLabel.Text = inputImagePath.Substring(inputImagePath.LastIndexOf('\\') + 1);
-                InputImageView.Source = new BitmapImage(new Uri(inputImagePath));
-                UpdateOutputPreview();
-            }
-        }
-
-        private void BtnLoadAlphaImage_Click(object sender, RoutedEventArgs e)
-        {
-            var openFileDialog = new OpenFileDialog
-            {
-                Filter = "PNG Files|*.png",
-                Title = "Select Mask (Alpha Channel)",
-            };
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                alphaImagePath = openFileDialog.FileName;
-
-                UpdateOutputPreview();
-            }
-        }
-
-        private void BtnSaveImage_Click(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrEmpty(inputImagePath) || string.IsNullOrEmpty(alphaImagePath))
-            {
-                MessageBox.Show("Please load both the input image and the mask image.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            var saveFileDialog = new SaveFileDialog
-            {
-                Title = "Save Masked Image",
-                FileName = "masked_image",
-                DefaultExt = ".png",
-                Filter = "PNG Files|*.png",
-            };
-
-            maskedImage = ApplyScaledAlphaChannel();
-
-            bool? result = saveFileDialog.ShowDialog();
-
-            if (result is true)
-            {
-                string filename = saveFileDialog.FileName;
-                maskedImage.Save(filename, ImageFormat.Png);
-            }
-        }
-
-        private void BtnNextAlphaImage_Click(object sender, RoutedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void BtnPrevAlphaImage_Click(object sender, RoutedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void BtnAutoSaveImage_Click(object sender, RoutedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private Bitmap ApplyScaledAlphaChannel()
-        {
-            using (var inputImage = new Bitmap(inputImagePath))
-            using (var alphaImage = new Bitmap(alphaImagePath))
-            {
-                var scaledAlphaImage = new Bitmap(inputImage.Width, inputImage.Height);
-                using (Graphics g = Graphics.FromImage(scaledAlphaImage))
-                {
-                    g.DrawImage(alphaImage, 0, 0, inputImage.Width, inputImage.Height);
-                }
-
-                Bitmap outputImage = new Bitmap(inputImage.Width, inputImage.Height);
-
-                for (int x = 0; x < inputImage.Width; x++)
-                {
-                    for (int y = 0; y < inputImage.Height; y++)
-                    {
-                        Color inputColor = inputImage.GetPixel(x, y);
-                        Color alphaColor = scaledAlphaImage.GetPixel(x, y);
-
-                        Color outputColor = Color.FromArgb(alphaColor.A, inputColor.R, inputColor.G, inputColor.B);
-                        outputImage.SetPixel(x, y, outputColor);
-                    }
-                }
-
-                return outputImage;
-            }
-        }
-
-        private void BtnAutoSave_Click(object sender, RoutedEventArgs e)
-        {
-            throw new NotImplementedException();
         }
     }
+
+    private void BtnRefreshPresets_Click(object sender, RoutedEventArgs e)
+    {
+        RefreshPresets();
+    }
+
+    private void ComboBoxSelectPreset_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (selectedPresetIndex == -1)
+        {
+            allowMasksDropdown = false;
+        }
+        
+        ComboBoxSelectSplit.SelectedIndex = 0;
+        
+        splitsComboBoxItems.Clear();
+
+        foreach (var split in splitPresets[selectedPresetIndex].Splits)
+        {
+            splitsComboBoxItems.Add(new ComboBoxItem { Content = split.Name });
+        }
+    }
+
+    private void BtnSelectOutputDirectory_Click(object sender, RoutedEventArgs e)
+    {
+        var folderDialog = new OpenFolderDialog
+        {
+            Title = "Select output directory"
+        };
+
+        if (folderDialog.ShowDialog() == true)
+        {
+            outputDirectoryPath = folderDialog.FolderName;
+            OutputDirectoryTextBox.Text = outputDirectoryPath;
+        }
+    }
+
+    private void BtnOpenPresetsFolder_Click(object sender, RoutedEventArgs e)
+    {
+        Process.Start("explorer.exe", "\"" + AppContext.BaseDirectory + "presets\\\"");
+    }
+
+    private void UpdateOutputPreview()
+    {
+        if (String.IsNullOrEmpty(selectedInputImagePath) || String.IsNullOrEmpty(alphaImagePath))
+        {
+            OutputImageView.Source = null;
+            return;
+        }
+
+        if (!File.Exists(selectedInputImagePath))
+        {
+            MessageBox.Show("Specified input image not found!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        if (!File.Exists(alphaImagePath))
+        {
+            MessageBox.Show("Specified mask image not found!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+        
+        maskedImage = ApplyScaledAlphaChannel();
+
+        var bmpImage = new BitmapImage();
+
+        var memoryStream = new MemoryStream();
+
+        maskedImage.Save(memoryStream, ImageFormat.Png);
+        bmpImage.BeginInit();
+        bmpImage.StreamSource = memoryStream;
+        bmpImage.EndInit();
+        bmpImage.Freeze();
+
+        OutputImageView.Source = bmpImage;
+
+        createdFilename = CreateCurrentFilename();
+
+        PreviewImageLabel.Text = createdFilename;
+    }
+
+    private void BtnLoadInputImages_Click(object sender, RoutedEventArgs e)
+    {
+        var openFileDialog = new OpenFileDialog
+        {
+            Multiselect = true,
+            Title = "Select Input Image",
+            Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;|All Files|*.*"
+        };
+
+        if (openFileDialog.ShowDialog() == true)
+        {
+            inputImagePaths = openFileDialog.FileNames.ToList();
+            selectedInputImagePath = inputImagePaths[0];
+            ComboBoxSelectInputImage.SelectedIndex = 0;
+            InputImageLabel.Text = selectedInputImagePath.Substring(selectedInputImagePath.LastIndexOf('\\') + 1);
+            InputImageView.Source = new BitmapImage(new Uri(selectedInputImagePath));
+            UpdateOutputPreview();
+
+            inputImagesComboBoxItems.Clear();
+
+            foreach (var path in inputImagePaths)
+            {
+                Console.WriteLine($"Adding ComboBoxItem: {path.Substring(selectedInputImagePath.LastIndexOf('\\') + 1)}");
+                inputImagesComboBoxItems.Add(new ComboBoxItem { Content =  path.Substring(selectedInputImagePath.LastIndexOf('\\') + 1)});
+                Console.WriteLine(inputImagesComboBoxItems.Count);
+            }
+        }
+    }
+
+    private void BtnLoadAlphaImage_Click(object sender, RoutedEventArgs e)
+    {
+        var openFileDialog = new OpenFileDialog
+        {
+            Filter = "PNG Files|*.png",
+            Title = "Select Mask (Alpha Channel)",
+        };
+
+        if (openFileDialog.ShowDialog() == true)
+        {
+            alphaImagePath = openFileDialog.FileName;
+
+            UpdateOutputPreview();
+        }
+    }
+
+    private void BtnSaveImageAs_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(selectedInputImagePath) || string.IsNullOrEmpty(alphaImagePath))
+        {
+            MessageBox.Show("Please load both the input image and the mask image.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        var saveFileDialog = new SaveFileDialog
+        {
+            Title = "Save Masked Image",
+            FileName = createdFilename,
+            DefaultExt = ".png",
+            Filter = "PNG Files|*.png",
+        };
+
+        maskedImage = ApplyScaledAlphaChannel();
+
+        bool? result = saveFileDialog.ShowDialog();
+
+        if (result is true)
+        {
+            string filename = saveFileDialog.FileName;
+            maskedImage.Save(filename, ImageFormat.Png);
+        }
+    }
+
+    private void BtnPrevAlphaImage_Click(object sender, RoutedEventArgs e)
+    {
+        if (ComboBoxSelectSplit.SelectedIndex == splitsComboBoxItems.Count - 1)
+        {
+            return;
+        }
+
+        ComboBoxSelectSplit.SelectedIndex += 1;
+    }
+
+    private void BtnNextAlphaImage_Click(object sender, RoutedEventArgs e)
+    {
+        if (ComboBoxSelectSplit.SelectedIndex == 0)
+        {
+            return;
+        }
+
+        ComboBoxSelectSplit.SelectedIndex -= 1;
+    }
+
+    private Bitmap ApplyScaledAlphaChannel()
+    {
+        using (var inputImage = new Bitmap(selectedInputImagePath))
+        using (var alphaImage = new Bitmap(alphaImagePath))
+        {
+            var scaledAlphaImage = new Bitmap(inputImage.Width, inputImage.Height);
+            using (Graphics g = Graphics.FromImage(scaledAlphaImage))
+            {
+                g.DrawImage(alphaImage, 0, 0, inputImage.Width, inputImage.Height);
+            }
+
+            Bitmap outputImage = new Bitmap(inputImage.Width, inputImage.Height);
+
+            for (int x = 0; x < inputImage.Width; x++)
+            {
+                for (int y = 0; y < inputImage.Height; y++)
+                {
+                    Color inputColor = inputImage.GetPixel(x, y);
+                    Color alphaColor = scaledAlphaImage.GetPixel(x, y);
+
+                    Color outputColor = Color.FromArgb(alphaColor.A, inputColor.R, inputColor.G, inputColor.B);
+                    outputImage.SetPixel(x, y, outputColor);
+                }
+            }
+
+            return outputImage;
+        }
+    }
+
+    private void BtnAutoSave_Click(object sender, RoutedEventArgs e)
+    {
+        Console.WriteLine("Saving masked image...");
+        
+        if (string.IsNullOrEmpty(outputDirectoryPath))
+        {
+            MessageBox.Show("Please select an output directory.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        if (!Directory.Exists(outputDirectoryPath))
+        {
+            MessageBox.Show("Specified directory not found!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        if (File.Exists(outputDirectoryPath + "\\" + createdFilename))
+        {
+            if (MessageBox.Show("File already exists! Do you want to overwrite it?", "Alert", MessageBoxButton.YesNo) ==
+                MessageBoxResult.Yes)
+            {
+                maskedImage.Save(outputDirectoryPath + "\\" + createdFilename, ImageFormat.Png);
+            }
+        }
+        else
+        {
+            maskedImage.Save(outputDirectoryPath + "\\" + createdFilename, ImageFormat.Png);
+        }
+    }
+
+    private string CreateCurrentFilename()
+    {
+        if (String.IsNullOrEmpty(selectedInputImagePath) || String.IsNullOrEmpty(alphaImagePath))
+        {
+            return "";
+        }
+
+        if (selectedPresetIndex == -1)
+        {
+            var path = selectedInputImagePath.Substring(selectedInputImagePath.LastIndexOf('\\') + 1);
+            path = path.Remove(path.LastIndexOf('.'));
+            Console.WriteLine(path);
+            return path + "_masked.png";
+        }
+        
+        var currentPreset = splitPresets[selectedPresetIndex];
+
+        var currentSplit = currentPreset.Splits[selectedSplitIndex];
+        
+        int totalSplits = currentPreset.Splits.Count;
+
+        string prefix = "";
+
+        switch (currentSplit.Name)
+        {
+            case "reset":
+                prefix = "reset";
+                break;
+            case "start_auto_splitter":
+                prefix = "start_auto_splitter";
+                break;
+            default:
+                prefix = $"{selectedSplitIndex.ToString().PadLeft(totalSplits.ToString().Length, '0')}_{currentSplit.Name}";
+                break;
+        }
+
+        string output =
+            $"{prefix}_{{{currentSplit.Threshold}}}_[{currentSplit.PauseTime}]";
+
+        if (currentSplit.SplitDelay > 0)
+        {
+            output += $"_#{currentSplit.SplitDelay}#";
+        }
+
+        if (currentSplit.Dummy)
+        {
+            output += "_{d}";
+        }
+
+        if (currentSplit.Inverted)
+        {
+            output += "_{b}";
+        }
+
+        return output + ".png";
+
+    }
+
+    private void ComboBoxSelectSplit_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ComboBoxSelectSplit.SelectedIndex == -1)
+        {
+            alphaImagePath = "";
+            UpdateOutputPreview();
+            return;
+        }
+        var currentPreset = splitPresets[selectedPresetIndex];
+        alphaImagePath = currentPreset.PresetFileName + "\\" + currentPreset.Splits[selectedSplitIndex].MaskImagePath;
+        Console.WriteLine(alphaImagePath);
+        UpdateOutputPreview();
+    }
+
+    private void BtnPrevInputImage_Click(object sender, RoutedEventArgs e)
+    {
+        if (ComboBoxSelectInputImage.SelectedIndex == splitsComboBoxItems.Count - 1)
+        {
+            return;
+        }
+
+        ComboBoxSelectInputImage.SelectedIndex += 1;
+    }
+    
+    private void BtnNextInputImage_Click(object sender, RoutedEventArgs e)
+    {
+        if (ComboBoxSelectInputImage.SelectedIndex == 0)
+        {
+            return;
+        }
+
+        ComboBoxSelectInputImage.SelectedIndex -= 1;
+    }
+
+    private void ComboBoxSelectInputImage_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        selectedInputImagePath = inputImagePaths[ComboBoxSelectInputImage.SelectedIndex];
+        InputImageLabel.Text = selectedInputImagePath.Substring(selectedInputImagePath.LastIndexOf('\\') + 1);
+        InputImageView.Source = new BitmapImage(new Uri(selectedInputImagePath));
+        UpdateOutputPreview();
+    }
+}
