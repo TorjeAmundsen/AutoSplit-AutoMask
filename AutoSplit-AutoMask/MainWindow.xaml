@@ -13,8 +13,8 @@
         <ComboBox Name="ComboBoxSelectPreset" Width="281" Height="22" ItemsSource="{Binding presetComboBoxItems}" SelectedItem="{Binding selectedPreset}" SelectedIndex="{Binding selectedPresetIndex}" SelectionChanged="ComboBoxSelectPreset_SelectionChanged" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="350, 10, 10, 10"></ComboBox>
         <Button Name="BtnRefreshPresets" Content="Refresh" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="630,10,10,0" Width="50" Height="22" Click="BtnRefreshPresets_Click" />
         
-        <TextBlock Text="Foobar_TestImage.png" Name="InputImageLabel" Width="330" Height="22" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Margin="10, 42, 10, 10"></TextBlock>
-        <TextBlock Text="Foobar_TestImage.png" Name="PreviewImageLabel" Width="330" Height="22" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Margin="350, 42, 10, 10"></TextBlock>
+        <TextBlock Text="Input image preview" Name="InputImageLabel" Width="330" Height="22" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Margin="10, 42, 10, 10"></TextBlock>
+        <TextBlock Text="Output image preview" Name="PreviewImageLabel" Width="330" Height="22" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Margin="350, 42, 10, 10"></TextBlock>
         <Border BorderBrush="DimGray" BorderThickness="1" Width="330" Height="250" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10, 62, 10, 10" Background="LightGray">
             <Image Name="InputImageView" Width="320" Height="240" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4, 4, 0, 0"/>
         </Border>

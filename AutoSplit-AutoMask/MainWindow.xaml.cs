@@ -42,14 +42,14 @@ public partial class MainWindow : Window
         splitsComboBoxItems = new ObservableCollection<ComboBoxItem>();
         inputImagesComboBoxItems = new ObservableCollection<ComboBoxItem>();
         
-        Directory.CreateDirectory(AppContext.BaseDirectory + "\\presets\\");
+        Directory.CreateDirectory(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName) + "\\presets\\");
         
         RefreshPresets();
     }
 
     private void RefreshPresets()
     {
-        string[] presetPaths = Directory.GetFiles(AppContext.BaseDirectory + "presets\\", "*json");
+        string[] presetPaths = Directory.GetFiles(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName) + "\\presets\\", "*json");
         
         Console.WriteLine($"Found {presetPaths.Length} presets");
         
@@ -133,7 +133,7 @@ public partial class MainWindow : Window
 
     private void BtnOpenPresetsFolder_Click(object sender, RoutedEventArgs e)
     {
-        Process.Start("explorer.exe", "\"" + AppContext.BaseDirectory + "presets\\\"");
+        Process.Start("explorer.exe", "\"" + Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName) + "\\presets\\\"");
     }
 
     private void UpdateOutputPreview()
@@ -158,7 +158,10 @@ public partial class MainWindow : Window
         
         maskedImage = ApplyScaledAlphaChannel();
 
-        var previewImage = new Bitmap(maskedImage, new Size(Convert.ToInt32(InputImageView.ActualWidth), Convert.ToInt32(InputImageView.ActualHeight)));
+        int previewWidth = Convert.ToInt32(maskedImage.Width * (320d / maskedImage.Width));
+        int previewHeight = Convert.ToInt32(maskedImage.Height * (320d / maskedImage.Width));
+        
+        var previewImage = new Bitmap(maskedImage, new Size(previewWidth, previewHeight));
 
         var bmpImage = new BitmapImage();
 
@@ -390,6 +393,11 @@ public partial class MainWindow : Window
 
     private void ComboBoxSelectSplit_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (presetComboBoxItems.Count == 0)
+        {
+            ComboBoxSelectPreset.SelectedIndex = -1;
+            return;
+        }
         if (ComboBoxSelectSplit.SelectedIndex == -1)
         {
             alphaImagePath = "";
