@@ -47,7 +47,8 @@
     {
       "MaskImagePath": "007_scrubs_dummy.png",
       "Name": "ScrubsDummy",
-      "Threshold": 0.95
+      "Threshold": 0.95,
+      "Dummy": true
     },
     {
       "MaskImagePath": "008_scrubs_door.png",
