@@ -364,7 +364,12 @@ public partial class MainWindow : Window
         }
 
         string output =
-            $"{prefix}_{{{currentSplit.Threshold}}}_[{currentSplit.PauseTime}]";
+            $"{prefix}_({currentSplit.Threshold})";
+
+        if (currentSplit.PauseTime != 3.0)
+        {
+            output += $"_[{currentSplit.PauseTime}]";
+        }
 
         if (currentSplit.SplitDelay > 0)
         {
