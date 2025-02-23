@@ -5,7 +5,6 @@
       "MaskImagePath": "001_escape.png",
       "Name": "Escape",
       "Threshold": 0.97,
-      "PauseTime": 1.5,
       "SplitDelay": 150
     },
     {
