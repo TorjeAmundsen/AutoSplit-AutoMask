@@ -290,8 +290,17 @@ public partial class MainWindow : Window
                     Color inputColor = inputImage.GetPixel(x, y);
                     Color alphaColor = scaledAlphaImage.GetPixel(x, y);
 
-                    Color outputColor = Color.FromArgb(alphaColor.A, inputColor.R, inputColor.G, inputColor.B);
-                    outputImage.SetPixel(x, y, outputColor);
+                    if (alphaColor.A != 255)
+                    {
+                        outputImage.SetPixel(x, y, Color.Transparent);
+                    }
+                    else
+                    {
+                        Color outputColor = Color.FromArgb(alphaColor.A, inputColor.R, inputColor.G, inputColor.B);
+                        outputImage.SetPixel(x, y, outputColor);
+                    }
+
+                    Console.WriteLine($"{x},{y} - {outputImage.GetPixel(x, y).A},{outputImage.GetPixel(x, y).R},{outputImage.GetPixel(x, y).G},{outputImage.GetPixel(x, y).B}");
                 }
             }
 
