@@ -73,7 +73,8 @@
       "MaskImagePath": "003_full_fade.png",
       "Name": "Collapse",
       "Threshold": 0.97,
-      "PauseTime": 60
+      "PauseTime": 60,
+      "SplitDelay": 50
     },
     {
       "MaskImagePath": "010_collapse_cs_zelda_text.png",
