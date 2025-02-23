@@ -1,15 +1,15 @@
 ﻿{
-  "PresetName": "Classic Kakariko route (Swordless)",
+  "PresetName": "Classic Kakariko route (Gohma Clip)",
   "Splits": [
     {
-      "MaskImagePath": "001.png",
+      "MaskImagePath": "001_escape.png",
       "Name": "Escape",
       "Threshold": 0.97,
       "PauseTime": 1.5,
       "SplitDelay": 150
     },
     {
-      "MaskImagePath": "002.png",
+      "MaskImagePath": "002_hyrule_field_text.png",
       "Name": "KakarikoDummy",
       "Threshold": 0.95,
       "PauseTime": 7,
@@ -17,14 +17,14 @@
       "Dummy": true
     },
     {
-      "MaskImagePath": "003.png",
+      "MaskImagePath": "003_full_fade.png",
       "Name": "Kakariko",
       "Threshold": 0.97,
       "PauseTime": 30,
       "SplitDelay": 50
     },
     {
-      "MaskImagePath": "004.png",
+      "MaskImagePath": "004_anju_text.png",
       "Name": "Bottle",
       "Threshold": 0.93,
       "PauseTime": 35,
@@ -32,59 +32,59 @@
       "Inverted": true
     },
     {
-      "MaskImagePath": "005.png",
+      "MaskImagePath": "005_deku_text.png",
       "Name": "DekuCSDummy",
       "Threshold": 0.94,
       "PauseTime": 6.5,
       "Dummy": true
     },
     {
-      "MaskImagePath": "006.png",
+      "MaskImagePath": "006_a_button_flip.png",
       "Name": "EnterDeku",
       "Threshold": 0.92,
       "PauseTime": 15,
       "SplitDelay": 1000
     },
     {
-      "MaskImagePath": "007.png",
+      "MaskImagePath": "007_scrubs_door.png",
       "Name": "Scrubs",
       "Threshold": 0.95,
       "SplitDelay": 1150
     },
     {
-      "MaskImagePath": "008.png",
+      "MaskImagePath": "008_nut_throw.png",
       "Name": "GohmaDummy",
       "Threshold": 0.95,
       "PauseTime": 1.5,
       "Dummy": true
     },
     {
-      "MaskImagePath": "009.png",
+      "MaskImagePath": "009_gohma_death_flash.png",
       "Name": "Ghoma",
       "Threshold": 0.92,
       "PauseTime": 30
     },
     {
-      "MaskImagePath": "003.png",
+      "MaskImagePath": "003_full_fade.png",
       "Name": "Ganondoor",
       "Threshold": 0.97,
       "PauseTime": 30
     },
     {
-      "MaskImagePath": "003.png",
+      "MaskImagePath": "003_full_fade.png",
       "Name": "Collapse",
       "Threshold": 0.97,
       "PauseTime": 60
     },
     {
-      "MaskImagePath": "012.png",
+      "MaskImagePath": "010_collapse_cs_zelda_text.png",
       "Name": "CutsceneRNG",
       "Threshold": 0.96,
       "SplitDelay": 100,
       "PauseTime": 130
     },
     {
-      "MaskImagePath": "013.png",
+      "MaskImagePath": "011_final_slash_zelda.png",
       "Name": "Ganon",
       "Threshold": 0.92
     },

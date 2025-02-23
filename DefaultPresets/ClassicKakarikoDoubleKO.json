@@ -1,0 +1,99 @@
+﻿{
+  "PresetName": "Classic Kakariko route (Double KO)",
+  "Splits": [
+    {
+      "MaskImagePath": "001_escape.png",
+      "Name": "Escape",
+      "Threshold": 0.97,
+      "PauseTime": 1.5,
+      "SplitDelay": 150
+    },
+    {
+      "MaskImagePath": "002_hyrule_field_text.png",
+      "Name": "KakarikoDummy",
+      "Threshold": 0.95,
+      "PauseTime": 7,
+      "SplitDelay": 0,
+      "Dummy": true
+    },
+    {
+      "MaskImagePath": "003_full_fade.png",
+      "Name": "Kakariko",
+      "Threshold": 0.97,
+      "PauseTime": 30,
+      "SplitDelay": 50
+    },
+    {
+      "MaskImagePath": "004_anju_text.png",
+      "Name": "Bottle",
+      "Threshold": 0.93,
+      "PauseTime": 35,
+      "SplitDelay": 1100,
+      "Inverted": true
+    },
+    {
+      "MaskImagePath": "005_deku_text.png",
+      "Name": "DekuCSDummy",
+      "Threshold": 0.94,
+      "PauseTime": 6.5,
+      "Dummy": true
+    },
+    {
+      "MaskImagePath": "006_a_button_flip.png",
+      "Name": "EnterDeku",
+      "Threshold": 0.92,
+      "PauseTime": 15,
+      "SplitDelay": 1000
+    },
+    {
+      "MaskImagePath": "007_scrubs_door.png",
+      "Name": "Scrubs",
+      "Threshold": 0.95,
+      "SplitDelay": 1150
+    },
+    {
+      "MaskImagePath": "008_hearts.png",
+      "Name": "DoubleKO",
+      "Threshold": 0.95,
+      "PauseTime": 1.5,
+      "Dummy": true
+    },
+    {
+      "MaskImagePath": "003_full_fade.png",
+      "Name": "Ganondoor",
+      "Threshold": 0.97,
+      "PauseTime": 30
+    },
+    {
+      "MaskImagePath": "003_full_fade.png",
+      "Name": "Collapse",
+      "Threshold": 0.97,
+      "PauseTime": 60
+    },
+    {
+      "MaskImagePath": "010_collapse_cs_zelda_text.png",
+      "Name": "CutsceneRNG",
+      "Threshold": 0.96,
+      "SplitDelay": 100,
+      "PauseTime": 130
+    },
+    {
+      "MaskImagePath": "011_final_slash_zelda.png",
+      "Name": "Ganon",
+      "Threshold": 0.92
+    },
+    {
+      "MaskImagePath": "reset.png",
+      "Name": "reset",
+      "Threshold": 0.96,
+      "PauseTime": 10
+    },
+    {
+      "MaskImagePath": "start.png",
+      "Name": "start_auto_splitter",
+      "Threshold": 0.96,
+      "PauseTime": 10,
+      "Inverted": true
+    }
+  ]
+}

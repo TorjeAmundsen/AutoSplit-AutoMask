@@ -26,7 +26,6 @@ public partial class MainWindow : Window
     private string? alphaImagePath;
     private Bitmap? maskedImage;
     private List<SplitPreset>? splitPresets;
-    private bool allowMasksDropdown;
     private string createdFilename;
     
 
@@ -102,11 +101,6 @@ public partial class MainWindow : Window
 
     private void ComboBoxSelectPreset_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (selectedPresetIndex == -1)
-        {
-            allowMasksDropdown = false;
-        }
-        
         ComboBoxSelectSplit.SelectedIndex = 0;
         
         splitsComboBoxItems.Clear();
