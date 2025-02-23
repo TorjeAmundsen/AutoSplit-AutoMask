@@ -364,11 +364,11 @@ public partial class MainWindow : Window
         }
 
         string output =
-            $"{prefix}_({currentSplit.Threshold})";
+            $"{prefix}_({currentSplit.Threshold.ToString(System.Globalization.CultureInfo.InvariantCulture)})";
 
         if (currentSplit.PauseTime != 3.0)
         {
-            output += $"_[{currentSplit.PauseTime}]";
+            output += $"_[{currentSplit.PauseTime.ToString(System.Globalization.CultureInfo.InvariantCulture)}]";
         }
 
         if (currentSplit.SplitDelay > 0)
