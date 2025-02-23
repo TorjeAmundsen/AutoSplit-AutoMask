@@ -54,7 +54,7 @@
       "MaskImagePath": "008_hearts.png",
       "Name": "DoubleKO",
       "Threshold": 0.95,
-      "PauseTime": 1.5,
+      "PauseTime": 30,
       "Dummy": true
     },
     {
