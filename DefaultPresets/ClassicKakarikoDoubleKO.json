@@ -71,14 +71,14 @@
       "PauseTime": 60
     },
     {
-      "MaskImagePath": "010_collapse_cs_zelda_text.png",
+      "MaskImagePath": "009_collapse_cs_zelda_text.png",
       "Name": "CutsceneRNG",
       "Threshold": 0.96,
       "SplitDelay": 100,
       "PauseTime": 130
     },
     {
-      "MaskImagePath": "011_final_slash_zelda.png",
+      "MaskImagePath": "010_final_slash_zelda.png",
       "Name": "Ganon",
       "Threshold": 0.92
     },
