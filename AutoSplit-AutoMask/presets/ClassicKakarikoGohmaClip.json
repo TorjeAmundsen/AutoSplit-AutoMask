@@ -45,20 +45,25 @@
       "SplitDelay": 1000
     },
     {
-      "MaskImagePath": "007_scrubs_door.png",
+      "MaskImagePath": "007_scrubs_dummy.png",
+      "Name": "ScrubsDummy",
+      "Threshold": 0.95
+    },
+    {
+      "MaskImagePath": "008_scrubs_door.png",
       "Name": "Scrubs",
       "Threshold": 0.95,
       "SplitDelay": 1150
     },
     {
-      "MaskImagePath": "008_nut_throw.png",
+      "MaskImagePath": "009_nut_throw.png",
       "Name": "GohmaDummy",
       "Threshold": 0.95,
       "PauseTime": 1.5,
       "Dummy": true
     },
     {
-      "MaskImagePath": "009_gohma_death_flash.png",
+      "MaskImagePath": "010_gohma_death_flash.png",
       "Name": "Ghoma",
       "Threshold": 0.92,
       "PauseTime": 30
@@ -77,14 +82,14 @@
       "SplitDelay": 50
     },
     {
-      "MaskImagePath": "010_collapse_cs_zelda_text.png",
+      "MaskImagePath": "011_collapse_cs_zelda_text.png",
       "Name": "CutsceneRNG",
       "Threshold": 0.96,
       "SplitDelay": 100,
       "PauseTime": 130
     },
     {
-      "MaskImagePath": "011_final_slash_zelda.png",
+      "MaskImagePath": "012_final_slash_zelda.png",
       "Name": "Ganon",
       "Threshold": 0.92
     },

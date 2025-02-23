@@ -17,10 +17,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="presets\ClassicKakarikoDoubleKO.json" />
-      <Content Include="presets\ClassicKakarikoDoubleKO.json">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
       <None Remove="presets\ClassicKakarikoGohmaClip\001_escape.png" />
       <Content Include="presets\ClassicKakarikoGohmaClip\001_escape.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -45,24 +41,28 @@
       <Content Include="presets\ClassicKakarikoGohmaClip\006_a_button_flip.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\007_scrubs_door.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\007_scrubs_door.png">
+      <None Remove="presets\ClassicKakarikoGohmaClip\007_scrubs_dummy.png" />
+      <Content Include="presets\ClassicKakarikoGohmaClip\007_scrubs_dummy.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\008_nut_throw.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\008_nut_throw.png">
+      <None Remove="presets\ClassicKakarikoGohmaClip\008_scrubs_door.png" />
+      <Content Include="presets\ClassicKakarikoGohmaClip\008_scrubs_door.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\009_gohma_death_flash.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\009_gohma_death_flash.png">
+      <None Remove="presets\ClassicKakarikoGohmaClip\009_nut_throw.png" />
+      <Content Include="presets\ClassicKakarikoGohmaClip\009_nut_throw.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\010_collapse_cs_zelda_text.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\010_collapse_cs_zelda_text.png">
+      <None Remove="presets\ClassicKakarikoGohmaClip\010_gohma_death_flash.png" />
+      <Content Include="presets\ClassicKakarikoGohmaClip\010_gohma_death_flash.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\011_final_slash_zelda.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\011_final_slash_zelda.png">
+      <None Remove="presets\ClassicKakarikoGohmaClip\011_collapse_cs_zelda_text.png" />
+      <Content Include="presets\ClassicKakarikoGohmaClip\011_collapse_cs_zelda_text.png">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="presets\ClassicKakarikoGohmaClip\012_final_slash_zelda.png" />
+      <Content Include="presets\ClassicKakarikoGohmaClip\012_final_slash_zelda.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
       <None Remove="presets\ClassicKakarikoGohmaClip\reset.png" />
@@ -71,6 +71,10 @@
       </Content>
       <None Remove="presets\ClassicKakarikoGohmaClip\start.png" />
       <Content Include="presets\ClassicKakarikoGohmaClip\start.png">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="presets\ClassicKakarikoDoubleKO.json" />
+      <Content Include="presets\ClassicKakarikoDoubleKO.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
       <None Remove="presets\ClassicKakarikoGohmaClip.json" />
@@ -101,20 +105,24 @@
       <Content Include="presets\ClassicKakarikoDoubleKO\006_a_button_flip.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\007_scrubs_door.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\007_scrubs_door.png">
+      <None Remove="presets\ClassicKakarikoDoubleKO\007_scrubs_dummy.png" />
+      <Content Include="presets\ClassicKakarikoDoubleKO\007_scrubs_dummy.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\008_hearts.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\008_hearts.png">
+      <None Remove="presets\ClassicKakarikoDoubleKO\008_scrubs_door.png" />
+      <Content Include="presets\ClassicKakarikoDoubleKO\008_scrubs_door.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\009_collapse_cs_zelda_text.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\009_collapse_cs_zelda_text.png">
+      <None Remove="presets\ClassicKakarikoDoubleKO\009_hearts.png" />
+      <Content Include="presets\ClassicKakarikoDoubleKO\009_hearts.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\010_final_slash_zelda.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\010_final_slash_zelda.png">
+      <None Remove="presets\ClassicKakarikoDoubleKO\010_collapse_cs_zelda_text.png" />
+      <Content Include="presets\ClassicKakarikoDoubleKO\010_collapse_cs_zelda_text.png">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="presets\ClassicKakarikoDoubleKO\011_final_slash_zelda.png" />
+      <Content Include="presets\ClassicKakarikoDoubleKO\011_final_slash_zelda.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
       <None Remove="presets\ClassicKakarikoDoubleKO\reset.png" />
@@ -126,5 +134,4 @@
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
-
 </Project>

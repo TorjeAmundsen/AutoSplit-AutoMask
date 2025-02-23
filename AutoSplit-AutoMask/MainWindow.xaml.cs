@@ -308,16 +308,16 @@ public partial class MainWindow : Window
 
     private void BtnAutoSave_Click(object sender, RoutedEventArgs e)
     {
-        Console.WriteLine("Saving masked image...");
-        
         if (string.IsNullOrEmpty(outputDirectoryPath))
         {
             MessageBox.Show("Please select an output directory.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
         }
 
         if (!Directory.Exists(outputDirectoryPath))
         {
             MessageBox.Show("Specified directory not found!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
         }
 
         if (File.Exists(outputDirectoryPath + "\\" + createdFilename))
@@ -330,6 +330,7 @@ public partial class MainWindow : Window
         }
         else
         {
+            
             maskedImage.Save(outputDirectoryPath + "\\" + createdFilename, ImageFormat.Png);
         }
     }

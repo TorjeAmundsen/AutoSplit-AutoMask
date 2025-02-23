@@ -41,17 +41,22 @@
       "MaskImagePath": "006_a_button_flip.png",
       "Name": "EnterDeku",
       "Threshold": 0.92,
-      "PauseTime": 15,
+      "PauseTime": 60,
       "SplitDelay": 1000
     },
     {
-      "MaskImagePath": "007_scrubs_door.png",
+      "MaskImagePath": "007_scrubs_dummy.png",
+      "Name": "ScrubsDummy",
+      "Threshold": 0.95
+    },
+    {
+      "MaskImagePath": "008_scrubs_door.png",
       "Name": "Scrubs",
       "Threshold": 0.95,
       "SplitDelay": 1150
     },
     {
-      "MaskImagePath": "008_hearts.png",
+      "MaskImagePath": "009_hearts.png",
       "Name": "DoubleKO",
       "Threshold": 0.95,
       "PauseTime": 30,
@@ -71,14 +76,14 @@
       "SplitDelay": 50
     },
     {
-      "MaskImagePath": "009_collapse_cs_zelda_text.png",
+      "MaskImagePath": "010_collapse_cs_zelda_text.png",
       "Name": "CutsceneRNG",
       "Threshold": 0.96,
       "SplitDelay": 100,
       "PauseTime": 130
     },
     {
-      "MaskImagePath": "010_final_slash_zelda.png",
+      "MaskImagePath": "011_final_slash_zelda.png",
       "Name": "Ganon",
       "Threshold": 0.92
     },
