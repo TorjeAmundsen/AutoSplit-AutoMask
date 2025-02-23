@@ -85,7 +85,7 @@
       "MaskImagePath": "reset.png",
       "Name": "reset",
       "Threshold": 0.96,
-      "PauseTime": 10
+      "PauseTime": 0.1
     },
     {
       "MaskImagePath": "start.png",
