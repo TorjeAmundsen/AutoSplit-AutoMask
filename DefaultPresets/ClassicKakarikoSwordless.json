@@ -92,13 +92,14 @@
       "MaskImagePath": "reset.png",
       "Name": "reset",
       "Threshold": 0.96,
-	  "PauseTime": 10
+      "PauseTime": 10
     },
     {
       "MaskImagePath": "start.png",
       "Name": "start_auto_splitter",
       "Threshold": 0.96,
-	  "PauseTime": 10
+      "PauseTime": 10,
+      "Inverted": true
     }
   ]
 }
