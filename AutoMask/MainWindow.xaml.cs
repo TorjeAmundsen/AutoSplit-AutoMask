@@ -6,7 +6,9 @@ using System.IO;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using Microsoft.Win32;
 using Size = System.Drawing.Size;
 
@@ -148,6 +150,8 @@ public partial class MainWindow
 
     private void UpdateOutputPreview()
     {
+        ImageSavedLabel.Opacity = 0;
+        
         if (String.IsNullOrEmpty(selectedInputImagePath) || String.IsNullOrEmpty(alphaImagePath))
         {
             OutputImageView.Source = null;
@@ -361,11 +365,13 @@ public partial class MainWindow
                 MessageBoxResult.Yes)
             {
                 maskedImage.Save(outputDirectoryPath + "\\" + createdFilename, ImageFormat.Png);
+                ImageSavedLabel.Opacity = 1;
             }
         }
         else
         {
             maskedImage.Save(outputDirectoryPath + "\\" + createdFilename, ImageFormat.Png);
+            ImageSavedLabel.Opacity = 1;
         }
     }
 

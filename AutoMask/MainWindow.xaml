@@ -21,6 +21,16 @@
         <Border BorderBrush="DimGray" BorderThickness="1" Width="330" Height="250" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="350, 62, 10, 10" Background="LightGray">
             <Image Stretch="None" Name="OutputImageView" Width="320" Height="240" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4, 4, 0, 0" />
         </Border>
+        <TextBlock Text="Saved!" Foreground="Green" Opacity="0" Name="ImageSavedLabel" Width="330" Height="22" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Left" Margin="359, 68, 10, 10">
+            <TextBlock.Effect>
+                <DropShadowEffect
+                    ShadowDepth="0"
+                    Direction="330"
+                    Color="White"
+                    Opacity="1"
+                    BlurRadius="2"/>
+            </TextBlock.Effect>
+        </TextBlock>
 
         <TextBox Name="OutputDirectoryTextBox" Width="231" Height="22" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True" Focusable="True"  Margin="10, 351, 10, 10"/>
         <Button Name="BtnSetOutputDirectory" Content="Set output folder" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="240,351,10,0" Width="100" Height="22" Click="BtnSelectOutputDirectory_Click" />
