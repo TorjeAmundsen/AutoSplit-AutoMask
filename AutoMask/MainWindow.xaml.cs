@@ -12,13 +12,9 @@ using Size = System.Drawing.Size;
 
 namespace AutoSplit_AutoMask;
 
-<<<<<<< Updated upstream:AutoMask/MainWindow.xaml.cs
 using static Utils;
 
-public partial class MainWindow : Window
-=======
 public partial class MainWindow
->>>>>>> Stashed changes:AutoSplit-AutoMask/MainWindow.xaml.cs
 {
     public ObservableCollection<ComboBoxItem> presetComboBoxItems { get; set; }
     public ObservableCollection<ComboBoxItem> splitsComboBoxItems { get; set; }
