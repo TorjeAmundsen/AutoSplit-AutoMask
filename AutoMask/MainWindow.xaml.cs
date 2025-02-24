@@ -168,9 +168,22 @@ public partial class MainWindow
 
         maskedImage = ApplyScaledAlphaChannel();
 
-        int previewWidth = Convert.ToInt32(maskedImage.Width * (320d / maskedImage.Width));
-        int previewHeight = Convert.ToInt32(maskedImage.Height * (320d / maskedImage.Width));
+        double factor;
 
+        var presentationSource = PresentationSource.FromVisual(this);
+
+        if (presentationSource == null || presentationSource.CompositionTarget == null)
+        {
+            factor = 1;
+        }
+        else
+        {
+            factor = presentationSource.CompositionTarget.TransformFromDevice.M11;
+        }
+
+        int previewWidth = Convert.ToInt32(maskedImage.Width * ((320 / factor) / maskedImage.Width));
+        int previewHeight = Convert.ToInt32(maskedImage.Height * ((320 / factor) / maskedImage.Width));
+        
         var previewImage = new Bitmap(maskedImage, new Size(previewWidth, previewHeight));
 
         var bmpImage = new BitmapImage();
@@ -352,7 +365,6 @@ public partial class MainWindow
         }
         else
         {
-
             maskedImage.Save(outputDirectoryPath + "\\" + createdFilename, ImageFormat.Png);
         }
     }
