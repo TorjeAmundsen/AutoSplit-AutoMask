@@ -17,8 +17,12 @@ public class SplitPreset
         {
             return true;
         }
-        
+
         SplitPreset other = obj as SplitPreset;
+        if (other == null || other.PresetFileName != PresetFileName || other.PresetName != PresetName)
+        {
+            return false;
+        }
         return PresetFileName == other.PresetFileName
                && PresetName == other.PresetName
                && Splits.SequenceEqual(other.Splits);
