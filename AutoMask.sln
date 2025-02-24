@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoSplit-AutoMask", "AutoSplit-AutoMask\AutoSplit-AutoMask.csproj", "{6555C45A-1371-4EB0-9A14-4FB9678B5EB9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoMask", "AutoMask\AutoMask.csproj", "{6555C45A-1371-4EB0-9A14-4FB9678B5EB9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

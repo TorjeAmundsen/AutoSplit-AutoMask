@@ -12,6 +12,8 @@ using Size = System.Drawing.Size;
 
 namespace AutoSplit_AutoMask;
 
+using static Utils;
+
 public partial class MainWindow : Window
 {
     public ObservableCollection<ComboBoxItem> presetComboBoxItems { get; set; }
@@ -34,6 +36,8 @@ public partial class MainWindow : Window
         InitializeComponent();
         
         DataContext = this;
+
+        Title = "AutoMask v" + AutoMaskSemVer + (string.IsNullOrEmpty(VersionSuffix) ? string.Empty : "-" + VersionSuffix);
 
         ComboBoxSelectSplit.AllowDrop = false;
         
