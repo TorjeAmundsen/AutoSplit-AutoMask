@@ -2,7 +2,8 @@
 
 public class SplitPreset
 {
-    public string? PresetFileName { get; set; }
+    public string? PresetFolder { get; set; }
+    public string? GameName { get; set; }
     public string? PresetName { get; init; }
     public IList<SingleSplit>? Splits { get; init; }
 
@@ -19,11 +20,13 @@ public class SplitPreset
         }
 
         SplitPreset other = obj as SplitPreset;
-        if (other == null || other.PresetFileName != PresetFileName || other.PresetName != PresetName)
+        if (other == null || other.PresetFolder != PresetFolder || other.PresetName != PresetName)
         {
             return false;
         }
-        return PresetFileName == other.PresetFileName
+
+        return PresetFolder == other.PresetFolder
+               && GameName == other.GameName
                && PresetName == other.PresetName
                && Splits.SequenceEqual(other.Splits);
     }

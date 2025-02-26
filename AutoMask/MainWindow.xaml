@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         ResizeMode="CanMinimize"
-        Title="AutoMask for AutoSplit" Height="422" Width="706">
+        Title="AutoMask for AutoSplit" Height="452" Width="706">
     <Grid>
         <Button Name="BtnLoadInputImage" Content="Load input image(s)" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,10,0,0" Width="120" Height="22" Click="BtnLoadInputImages_Click" />
         <Button Name="BtnOpenOutputFolder" Content="Show presets" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="250, 10, 10, 0" Width="90" Height="22" Click="BtnOpenPresetsFolder_Click"></Button>
@@ -33,17 +33,20 @@
         </TextBlock>
 
         <TextBox Name="OutputDirectoryTextBox" Width="231" Height="22" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True" Focusable="True"  Margin="10, 351, 10, 10"/>
-        <Button Name="BtnSetOutputDirectory" Content="Set output folder" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="240,351,10,0" Width="100" Height="22" Click="BtnSelectOutputDirectory_Click" />
+        <Button VerticalAlignment="Top" HorizontalAlignment="Left" Margin="240,351,10,0" Width="100" Height="22" Click="BtnSelectOutputDirectory_Click" />
 
-        <ComboBox Name="ComboBoxSelectInputImage" SelectionChanged="ComboBoxSelectInputImage_OnSelectionChanged" ItemsSource="{Binding inputImagesComboBoxItems}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="31,321,0,0" Width="288" Height="22" />
-        <Button Name="BtnPrevInputImage" Content="&lt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,321,0,0" Width="22" Height="22" Click="BtnNextInputImage_Click" />
-        <Button Name="BtnNextInputImage" Content="&gt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="318,321,0,0" Width="22" Height="22" Click="BtnPrevInputImage_Click" />
+        <ComboBox Name="ComboBoxSelectInputImage" SelectionChanged="ComboBoxSelectInputImage_OnSelectionChanged" ItemsSource="{Binding inputImagesComboBoxItems}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="37,321,0,0" Width="276" Height="22" />
+        <Button VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,321,0,0" Width="28" Height="22" Click="BtnNextInputImage_Click">&lt;</Button>
+        <Button VerticalAlignment="Top" HorizontalAlignment="Left" Margin="312,321,0,0" Width="28" Height="22" Click="BtnPrevInputImage_Click">&gt;</Button>
 
-        <ComboBox Name="ComboBoxSelectSplit" SelectionChanged="ComboBoxSelectSplit_OnSelectionChanged" SelectedIndex="{Binding selectedSplitIndex}" ItemsSource="{Binding splitsComboBoxItems}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="371,321,0,0" Width="288" Height="22" />
-        <Button Name="BtnPrevAlphaImage" Content="&lt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="350,321,0,0" Width="22" Height="22" Click="BtnNextAlphaImage_Click" />
-        <Button Name="BtnNextAlphaImage" Content="&gt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="658,321,0,0" Width="22" Height="22" Click="BtnPrevAlphaImage_Click" />
+        <ComboBox Name="ComboBoxSelectSplit" SelectionChanged="ComboBoxSelectSplit_OnSelectionChanged" SelectedIndex="{Binding selectedSplitIndex}" ItemsSource="{Binding splitsComboBoxItems}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="377,321,0,0" Width="276" Height="22" />
+        <Button Name="BtnPrevAlphaImage" Content="&lt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="350,321,0,0" Width="28" Height="22" Click="BtnNextAlphaImage_Click" />
+        <Button Name="BtnNextAlphaImage" Content="&gt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="652,321,0,0" Width="28" Height="22" Click="BtnPrevAlphaImage_Click" />
         <Button Name="BtnLoadCustomAlphaImage" Content="Load custom mask" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="350,351,0,0" Width="120" Height="22" Click="BtnLoadAlphaImage_Click" />
         <Button Name="BtnSave" Content="Save masked image" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="480,351,10,0" Width="130" Height="22" Click="BtnAutoSave_Click" />
         <Button Name="BtnSaveAs" Content="Save as..." VerticalAlignment="Top" HorizontalAlignment="Left" Margin="620,351,10,0" Width="60" Height="22" Click="BtnSaveImageAs_Click" />
+        <Button Width="120" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10, 381, 0, 0" Click="BtnOpenPresetEditor_Click">
+            Open preset editor
+        </Button>
     </Grid>
 </Window>

@@ -1,0 +1,103 @@
+﻿{
+  "PresetName": "MST (Water before Farore's Wind)",
+  "GameName": "The Legend of Zelda: Ocarina of Time",
+  "Splits": [
+    {
+      "MaskImagePath": "center_circle.png",
+      "Name": "Escape",
+      "Threshold": 0.97,
+      "SplitDelay": 150,
+      "PauseTime": 180
+    },
+    {
+      "MaskImagePath": "anju_text.png",
+      "Name": "Bottle",
+      "Threshold": 0.93,
+      "PauseTime": 25,
+      "Inverted": true
+    },
+    {
+      "MaskImagePath": "botw_oob.png",
+      "Name": "SkullPushDummy",
+      "Threshold": 0.95,
+      "PauseTime": 3,
+      "Dummy": true
+    },
+    {
+      "MaskImagePath": "a_attack.png",
+      "Name": "BombchusDummy",
+      "Threshold": 0.95,
+      "PauseTime": 0.5,
+      "Dummy": true
+    },
+    {
+      "MaskImagePath": "c_buttons_blackbars.png",
+      "Name": "Bombchus",
+      "Threshold": 0.95,
+      "PauseTime": 3,
+      "SplitDelay": 700,
+      "Dummy": true
+    },
+    {
+      "MaskImagePath": "crawlspace_triforce.png",
+      "Name": "EnterGuardsDummy",
+      "Threshold": 0.95,
+      "PauseTime": 0.1,
+      "Dummy": true
+    },
+    {
+      "MaskImagePath": "c_buttons_fullfade.png",
+      "Name": "EnterGuards",
+      "Threshold": 0.97,
+      "PauseTime": 20
+    },
+    {
+      "MaskImagePath": "tegami.png",
+      "Name": "Zelda's Letter",
+      "Threshold": 0.95,
+      "PauseTime": 60,
+      "Inverted": true,
+      "SplitDelay": 1100
+    },
+    {
+      "MaskImagePath": "master_sword.png",
+      "Name": "Master Sword",
+      "Threshold": 0.95,
+      "PauseTime": 60
+    },
+    {
+      "MaskImagePath": "hehehe.png",
+      "Name": "DampeRaceDummy",
+      "Threshold": 0.95,
+      "PauseTime": 12,
+      "Inverted": true,
+      "Dummy": true
+    },
+    {
+      "MaskImagePath": "black_bar_sliver.png",
+      "Name": "Hookshot",
+      "Threshold": 0.96,
+      "PauseTime": 12,
+      "Inverted": true,
+      "SplitDelay": 1000
+    },
+    {
+      "MaskImagePath": "shadow_textbox.png",
+      "Name": "DeadhandDummy",
+      "Threshold": 0.9,
+      "Dummy": true
+    },
+    {
+      "MaskImagePath": "navi_c_up.png",
+      "Name": "DeadhandDummy2",
+      "Threshold": 0.9,
+      "Dummy": true
+    },
+    {
+      "MaskImagePath": "navi_c_up.png",
+      "Name": "DeadhandDummy2",
+      "Threshold": 0.9,
+      "Dummy": true
+    }
+  ]
+}

@@ -31,6 +31,7 @@ public partial class MainWindow
     private Bitmap? maskedImage;
     private List<SplitPreset> splitPresets;
     private string createdFilename;
+    private string currentPresetsDirectory;
 
 
     public MainWindow()
@@ -51,27 +52,42 @@ public partial class MainWindow
 
         createdFilename = "Output preview";
 
-        Directory.CreateDirectory(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule!.FileName) + "\\presets\\");
+        var rootDir = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule!.FileName);
 
+        if (string.IsNullOrEmpty(rootDir))
+        {
+            MessageBox.Show("Error! Program could not locate root directory. Exiting...");
+            throw new NullReferenceException("Could not locate root directory");
+        }
+
+        currentPresetsDirectory = rootDir + "\\presets\\";
+        
+        Directory.CreateDirectory(rootDir + "\\presets\\");
+        
         RefreshPresets();
     }
 
     private void RefreshPresets()
     {
-        string[] presetPaths = Directory.GetFiles(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule!.FileName) + "\\presets\\", "*json");
-
-        Console.WriteLine($"Found {presetPaths.Length} presets");
+        var presetPaths = Directory.EnumerateDirectories(currentPresetsDirectory).Where(dir => Directory.EnumerateFiles(dir, "preset.json", SearchOption.TopDirectoryOnly).Any());
+        
+        Console.WriteLine($"Found {presetPaths.Count()} presets:");
+        
+        foreach (var preset in presetPaths)
+        {
+            Console.WriteLine(preset + "\\preset.json");
+        }
 
         var foundPresets = new List<SplitPreset>();
 
         foreach (string presetPath in presetPaths)
         {
-            SplitPreset? preset = JsonSerializer.Deserialize<SplitPreset>(File.ReadAllText(presetPath));
+            SplitPreset? preset = JsonSerializer.Deserialize<SplitPreset>(File.ReadAllText(presetPath + "\\preset.json"));
 
             if (preset is not null)
             {
-                preset.PresetFileName = presetPath.Replace(".json", "");
-                Console.WriteLine($"Adding preset: {presetPath}");
+                preset.PresetFolder = presetPath;
+                Console.WriteLine($"Adding preset: {preset.PresetFolder} from {presetPath + "\\preset.json"}");
                 foundPresets.Add(preset);
             }
         }
@@ -91,18 +107,20 @@ public partial class MainWindow
 
         foreach (SplitPreset preset in foundPresets)
         {
-            presetComboBoxItems.Add(new ComboBoxItem { Content = preset.PresetName});
-            Console.WriteLine($"Found preset: {preset.PresetName}");
             if (preset.Splits == null || preset.Splits.Count == 0)
             {
-                MessageBox.Show($"Invalid preset format found: {preset.PresetFileName}");
-                invalidPresetFiles.Add(preset.PresetFileName);
+                MessageBox.Show($"Invalid preset format found: {preset.PresetFolder}");
+                invalidPresetFiles.Add(preset.PresetFolder);
                 continue;
             }
+            
+            presetComboBoxItems.Add(new ComboBoxItem { Content = preset.PresetName});
+            Console.WriteLine($"Found preset: {preset.PresetName}");
+            
             for (int i = 0; i < preset.Splits.Count; ++i)
             {
                 var cur = preset.Splits[i];
-                Console.WriteLine($"{i + 1}. {cur.Name}, threshold: {cur.Threshold}, filename: {preset.PresetFileName}, enabled: {cur.Enabled}");
+                Console.WriteLine($"{i + 1}. {cur.Name}, threshold: {cur.Threshold}, filename: {preset.PresetFolder}, enabled: {cur.Enabled}");
             }
         }
 
@@ -145,7 +163,7 @@ public partial class MainWindow
 
     private void BtnOpenPresetsFolder_Click(object sender, RoutedEventArgs e)
     {
-        Process.Start("explorer.exe", "\"" + Path.GetDirectoryName(Process.GetCurrentProcess().MainModule!.FileName) + "\\presets\\\"");
+        Process.Start("explorer.exe", "\"" + currentPresetsDirectory + "\"");
     }
 
     private void UpdateOutputPreview()
@@ -469,7 +487,7 @@ public partial class MainWindow
             return;
         }
 
-        alphaImagePath = currentPreset.PresetFileName + "\\" + currentPreset.Splits[selectedSplitIndex].MaskImagePath;
+        alphaImagePath = currentPreset.PresetFolder + "\\" + currentPreset.Splits[selectedSplitIndex].MaskImagePath;
         Console.WriteLine(alphaImagePath);
         UpdateOutputPreview();
     }
@@ -522,6 +540,14 @@ public partial class MainWindow
         }
 
         Process.Start("explorer.exe", outputDirectoryPath);
+    }
 
+    private void BtnOpenPresetEditor_Click(object sender, RoutedEventArgs e)
+    {
+        PresetEditor editorWindow = new PresetEditor(splitPresets);
+        
+        editorWindow.Owner = this;
+        
+        editorWindow.ShowDialog();
     }
 }
