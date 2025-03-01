@@ -1,11 +1,11 @@
 ﻿<Window x:Class="AutoSplit_AutoMask.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d"
-        ResizeMode="CanMinimize"
-        Title="AutoMask for AutoSplit" Height="452" Width="706">
+        mc:Ignorable="d" d:DesignHeight="452" d:DesignWidth="706"
+        CanResize="False"
+        Title="AutoMask for AutoSplit" >
     <Grid>
         <Button Name="BtnLoadInputImage" Content="Load input image(s)" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,10,0,0" Width="120" Height="22" Click="BtnLoadInputImages_Click" />
         <Button Name="BtnOpenOutputFolder" Content="Show presets" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="250, 10, 10, 0" Width="90" Height="22" Click="BtnOpenPresetsFolder_Click"></Button>
@@ -33,7 +33,7 @@
         </TextBlock>
 
         <TextBox Name="OutputDirectoryTextBox" Width="231" Height="22" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True" Focusable="True"  Margin="10, 351, 10, 10"/>
-        <Button VerticalAlignment="Top" HorizontalAlignment="Left" Margin="240,351,10,0" Width="100" Height="22" Click="BtnSelectOutputDirectory_Click" />
+        <Button VerticalAlignment="Top" HorizontalAlignment="Left" Margin="240,351,10,0" Width="100" Height="22" Click="BtnSelectOutputDirectory_Click">Set output folder</Button>
 
         <ComboBox Name="ComboBoxSelectInputImage" SelectionChanged="ComboBoxSelectInputImage_OnSelectionChanged" ItemsSource="{Binding inputImagesComboBoxItems}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="37,321,0,0" Width="276" Height="22" />
         <Button VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,321,0,0" Width="28" Height="22" Click="BtnNextInputImage_Click">&lt;</Button>

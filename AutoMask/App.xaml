@@ -1,7 +1,8 @@
-﻿<Application x:Class="AutoSplit_AutoMask.App"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             StartupUri="MainWindow.xaml">
-    <Application.Resources>
-    </Application.Resources>
+             x:Class="AutoSplit_AutoMask.App"
+             RequestedThemeVariant="Default">
+    <Application.Styles>
+        <SimpleTheme/>
+    </Application.Styles>
 </Application>

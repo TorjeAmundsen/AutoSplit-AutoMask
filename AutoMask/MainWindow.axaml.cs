@@ -5,18 +5,17 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
-using System.Windows.Threading;
-using Microsoft.Win32;
-using Size = System.Drawing.Size;
+using Avalonia.Controls;
+using RoutedEventArgs = Avalonia.Interactivity.RoutedEventArgs;
+using Size = System.Windows.Size;
+using Window = Avalonia.Controls.Window;
 
 namespace AutoSplit_AutoMask;
 
 using static Utils;
 
-public partial class MainWindow
+public partial class MainWindow : Window
 {
     public ObservableCollection<ComboBoxItem> presetComboBoxItems { get; set; }
     public ObservableCollection<ComboBoxItem> splitsComboBoxItems { get; set; }
@@ -41,8 +40,6 @@ public partial class MainWindow
         DataContext = this;
 
         Title = "AutoMask v" + AutoMaskSemVer + (string.IsNullOrEmpty(VersionSuffix) ? string.Empty : "-" + VersionSuffix);
-
-        ComboBoxSelectSplit.AllowDrop = false;
 
         presetComboBoxItems = new ObservableCollection<ComboBoxItem>();
         splitsComboBoxItems = new ObservableCollection<ComboBoxItem>();
@@ -130,12 +127,12 @@ public partial class MainWindow
         }
     }
 
-    private void BtnRefreshPresets_Click(object sender, RoutedEventArgs e)
+    private void BtnRefreshPresets_Click(object? sender, RoutedEventArgs e)
     {
         RefreshPresets();
     }
 
-    private void ComboBoxSelectPreset_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void ComboBoxSelectPreset_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         ComboBoxSelectSplit.SelectedIndex = 0;
 
@@ -147,21 +144,25 @@ public partial class MainWindow
         }
     }
 
-    private void BtnSelectOutputDirectory_Click(object sender, RoutedEventArgs e)
+    private void BtnSelectOutputDirectory_Click(object? sender, RoutedEventArgs e)
     {
         var folderDialog = new OpenFolderDialog
         {
             Title = "Select output directory"
         };
 
-        if (folderDialog.ShowDialog() == true)
+        var foo = folderDialog.ShowAsync(this);
+        
+        Console.WriteLine(foo);
+
+        if (true)
         {
-            outputDirectoryPath = folderDialog.FolderName;
+            outputDirectoryPath = folderDialog.Directory;
             OutputDirectoryTextBox.Text = outputDirectoryPath;
         }
     }
 
-    private void BtnOpenPresetsFolder_Click(object sender, RoutedEventArgs e)
+    private void BtnOpenPresetsFolder_Click(object? sender, RoutedEventArgs e)
     {
         Process.Start("explorer.exe", "\"" + currentPresetsDirectory + "\"");
     }
@@ -190,18 +191,7 @@ public partial class MainWindow
 
         maskedImage = ApplyScaledAlphaChannel();
 
-        double factor;
-
-        var presentationSource = PresentationSource.FromVisual(this);
-
-        if (presentationSource == null || presentationSource.CompositionTarget == null)
-        {
-            factor = 1;
-        }
-        else
-        {
-            factor = presentationSource.CompositionTarget.TransformFromDevice.M11;
-        }
+        double factor = 1;
 
         int previewWidth = Convert.ToInt32(maskedImage.Width * ((320 / factor) / maskedImage.Width));
         int previewHeight = Convert.ToInt32(maskedImage.Height * ((320 / factor) / maskedImage.Width));
@@ -225,7 +215,7 @@ public partial class MainWindow
         PreviewImageLabel.Text = createdFilename;
     }
 
-    private void BtnLoadInputImages_Click(object sender, RoutedEventArgs e)
+    private void BtnLoadInputImages_Click(object? sender, RoutedEventArgs e)
     {
         var openFileDialog = new OpenFileDialog
         {
@@ -258,7 +248,7 @@ public partial class MainWindow
         }
     }
 
-    private void BtnLoadAlphaImage_Click(object sender, RoutedEventArgs e)
+    private void BtnLoadAlphaImage_Click(object? sender, RoutedEventArgs e)
     {
         var openFileDialog = new OpenFileDialog
         {
@@ -274,7 +264,7 @@ public partial class MainWindow
         }
     }
 
-    private void BtnSaveImageAs_Click(object sender, RoutedEventArgs e)
+    private void BtnSaveImageAs_Click(object? sender, RoutedEventArgs e)
     {
         if (string.IsNullOrEmpty(selectedInputImagePath) || string.IsNullOrEmpty(alphaImagePath))
         {
@@ -285,23 +275,24 @@ public partial class MainWindow
         var saveFileDialog = new SaveFileDialog
         {
             Title = "Save Masked Image",
-            FileName = createdFilename,
+            Filters = new List<FileDialogFilter>() {}
+            /*FileName = createdFilename,
             DefaultExt = ".png",
-            Filter = "PNG Files|*.png",
+            Filter = "PNG Files|*.png",*/
         };
 
         maskedImage = ApplyScaledAlphaChannel();
 
-        bool? result = saveFileDialog.ShowDialog();
+        bool? result = saveFileDialog.();
 
         if (result is true)
         {
-            string filename = saveFileDialog.FileName;
+            string filename = saveFileDialog.;
             maskedImage.Save(filename, ImageFormat.Png);
         }
     }
 
-    private void BtnPrevAlphaImage_Click(object sender, RoutedEventArgs e)
+    private void BtnPrevAlphaImage_Click(object? sender, RoutedEventArgs e)
     {
         if (ComboBoxSelectSplit.SelectedIndex == splitsComboBoxItems.Count - 1)
         {
@@ -311,7 +302,7 @@ public partial class MainWindow
         ComboBoxSelectSplit.SelectedIndex += 1;
     }
 
-    private void BtnNextAlphaImage_Click(object sender, RoutedEventArgs e)
+    private void BtnNextAlphaImage_Click(object? sender, RoutedEventArgs e)
     {
         if (ComboBoxSelectSplit.SelectedIndex == 0)
         {
@@ -357,7 +348,7 @@ public partial class MainWindow
         }
     }
 
-    private void BtnAutoSave_Click(object sender, RoutedEventArgs e)
+    private void BtnAutoSave_Click(object? sender, RoutedEventArgs e)
     {
         if (maskedImage == null)
         {
@@ -462,7 +453,7 @@ public partial class MainWindow
 
     }
 
-    private void ComboBoxSelectSplit_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void ComboBoxSelectSplit_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (presetComboBoxItems.Count == 0)
         {
@@ -492,7 +483,7 @@ public partial class MainWindow
         UpdateOutputPreview();
     }
 
-    private void BtnPrevInputImage_Click(object sender, RoutedEventArgs e)
+    private void BtnPrevInputImage_Click(object? sender, RoutedEventArgs e)
     {
         if (ComboBoxSelectInputImage.SelectedIndex == splitsComboBoxItems.Count - 1)
         {
@@ -502,7 +493,7 @@ public partial class MainWindow
         ComboBoxSelectInputImage.SelectedIndex += 1;
     }
 
-    private void BtnNextInputImage_Click(object sender, RoutedEventArgs e)
+    private void BtnNextInputImage_Click(object? sender, RoutedEventArgs e)
     {
         if (ComboBoxSelectInputImage.SelectedIndex == 0)
         {
@@ -512,7 +503,7 @@ public partial class MainWindow
         ComboBoxSelectInputImage.SelectedIndex -= 1;
     }
 
-    private void ComboBoxSelectInputImage_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void ComboBoxSelectInputImage_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (ComboBoxSelectInputImage.SelectedIndex == -1)
         {
@@ -531,7 +522,7 @@ public partial class MainWindow
         UpdateOutputPreview();
     }
 
-    private void BtnShowOutput_Click(object sender, RoutedEventArgs e)
+    private void BtnShowOutput_Click(object? sender, RoutedEventArgs e)
     {
         if (string.IsNullOrEmpty(outputDirectoryPath))
         {
@@ -542,7 +533,7 @@ public partial class MainWindow
         Process.Start("explorer.exe", outputDirectoryPath);
     }
 
-    private void BtnOpenPresetEditor_Click(object sender, RoutedEventArgs e)
+    private void BtnOpenPresetEditor_Click(object? sender, RoutedEventArgs e)
     {
         PresetEditor editorWindow = new PresetEditor(splitPresets);
         
