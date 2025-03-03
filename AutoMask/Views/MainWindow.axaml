@@ -1,0 +1,208 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AutoMask.Views"
+        mc:Ignorable="d" d:DesignWidth="690" d:DesignHeight="400"
+        x:Class="AutoMask.Views.MainWindow"
+        x:DataType="local:MainWindow"
+        Title="AutoMask"
+        Width="690" Height="400"
+        CanResize="False">
+    <Grid>
+        <Button Name="BtnLoadInputImage"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Left"
+                Margin="10"
+                Width="130"
+                Height="25"
+                Click="BtnLoadInputImage_OnClick"
+                Content="{Binding TestString, Mode=TwoWay}">
+        </Button>
+        <Button Name="BtnOpenOutputFolder"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Left"
+                Margin="150, 10, 10, 10"
+                Width="88"
+                Height="25"
+                Click="BtnOpenOutputFolder_OnClick">
+            Show output
+        </Button>
+        <Button Name="BtnOpenPresetsFolder"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Left"
+                Margin="248, 10, 10, 10"
+                Width="92"
+                Click="BtnOpenPresetsFolder_OnClick">
+            Show presets
+        </Button>
+        
+        <Button Name="BtnRefreshPresets"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Left"
+                Width="53"
+                Height="25"
+                Margin="627, 10, 10, 10">
+            Reload
+        </Button>
+        <ComboBox Name="ComboBoxSelectPreset"
+                  Width="278"
+                  Height="25"
+                  HorizontalAlignment="Left"
+                  VerticalAlignment="Top"
+                  Margin="350, 10, 10, 10"/>
+                  <!--ItemsSource="{Binding PresetComboBoxItems}"-->
+        
+        <TextBlock Name="InputImageLabel"
+                   Width="330"
+                   Height="22"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Top"
+                   Margin="10, 50, 0, 0"
+                   TextAlignment="Center">
+            Input image preview
+        </TextBlock>
+        <Border BorderBrush="Gray"
+                BorderThickness="1"
+                Width="330"
+                Height="250"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Margin="10, 70, 0, 0">
+            <Image Name="InputImagePreview"
+                   Width="320"
+                   Height="240"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Top"
+                   Margin="4, 4, 0, 0"/>
+        </Border>
+        <TextBlock Name="OutputImageLabel"
+                   Width="330"
+                   Height="22"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Top"
+                   Margin="350, 50, 0, 0"
+                   TextAlignment="Center">
+            Output image preview
+        </TextBlock>
+        <Border BorderBrush="Gray"
+                BorderThickness="1"
+                Width="330"
+                Height="250"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Margin="350, 70, 0, 0">
+            <Image Name="OutputImagePreview"
+                   Width="320"
+                   Height="240"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Top"
+                   Margin="4, 4, 0, 0"/>
+        </Border>
+        
+        <Button Name="BtnPrevInputImage"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Left"
+                Margin="10, 330, 0, 0"
+                Width="32"
+                Height="25"
+                Padding="0, 0, 0, 2"
+                Click="BtnPrevInputImage_OnClick_OnClick">
+            &lt;
+        </Button>
+        <Button Name="BtnNextInputImage"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Left"
+                Margin="308, 330, 0, 0"
+                Width="32"
+                Height="25"
+                Padding="0, 0, 0, 2"
+                Click="BtnNextInputImage_OnClick_OnClick">
+            &gt;
+        </Button>
+        <ComboBox Name="ComboBoxSelectInputImage"
+                  SelectionChanged="ComboBoxSelectInputImage_OnSelectionChanged"
+                  VerticalAlignment="Top"
+                  HorizontalAlignment="Left"
+                  Width="268"
+                  Height="25"
+                  Margin="41, 330, 0, 0"/>
+                  <!--ItemsSource="{Binding InputImageComboBoxItems}"-->
+        
+        <Button Name="BtnSelectOutputDirectory"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Left"
+                Width="108"
+                Height="25"
+                Margin="232, 365, 0, 0"
+                Click="BtnSelectOutputDirectory_OnClick">
+            Set output folder
+        </Button>
+        <TextBox Name="OutputDirectoryTextbox"
+                 Width="223"
+                 Height="25"
+                 HorizontalAlignment="Left"
+                 VerticalAlignment="Top"
+                 Margin="10, 365, 0, 0"/>
+        
+        <Button Name="BtnPrevAlphaImage"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Left"
+                Margin="350, 330, 0, 0"
+                Width="32"
+                Height="25"
+                Padding="0, 0, 0, 2"
+                Click="BtnPrevAlphaImage_OnClick">
+            &lt;
+        </Button>
+        <Button Name="BtnNextAlphaImage"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Left"
+                Margin="648, 330, 0, 0"
+                Width="32"
+                Height="25"
+                Padding="0, 0, 0, 2"
+                Click="BtnNextAlphaImage_OnClick">
+            &gt;
+        </Button>
+        <ComboBox Name="ComboBoxSelectSplit"
+                  SelectionChanged="ComboBoxSelectSplit_OnSelectionChanged_OnSelectionChanged"
+                  VerticalAlignment="Top"
+                  HorizontalAlignment="Left"
+                  Width="268"
+                  Height="25"
+                  Margin="381, 330, 0, 0"/>
+                  <!--ItemsSource="{Binding InputImageComboBoxItems}"-->
+        
+        <Button Name="BtnLoadCustomAlphaImage"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Left"
+                Margin="350, 365, 0, 0"
+                Width="100"
+                Height="25"
+                Click="BtnLoadCustomAlphaImage_OnClick">
+            Load mask
+        </Button>
+        <Button Name="BtnSave"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Left"
+                Margin="460, 365, 0, 0"
+                Width="110"
+                Height="25"
+                Click="BtnSave_OnClick">
+            Save image
+        </Button>
+        <Button Name="BtnSaveAs"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Left"
+                Margin="580, 365, 0, 0"
+                Width="100"
+                Height="25"
+                Click="BtnSaveAs_OnClick">
+            Save as...
+        </Button>
+        
+    </Grid>
+    
+    
+</Window>

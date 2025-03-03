@@ -1,140 +1,33 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
-        <TargetFramework>net9.0-windows</TargetFramework>
-        <RootNamespace>AutoSplit_AutoMask</RootNamespace>
+        <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <PublishSingleFile>true</PublishSingleFile>
-        <SelfContained>true</SelfContained>
-        <UseWPF>true</UseWPF>
+        <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Avalonia" Version="11.2.5" />
-      <PackageReference Include="Avalonia.Desktop" Version="11.2.5" />
-      <PackageReference Include="Avalonia.Themes.Simple" Version="11.2.5" />
-      <PackageReference Include="System.Drawing.Common" Version="9.0.2" />
-      <PackageReference Include="System.Text.Json" Version="9.0.2" />
+        <PackageReference Include="Avalonia" Version="11.2.1"/>
+        <PackageReference Include="Avalonia.Desktop" Version="11.2.1"/>
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.1"/>
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.1"/>
+        <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+        <PackageReference Include="Avalonia.Diagnostics" Version="11.2.1">
+            <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+            <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+        </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="presets\ClassicKakarikoGohmaClip\001_escape.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\001_escape.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\002_hyrule_field_text.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\002_hyrule_field_text.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\003_full_fade.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\003_full_fade.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\004_anju_text.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\004_anju_text.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\005_deku_text.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\005_deku_text.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\006_a_button_flip.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\006_a_button_flip.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\007_scrubs_dummy.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\007_scrubs_dummy.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\008_scrubs_door.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\008_scrubs_door.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\009_nut_throw.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\009_nut_throw.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\010_gohma_death_flash.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\010_gohma_death_flash.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\011_collapse_cs_zelda_text.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\011_collapse_cs_zelda_text.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\012_final_slash_zelda.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\012_final_slash_zelda.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\reset.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\reset.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip\start.png" />
-      <Content Include="presets\ClassicKakarikoGohmaClip\start.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO.json" />
-      <Content Include="presets\ClassicKakarikoDoubleKO.json">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoGohmaClip.json" />
-      <Content Include="presets\ClassicKakarikoGohmaClip.json">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\001_escape.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\001_escape.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\002_hyrule_field_text.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\002_hyrule_field_text.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\003_full_fade.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\003_full_fade.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\004_anju_text.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\004_anju_text.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\005_deku_text.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\005_deku_text.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\006_a_button_flip.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\006_a_button_flip.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\007_scrubs_dummy.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\007_scrubs_dummy.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\008_scrubs_door.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\008_scrubs_door.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\009_hearts.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\009_hearts.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\010_collapse_cs_zelda_text.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\010_collapse_cs_zelda_text.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\011_final_slash_zelda.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\011_final_slash_zelda.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\reset.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\reset.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <None Remove="presets\ClassicKakarikoDoubleKO\start.png" />
-      <Content Include="presets\ClassicKakarikoDoubleKO\start.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
+      <Compile Update="Views\MainWindow.axaml.cs">
+        <DependentUpon>MainWindow.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Assets\Icons\reload.svg" />
     </ItemGroup>
 </Project>

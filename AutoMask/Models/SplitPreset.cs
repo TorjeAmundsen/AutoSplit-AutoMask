@@ -1,11 +1,14 @@
-﻿namespace AutoSplit_AutoMask;
+﻿using System.Collections.Generic;
+using System.Linq;
+
+namespace AutoMask.Models;
 
 public class SplitPreset
 {
     public string? PresetFolder { get; set; }
     public string? GameName { get; set; }
     public string? PresetName { get; init; }
-    public IList<SingleSplit>? Splits { get; init; }
+    public List<SingleSplit>? Splits { get; init; }
 
     public override bool Equals(object obj)
     {

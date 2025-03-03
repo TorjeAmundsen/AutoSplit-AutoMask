@@ -1,8 +1,9 @@
-﻿using Avalonia;
+using AutoMask.Views;
+using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 
-namespace AutoSplit_AutoMask;
+namespace AutoMask;
 
 public partial class App : Application
 {
@@ -17,7 +18,7 @@ public partial class App : Application
         {
             desktop.MainWindow = new MainWindow();
         }
-        
+
         base.OnFrameworkInitializationCompleted();
     }
 }
