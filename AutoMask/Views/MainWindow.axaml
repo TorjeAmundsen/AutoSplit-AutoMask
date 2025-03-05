@@ -17,7 +17,8 @@
                 Width="130"
                 Height="25"
                 Click="BtnLoadInputImage_OnClick"
-                Content="{Binding TestString, Mode=TwoWay}">
+                CornerRadius="4">
+            Load input image(s)
         </Button>
         <Button Name="BtnOpenOutputFolder"
                 VerticalAlignment="Top"
@@ -25,7 +26,8 @@
                 Margin="150, 10, 10, 10"
                 Width="88"
                 Height="25"
-                Click="BtnOpenOutputFolder_OnClick">
+                Click="BtnOpenOutputFolder_OnClick"
+                CornerRadius="4">
             Show output
         </Button>
         <Button Name="BtnOpenPresetsFolder"
@@ -33,7 +35,8 @@
                 HorizontalAlignment="Left"
                 Margin="248, 10, 10, 10"
                 Width="92"
-                Click="BtnOpenPresetsFolder_OnClick">
+                Click="BtnOpenPresetsFolder_OnClick"
+                CornerRadius="4">
             Show presets
         </Button>
         
@@ -42,7 +45,8 @@
                 HorizontalAlignment="Left"
                 Width="53"
                 Height="25"
-                Margin="627, 10, 10, 10">
+                Margin="627, 10, 10, 10"
+                CornerRadius="0, 4, 4, 0">
             Reload
         </Button>
         <ComboBox Name="ComboBoxSelectPreset"
@@ -50,8 +54,12 @@
                   Height="25"
                   HorizontalAlignment="Left"
                   VerticalAlignment="Top"
-                  Margin="350, 10, 10, 10"/>
-                  <!--ItemsSource="{Binding PresetComboBoxItems}"-->
+                  Margin="350, 10, 10, 10"
+                  CornerRadius="4, 0, 0, 4"
+                  SelectedIndex="0"
+                  IsEnabled="False">
+            <ComboBoxItem>No presets found</ComboBoxItem>
+        </ComboBox>
         
         <TextBlock Name="InputImageLabel"
                    Width="330"
@@ -107,6 +115,7 @@
                 Width="32"
                 Height="25"
                 Padding="0, 0, 0, 2"
+                CornerRadius="4, 0, 0, 4"
                 Click="BtnPrevInputImage_OnClick_OnClick">
             &lt;
         </Button>
@@ -117,6 +126,7 @@
                 Width="32"
                 Height="25"
                 Padding="0, 0, 0, 2"
+                CornerRadius="0, 4, 4, 0"
                 Click="BtnNextInputImage_OnClick_OnClick">
             &gt;
         </Button>
@@ -126,7 +136,10 @@
                   HorizontalAlignment="Left"
                   Width="268"
                   Height="25"
-                  Margin="41, 330, 0, 0"/>
+                  Margin="41, 330, 0, 0"
+                  SelectedIndex="0"
+                  IsEnabled="False">
+        </ComboBox>
                   <!--ItemsSource="{Binding InputImageComboBoxItems}"-->
         
         <Button Name="BtnSelectOutputDirectory"
@@ -135,6 +148,7 @@
                 Width="108"
                 Height="25"
                 Margin="232, 365, 0, 0"
+                CornerRadius="0, 4, 4, 0"
                 Click="BtnSelectOutputDirectory_OnClick">
             Set output folder
         </Button>
@@ -143,7 +157,8 @@
                  Height="25"
                  HorizontalAlignment="Left"
                  VerticalAlignment="Top"
-                 Margin="10, 365, 0, 0"/>
+                 Margin="10, 365, 0, 0"
+                 CornerRadius="4, 0, 0, 4"/>
         
         <Button Name="BtnPrevAlphaImage"
                 VerticalAlignment="Top"
@@ -152,6 +167,7 @@
                 Width="32"
                 Height="25"
                 Padding="0, 0, 0, 2"
+                CornerRadius="4, 0, 0, 4"
                 Click="BtnPrevAlphaImage_OnClick">
             &lt;
         </Button>
@@ -162,6 +178,7 @@
                 Width="32"
                 Height="25"
                 Padding="0, 0, 0, 2"
+                CornerRadius="0, 4, 4, 0"
                 Click="BtnNextAlphaImage_OnClick">
             &gt;
         </Button>
@@ -180,7 +197,8 @@
                 Margin="350, 365, 0, 0"
                 Width="100"
                 Height="25"
-                Click="BtnLoadCustomAlphaImage_OnClick">
+                Click="BtnLoadCustomAlphaImage_OnClick"
+                CornerRadius="4">
             Load mask
         </Button>
         <Button Name="BtnSave"
@@ -189,7 +207,8 @@
                 Margin="460, 365, 0, 0"
                 Width="110"
                 Height="25"
-                Click="BtnSave_OnClick">
+                Click="BtnSave_OnClick"
+                CornerRadius="4">
             Save image
         </Button>
         <Button Name="BtnSaveAs"
@@ -198,7 +217,8 @@
                 Margin="580, 365, 0, 0"
                 Width="100"
                 Height="25"
-                Click="BtnSaveAs_OnClick">
+                Click="BtnSaveAs_OnClick"
+                CornerRadius="4">
             Save as...
         </Button>
         
