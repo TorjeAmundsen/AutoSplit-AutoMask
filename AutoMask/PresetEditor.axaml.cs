@@ -1,15 +1,19 @@
-﻿using System.Windows;
-using System.Windows.Controls;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Layout;
+using Avalonia.Media;
+using MsBox.Avalonia;
 
 namespace AutoSplit_AutoMask;
 
-public partial class PresetEditor
+public partial class PresetEditor : Window
 {
     public List<SplitPreset> Presets { get; set; }
+
     public PresetEditor(List<SplitPreset> presets)
     {
         InitializeComponent();
-        
+
         Presets = presets;
         CreatePresetsList();
     }
@@ -19,7 +23,6 @@ public partial class PresetEditor
         Grid table = new();
 
         int rows = Presets.Count;
-        
         int cols = 3;
 
         for (int i = 0; i < rows; ++i)
@@ -31,29 +34,18 @@ public partial class PresetEditor
         {
             table.ColumnDefinitions.Add(new ColumnDefinition());
         }
-        
-        TextBlock headerGameName = new TextBlock
-        {
-            Text = "Game"
-        };
-        
-        TextBlock headerPresetName = new TextBlock
-        {
-            Text = "Preset"
-        };
 
-        TextBlock headerSplitsCount = new TextBlock
-        {
-            Text = "Splits"
-        };
-        
+        TextBlock headerGameName = new TextBlock { Text = "Game" };
+        TextBlock headerPresetName = new TextBlock { Text = "Preset" };
+        TextBlock headerSplitsCount = new TextBlock { Text = "Splits" };
+
         Grid.SetRow(headerGameName, 0);
         Grid.SetRow(headerPresetName, 0);
         Grid.SetRow(headerSplitsCount, 0);
         Grid.SetColumn(headerGameName, 0);
         Grid.SetColumn(headerPresetName, 1);
         Grid.SetColumn(headerSplitsCount, 2);
-        
+
         table.Children.Add(headerGameName);
         table.Children.Add(headerPresetName);
         table.Children.Add(headerSplitsCount);
@@ -69,10 +61,10 @@ public partial class PresetEditor
                     VerticalAlignment = VerticalAlignment.Center,
                     Margin = new Thickness(5),
                 };
-                
+
                 Grid.SetRow(textBlock, i);
                 Grid.SetColumn(textBlock, j);
-                
+
                 table.Children.Add(textBlock);
             }
         }
@@ -83,30 +75,32 @@ public partial class PresetEditor
             {
                 Border border = new Border
                 {
-                    BorderBrush = SystemColors.ControlDarkBrush,
+                    BorderBrush = Brushes.Gray,
                     BorderThickness = new Thickness(1),
                 };
-                
+
                 Grid.SetRow(border, i);
                 Grid.SetColumn(border, j);
-                
+
                 table.Children.Add(border);
             }
         }
-        
+
         MainGrid.Children.Add(table);
     }
 
-    private void CreateSplitsList(SplitPreset splitPreset)
+    private async Task CreateSplitsList(SplitPreset splitPreset)
     {
         if (splitPreset.Splits == null || splitPreset.Splits.Count == 0)
         {
-            MessageBox.Show("Selected split preset has no splits!");
+            await MessageBoxManager
+                .GetMessageBoxStandard("", "Selected split preset has no splits!")
+                .ShowWindowDialogAsync(this);
             return;
         }
+
         Grid table = new();
 
-        int cols = 8;
         int rows = splitPreset.Splits.Count;
     }
 }
