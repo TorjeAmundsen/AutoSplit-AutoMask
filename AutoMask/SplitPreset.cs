@@ -7,29 +7,26 @@ public class SplitPreset
     public string? PresetName { get; init; }
     public IList<SingleSplit>? Splits { get; init; }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
-        if (obj is null)
+        if (obj is not SplitPreset other)
         {
             return false;
         }
 
-        if (ReferenceEquals(this, obj))
+        if (ReferenceEquals(this, other))
         {
             return true;
-        }
-
-        SplitPreset other = obj as SplitPreset;
-        if (other == null || other.PresetFolder != PresetFolder || other.PresetName != PresetName)
-        {
-            return false;
         }
 
         return PresetFolder == other.PresetFolder
                && GameName == other.GameName
                && PresetName == other.PresetName
-               && Splits.SequenceEqual(other.Splits);
+               && (Splits?.SequenceEqual(other.Splits ?? []) ?? other.Splits == null);
     }
+
+    public override int GetHashCode() =>
+        HashCode.Combine(PresetFolder, GameName, PresetName);
 }
 
 public record SingleSplit
