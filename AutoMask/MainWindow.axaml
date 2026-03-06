@@ -85,8 +85,8 @@
         <Button Name="BtnInputImageNext" IsEnabled="False" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="374,380,0,0" Width="28" Height="28" Click="BtnPrevInputImage_Click">&gt;</Button>
 
         <Button Name="BtnPrevAlphaImage" IsEnabled="False" Content="&lt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="418,380,0,0" Width="28" Height="28" Click="BtnNextAlphaImage_Click" />
-        <ComboBox Name="ComboBoxSelectSplit" SelectionChanged="ComboBoxSelectSplit_OnSelectionChanged" SelectedIndex="{Binding selectedSplitIndex}" ItemsSource="{Binding splitsComboBoxItems}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="450,380,0,0" Width="322" Height="28" />
-        <Button Name="BtnNextAlphaImage" IsEnabled="False" Content="&gt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="776,380,0,0" Width="34" Height="28" Click="BtnPrevAlphaImage_Click" />
+        <ComboBox Name="ComboBoxSelectSplit" SelectionChanged="ComboBoxSelectSplit_OnSelectionChanged" SelectedIndex="{Binding selectedSplitIndex}" ItemsSource="{Binding splitsComboBoxItems}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="450,380,0,0" Width="328" Height="28" />
+        <Button Name="BtnNextAlphaImage" IsEnabled="False" Content="&gt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="782,380,0,0" Width="28" Height="28" Click="BtnPrevAlphaImage_Click" />
 
         <!-- Row 5: output directory + save buttons -->
         <Button VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,420,0,0" Width="112" Height="28" Click="BtnSelectOutputDirectory_Click" Content="Select directory" />
