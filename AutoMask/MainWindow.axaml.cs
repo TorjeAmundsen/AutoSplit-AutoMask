@@ -61,6 +61,8 @@ public partial class MainWindow : Window
 
         Directory.CreateDirectory(currentPresetsDirectory);
 
+        OutputCheckerBg.Source = CreateCheckerBitmap(384, 288);
+
         // Set DataContext last so binding-triggered event handlers fire with all fields initialised.
         DataContext = this;
 
@@ -164,8 +166,10 @@ public partial class MainWindow : Window
                 .Select(s => Path.Combine(preset.PresetFolder, s.MaskImagePath))
                 .Distinct()
                 .ToList();
-            _maskSkBitmapCache = await Task.Run(() =>
-                paths.ToDictionary(p => p, p => SKBitmap.Decode(p)));
+            _maskSkBitmapCache = await Task.Run(() => paths
+                .Select(p => (Key: p, Value: SKBitmap.Decode(p)))
+                .Where(x => x.Value is not null)
+                .ToDictionary(x => x.Key, x => x.Value!));
         }
 
         splitsComboBoxItems.Clear();
@@ -212,13 +216,13 @@ public partial class MainWindow : Window
 
         if (!File.Exists(selectedInputImagePath))
         {
-            await ShowMessage("Error", "Specified input image not found!", MsgBoxIcon.Error);
+            await ShowMessage("Error", "Specified input image not found!", detail: selectedInputImagePath);
             return;
         }
 
         if (!File.Exists(alphaImagePath))
         {
-            await ShowMessage("Error", "Specified mask image not found!", MsgBoxIcon.Error);
+            await ShowMessage("Error", "Specified mask image not found!", detail: alphaImagePath);
             return;
         }
 
@@ -339,6 +343,12 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OutputImageBorder_PointerPressed(object sender, Avalonia.Input.PointerPressedEventArgs e)
+    {
+        OutputCheckerBg.IsVisible = !OutputCheckerBg.IsVisible;
+        OutputDarkBg.IsVisible = !OutputDarkBg.IsVisible;
+    }
+
     private void BtnPrevAlphaImage_Click(object sender, RoutedEventArgs e)
     {
         if (ComboBoxSelectSplit.SelectedIndex == splitsComboBoxItems.Count - 1)
@@ -398,6 +408,24 @@ public partial class MainWindow : Window
             alphaBitmap.Dispose();
         }
         return outputBitmap;
+    }
+
+    private static Bitmap CreateCheckerBitmap(int width, int height)
+    {
+        const int tileSize = 8;
+        var light = new SKColor(0xBB, 0xBB, 0xBB);
+        var dark  = new SKColor(0x88, 0x88, 0x88);
+        using var skBitmap = new SKBitmap(width, height);
+        var pixels = new SKColor[width * height];
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                pixels[y * width + x] = ((x / tileSize + y / tileSize) & 1) == 0 ? light : dark;
+            }
+        }
+        skBitmap.Pixels = pixels;
+        return ToAvaloniaBitmap(skBitmap);
     }
 
     private static Bitmap ToAvaloniaBitmap(SKBitmap skBitmap)
@@ -641,10 +669,11 @@ public partial class MainWindow : Window
         }
     }
 
-    private async Task ShowMessage(string title, string message, Icon icon = MsgBoxIcon.None)
+    private async Task ShowMessage(string title, string message, Icon icon = MsgBoxIcon.None, string? detail = null)
     {
+        var fullMessage = detail is null ? message : $"{message}\n\n{detail}";
         await MessageBoxManager
-            .GetMessageBoxStandard(title, message, ButtonEnum.Ok, icon)
+            .GetMessageBoxStandard(title, fullMessage, ButtonEnum.Ok, icon)
             .ShowWindowDialogAsync(this);
     }
 }

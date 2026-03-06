@@ -52,11 +52,15 @@
 
         <!-- Row 3: image previews -->
         <!-- Containers are 392x296: internal 384x288 = 4:3, leaving 4px padding on each side -->
-        <Border BorderBrush="#484848" BorderThickness="1" Width="392" Height="296" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,72,0,0" Background="#151515">
+        <Border BorderBrush="#484848" BorderThickness="1" Width="392" Height="296" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,72,0,0" Background="#151515" Padding="3">
             <Image Name="InputImageView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stretch="Uniform" />
         </Border>
-        <Border BorderBrush="#484848" BorderThickness="1" Width="392" Height="296" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="418,72,0,0" Background="#151515">
-            <Image Name="OutputImageView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stretch="Uniform" />
+        <Border Name="OutputImageBorder" BorderBrush="#484848" BorderThickness="1" Width="392" Height="296" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="418,72,0,0" Padding="3" Background="#151515" PointerPressed="OutputImageBorder_PointerPressed">
+            <Grid Background="Transparent">
+                <Border Name="OutputDarkBg" Background="#151515"/>
+                <Image Name="OutputCheckerBg" Stretch="Fill" IsVisible="False"/>
+                <Image Name="OutputImageView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stretch="Uniform"/>
+            </Grid>
         </Border>
         <TextBlock Text="Saved!" Foreground="Green" Opacity="0" Name="ImageSavedLabel" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="426,78,0,0" />
         <Border Name="InputLoadingOverlay" Width="392" Height="296" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,72,0,0" Background="#99000000" IsVisible="False">
@@ -90,7 +94,7 @@
 
         <!-- Row 5: output directory + save buttons -->
         <Button VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,420,0,0" Width="112" Height="28" Click="BtnSelectOutputDirectory_Click" Content="Select directory" />
-        <TextBox Name="OutputDirectoryTextBox" Width="276" Height="28" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True" Focusable="True" Margin="126,420,0,0" />
+        <TextBox Name="OutputDirectoryTextBox" Width="276" Height="28" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True" Focusable="True" Margin="126,420,0,0" VerticalContentAlignment="Center" />
         <Button Name="BtnLoadCustomAlphaImage" Content="Load custom mask" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="418,420,0,0" Width="144" Height="28" Click="BtnLoadAlphaImage_Click" />
         <Button Name="BtnSave" Content="Save masked image" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="566,420,0,0" Width="152" Height="28" Click="BtnAutoSave_Click" />
         <Button Name="BtnSaveAs" Content="Save as..." VerticalAlignment="Top" HorizontalAlignment="Left" Margin="722,420,0,0" Width="88" Height="28" Click="BtnSaveImageAs_Click" />
