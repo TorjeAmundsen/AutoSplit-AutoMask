@@ -1,9 +1,10 @@
 $ErrorActionPreference = "Stop"
 
 $project = "AutoMask/AutoMask.csproj"
-$output = "$PSScriptRoot/build"
+$outputSelfContained = "$PSScriptRoot/build/self-contained"
+$outputFrameworkDependent = "$PSScriptRoot/build/framework-dependent"
 
-Write-Host "Building AutoMask (Release, win-x64, ReadyToRun single file)..."
+Write-Host "Building AutoMask (self-contained)..."
 
 dotnet publish $project `
     -c Release `
@@ -12,11 +13,28 @@ dotnet publish $project `
     /p:PublishSingleFile=true `
     /p:PublishReadyToRun=true `
     /p:IncludeNativeLibrariesForSelfExtract=true `
-    -o $output
+    -o $outputSelfContained
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Build failed with exit code $LASTEXITCODE"
+    Write-Error "Self-contained build failed with exit code $LASTEXITCODE"
     exit $LASTEXITCODE
 }
 
-Write-Host "Build complete. Output: $output"
+Write-Host "Building AutoMask (framework-dependent)..."
+
+dotnet publish $project `
+    -c Release `
+    -r win-x64 `
+    --self-contained false `
+    /p:PublishSingleFile=true `
+    /p:IncludeNativeLibrariesForSelfExtract=true `
+    -o $outputFrameworkDependent
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Framework-dependent build failed with exit code $LASTEXITCODE"
+    exit $LASTEXITCODE
+}
+
+Write-Host "Build complete."
+Write-Host "  Self-contained:      $outputSelfContained"
+Write-Host "  Framework-dependent: $outputFrameworkDependent"

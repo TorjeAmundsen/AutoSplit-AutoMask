@@ -87,8 +87,7 @@ public partial class MainWindow : Window
 
         foreach (string presetPath in presetPaths)
         {
-            SplitPreset? preset = JsonSerializer.Deserialize<SplitPreset>(
-                File.ReadAllText(Path.Combine(presetPath, "preset.json")));
+            SplitPreset? preset = JsonSerializer.Deserialize<SplitPreset>(await File.ReadAllTextAsync(Path.Combine(presetPath, "preset.json")));
 
             if (preset is not null)
             {
@@ -634,11 +633,11 @@ public partial class MainWindow : Window
         await editorWindow.ShowDialog(this);
     }
 
-    [System.Diagnostics.Conditional("DEBUG")]
-    private static void Log(string message) => System.Console.WriteLine(message);
+    [Conditional("DEBUG")]
+    private static void Log(string message) => Console.WriteLine(message);
 
-    [System.Diagnostics.Conditional("DEBUG")]
-    private static void LogError(string message) => System.Console.Error.WriteLine(message);
+    [Conditional("DEBUG")]
+    private static void LogError(string message) => Console.Error.WriteLine(message);
 
     private void UpdateNavigationButtons()
     {
