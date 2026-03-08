@@ -540,7 +540,7 @@ public partial class MainWindow : Window
             });
         });
 
-        ShowSavedNotification($"Saved {inputPaths.Count} images");
+        ShowSavedNotification($"{inputPaths.Count} images");
     }
 
     private async void ShowSavedNotification(string text)
