@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Text.Json;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
@@ -63,7 +62,7 @@ public partial class MainWindow : Window
 
         Directory.CreateDirectory(_currentPresetsDirectory);
 
-        OutputCheckerBg.Source = CreateCheckerBitmap(384, 288);
+        OutputCheckerBg.Source = ImageProcessor.CreateCheckerBitmap(384, 288);
 
         // Set DataContext last so binding-triggered event handlers fire with all fields initialised.
         DataContext = this;
@@ -91,31 +90,12 @@ public partial class MainWindow : Window
 
     private async Task RefreshPresetsAsync()
     {
-        var presetPaths = Directory.EnumerateDirectories(_currentPresetsDirectory)
-            .Where(dir => Directory.EnumerateFiles(dir, "preset.json", SearchOption.TopDirectoryOnly).Any())
-            .ToArray();
+        var foundPresets = await PresetService.LoadPresetsAsync(_currentPresetsDirectory);
 
-        DebugLog($"Found {presetPaths.Length} presets:");
-
-        foreach (var preset in presetPaths)
+        DebugLog($"Found {foundPresets.Count} presets:");
+        foreach (var preset in foundPresets)
         {
-            DebugLog(Path.Combine(preset, "preset.json"));
-        }
-
-        List<SplitPreset> foundPresets = [];
-
-        foreach (string presetPath in presetPaths)
-        {
-            SplitPreset? preset = JsonSerializer.Deserialize<SplitPreset>(
-                await File.ReadAllTextAsync(Path.Combine(presetPath, "preset.json")),
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            if (preset is not null)
-            {
-                preset.PresetFolder = presetPath;
-                DebugLog($"Adding preset: {preset.PresetFolder} from {Path.Combine(presetPath, "preset.json")}");
-                foundPresets.Add(preset);
-            }
+            DebugLog(Path.Combine(preset.PresetFolder!, "preset.json"));
         }
 
         if (_splitPresets.Count > 0 && foundPresets.SequenceEqual(_splitPresets))
@@ -123,7 +103,6 @@ public partial class MainWindow : Window
             DebugLog("No changes were detected");
             return;
         }
-
 
         _splitPresets = foundPresets;
         presetComboBoxItems.Clear();
@@ -251,10 +230,10 @@ public partial class MainWindow : Window
         }
 
         _maskedImage?.Dispose();
-        _maskedImage = await Task.Run(ApplyScaledAlphaChannel);
+        _maskedImage = await Task.Run(() => ImageProcessor.ApplyScaledAlphaChannel(_selectedInputImagePath!, _alphaImagePath!, _maskSkBitmapCache));
 
         _previewBitmap?.Dispose();
-        _previewBitmap = await Task.Run(() => ToAvaloniaBitmap(_maskedImage));
+        _previewBitmap = await Task.Run(() => ImageProcessor.ToAvaloniaBitmap(_maskedImage));
         OutputImageView.Source = _previewBitmap;
         OutputLoadingOverlay.IsVisible = false;
         UpdateNavigationButtons();
@@ -303,9 +282,9 @@ public partial class MainWindow : Window
             Parallel.ForEach(_inputImagePaths!, path =>
             {
                 using var sk = SKBitmap.Decode(path);
-                full[path] = ToAvaloniaBitmap(sk);
+                full[path] = ImageProcessor.ToAvaloniaBitmap(sk);
                 using var skThumb = sk.Resize(new SKImageInfo(32, 24), new SKSamplingOptions(SKFilterMode.Linear));
-                thumbs[path] = ToAvaloniaBitmap(skThumb);
+                thumbs[path] = ImageProcessor.ToAvaloniaBitmap(skThumb);
             });
             return (new Dictionary<string, Bitmap>(full), new Dictionary<string, Bitmap>(thumbs));
         });
@@ -353,7 +332,7 @@ public partial class MainWindow : Window
         }
 
         _maskedImage?.Dispose();
-        _maskedImage = await Task.Run(ApplyScaledAlphaChannel);
+        _maskedImage = await Task.Run(() => ImageProcessor.ApplyScaledAlphaChannel(_selectedInputImagePath!, _alphaImagePath!, _maskSkBitmapCache));
 
         var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
@@ -366,7 +345,7 @@ public partial class MainWindow : Window
         if (file != null)
         {
             await using var stream = await file.OpenWriteAsync();
-            SaveMaskedImageToStream(stream);
+            ImageProcessor.SaveBitmapToStream(_maskedImage!, stream);
         }
     }
 
@@ -394,91 +373,6 @@ public partial class MainWindow : Window
         }
 
         ComboBoxSelectSplit.SelectedIndex -= 1;
-    }
-
-    private SKBitmap ApplyScaledAlphaChannel()
-        => ApplyScaledAlphaChannel(_selectedInputImagePath!, _alphaImagePath!, _maskSkBitmapCache);
-
-    private static SKBitmap ApplyScaledAlphaChannel(string inputPath, string alphaPath, Dictionary<string, SKBitmap> maskCache)
-    {
-        using var inputBitmap = SKBitmap.Decode(inputPath);
-
-        bool ownAlpha = !maskCache.TryGetValue(alphaPath, out var alphaBitmap);
-        alphaBitmap ??= SKBitmap.Decode(alphaPath);
-
-        using var scaledAlpha = alphaBitmap!.Resize(
-            new SKImageInfo(inputBitmap.Width, inputBitmap.Height),
-            new SKSamplingOptions(SKFilterMode.Linear))!;
-
-        int width = inputBitmap.Width;
-        int height = inputBitmap.Height;
-        var outputBitmap = new SKBitmap(width, height);
-
-        SKColor[] inputPixels = inputBitmap.Pixels;
-        SKColor[] alphaPixels = scaledAlpha.Pixels;
-        SKColor[] outputPixels = new SKColor[width * height];
-
-        Parallel.For(0, height, y =>
-        {
-            int row = y * width;
-            for (int x = 0; x < width; x++)
-            {
-                int i = row + x;
-                var src = inputPixels[i];
-                outputPixels[i] = alphaPixels[i].Alpha == 255
-                    ? new SKColor(src.Red, src.Green, src.Blue)
-                    : SKColors.Transparent;
-            }
-        });
-
-        outputBitmap.Pixels = outputPixels;
-
-        if (ownAlpha)
-        {
-            alphaBitmap.Dispose();
-        }
-        return outputBitmap;
-    }
-
-    private static Bitmap CreateCheckerBitmap(int width, int height)
-    {
-        const int tileSize = 8;
-        var light = new SKColor(0xBB, 0xBB, 0xBB);
-        var dark  = new SKColor(0x88, 0x88, 0x88);
-        using var skBitmap = new SKBitmap(width, height);
-        var pixels = new SKColor[width * height];
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                pixels[y * width + x] = ((x / tileSize + y / tileSize) & 1) == 0 ? light : dark;
-            }
-        }
-        skBitmap.Pixels = pixels;
-        return ToAvaloniaBitmap(skBitmap);
-    }
-
-    private static Bitmap ToAvaloniaBitmap(SKBitmap skBitmap)
-    {
-        using var skImage = SKImage.FromBitmap(skBitmap);
-        using var encoded = skImage.Encode(SKEncodedImageFormat.Png, 100);
-        var stream = new MemoryStream();
-        encoded.SaveTo(stream);
-        stream.Position = 0;
-        return new Bitmap(stream);
-    }
-
-    private void SaveMaskedImageToStream(Stream stream)
-    {
-        using var skImage = SKImage.FromBitmap(_maskedImage!);
-        using var encoded = skImage.Encode(SKEncodedImageFormat.Png, 100);
-        encoded.SaveTo(stream);
-    }
-
-    private void SaveMaskedImageToPath(string path)
-    {
-        using var stream = File.OpenWrite(path);
-        SaveMaskedImageToStream(stream);
     }
 
     private async void BtnAutoSave_Click(object sender, RoutedEventArgs e)
@@ -515,7 +409,7 @@ public partial class MainWindow : Window
             }
         }
 
-        SaveMaskedImageToPath(outputPath);
+        ImageProcessor.SaveBitmapToPath(_maskedImage!, outputPath);
         ShowSavedNotification(_createdFilename);
     }
 
@@ -531,12 +425,9 @@ public partial class MainWindow : Window
             Parallel.For(0, inputPaths.Count, i =>
             {
                 var maskPath = Path.Combine(preset.PresetFolder!, preset.Splits![i].Mask);
-                using var result = ApplyScaledAlphaChannel(inputPaths[i], maskPath, maskCache);
-                var filename = CreateFilenameForSplit(preset, i);
-                using var stream = File.OpenWrite(Path.Combine(outDir, filename));
-                using var skImage = SKImage.FromBitmap(result);
-                using var encoded = skImage.Encode(SKEncodedImageFormat.Png, 100);
-                encoded.SaveTo(stream);
+                using var result = ImageProcessor.ApplyScaledAlphaChannel(inputPaths[i], maskPath, maskCache);
+                var filename = PresetService.CreateFilenameForSplit(preset, i);
+                ImageProcessor.SaveBitmapToPath(result, Path.Combine(outDir, filename));
             });
         });
 
@@ -582,44 +473,7 @@ public partial class MainWindow : Window
             return "";
         }
 
-        return CreateFilenameForSplit(currentPreset, selectedSplitIndex);
-    }
-
-    private static string CreateFilenameForSplit(SplitPreset preset, int splitIndex)
-    {
-        var split = preset.Splits![splitIndex];
-        int totalSplits = preset.Splits.Count;
-
-        string prefix = split.Name switch
-        {
-            "reset" => "reset",
-            "start_auto_splitter" => "start_auto_splitter",
-            _ => $"{splitIndex.ToString().PadLeft(totalSplits.ToString().Length, '0')}_{split.Name}"
-        };
-
-        string output = $"{prefix}_({split.Threshold.ToString(System.Globalization.CultureInfo.InvariantCulture)})";
-
-        if (!(Math.Abs(split.PauseTime - 3.0) < 0.01f))
-        {
-            output += $"_[{split.PauseTime.ToString(System.Globalization.CultureInfo.InvariantCulture)}]";
-        }
-
-        if (split.Delay > 0)
-        {
-            output += $"_#{split.Delay}#";
-        }
-
-        if (split.Dummy)
-        {
-            output += "_{d}";
-        }
-
-        if (split.Inverted)
-        {
-            output += "_{b}";
-        }
-
-        return output + ".png";
+        return PresetService.CreateFilenameForSplit(currentPreset, selectedSplitIndex);
     }
 
     private async void ComboBoxSelectSplit_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -710,12 +564,6 @@ public partial class MainWindow : Window
         await editorWindow.ShowDialog(this);
     }
 
-    [Conditional("DEBUG")]
-    private static void DebugLog(string message) => Console.WriteLine(message);
-
-    [Conditional("DEBUG")]
-    private static void LogError(string message) => Console.Error.WriteLine(message);
-
     private void UpdateNavigationButtons()
     {
         int inputIndex = ComboBoxSelectInputImage.SelectedIndex;
@@ -727,22 +575,6 @@ public partial class MainWindow : Window
         int splitCount = splitsComboBoxItems.Count;
         BtnPrevAlphaImage.IsEnabled = splitIndex > 0;
         BtnNextAlphaImage.IsEnabled = splitIndex >= 0 && splitIndex < splitCount - 1;
-    }
-
-    private static void OpenInFileManager(string path)
-    {
-        if (OperatingSystem.IsWindows())
-        {
-            Process.Start("explorer.exe", $"\"{path}\"");
-        }
-        else if (OperatingSystem.IsMacOS())
-        {
-            Process.Start("open", path);
-        }
-        else if (OperatingSystem.IsLinux())
-        {
-            Process.Start("xdg-open", path);
-        }
     }
 
     private async Task ShowMessage(string title, string message, Icon icon = MsgBoxIcon.None, string? detail = null)
