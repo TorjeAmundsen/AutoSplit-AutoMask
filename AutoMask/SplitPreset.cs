@@ -4,8 +4,8 @@ public class SplitPreset
 {
     public string? PresetFolder { get; set; }
     public string? GameName { get; set; }
-    public string? PresetName { get; init; }
-    public IList<SingleSplit>? Splits { get; init; }
+    public string? PresetName { get; set; }
+    public IList<Split>? Splits { get; set; }
 
     public override bool Equals(object? obj)
     {
@@ -24,19 +24,15 @@ public class SplitPreset
                && PresetName == other.PresetName
                && (Splits?.SequenceEqual(other.Splits ?? []) ?? other.Splits == null);
     }
-
-    public override int GetHashCode() =>
-        HashCode.Combine(PresetFolder, GameName, PresetName);
 }
 
-public record SingleSplit
+public record Split
 (
-    string MaskImagePath,
-    string Name = "",
+    string Mask,
+    string Name,
     float Threshold = 0.95f,
     float PauseTime = 3.0f,
-    uint SplitDelay = 0,
+    uint Delay = 0,
     bool Dummy = false,
-    bool Inverted = false,
-    bool Enabled = true
+    bool Inverted = false
 );

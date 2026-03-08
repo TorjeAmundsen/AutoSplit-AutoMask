@@ -1,0 +1,67 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "AutoMask Preset Configuration",
+    "$id": "preset-schema.json",
+    "type": "object",
+    "required": ["presetName", "splits"],
+    "properties": {
+        "$schema": {
+            "type": "string"
+        },
+        "presetName": {
+            "type": "string"
+        },
+        "gameName": {
+            "type": "string"
+        },
+        "splits": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/Split"
+            }
+        }
+    },
+    "additionalProperties": false,
+    "$defs": {
+        "Split": {
+            "type": "object",
+            "description": "One split element in the split array",
+            "required": ["mask", "name"],
+            "properties": {
+                "mask": {
+                    "type": "string",
+                    "description": "File path to mask image (png) relative to preset.json",
+                    "pattern": "^.*\\.png$"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name of the split/dummy, must not contain characters used by AutoSplit's file name options: ^#@{}()[]",
+                    "pattern": "^[^#@{}\\(\\)\\[\\]\\^]*$"
+                },
+                "threshold": {
+                    "type": "number",
+                    "description": "Similarity threshold where this split will trigger, represented by a number between 0 and 1",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "pauseTime": {
+                    "type": "number",
+                    "description": "Duration in seconds AutoSplit will pause its image detection after this split triggers"
+                },
+                "delay": {
+                    "type": "integer",
+                    "description": "Duration in milliseconds to delay the split time after this image triggers"
+                },
+                "dummy": {
+                    "type": "boolean",
+                    "description": "Whether or not this is a dummy split, meaning this image will not trigger a split, but simply acts as a pre-requisite to the next image"
+                },
+                "inverted": {
+                    "type": "boolean",
+                    "description": "Whether or not this split is inverted, meaning this split will trigger once the image drops below the given threshold after reaching it once"
+                }
+            },
+            "additionalProperties": false
+        }
+    }
+}
