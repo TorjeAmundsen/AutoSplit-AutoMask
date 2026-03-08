@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Text.Json;
@@ -297,16 +298,16 @@ public partial class MainWindow : Window
         InputLoadingOverlay.IsVisible = true;
         var (fullCache, thumbCache) = await Task.Run(() =>
         {
-            var full = new Dictionary<string, Bitmap>();
-            var thumbs = new Dictionary<string, Bitmap>();
-            foreach (var path in _inputImagePaths!)
+            var full = new ConcurrentDictionary<string, Bitmap>();
+            var thumbs = new ConcurrentDictionary<string, Bitmap>();
+            Parallel.ForEach(_inputImagePaths!, path =>
             {
                 using var sk = SKBitmap.Decode(path);
                 full[path] = ToAvaloniaBitmap(sk);
                 using var skThumb = sk.Resize(new SKImageInfo(32, 24), new SKSamplingOptions(SKFilterMode.Linear));
                 thumbs[path] = ToAvaloniaBitmap(skThumb);
-            }
-            return (full, thumbs);
+            });
+            return (new Dictionary<string, Bitmap>(full), new Dictionary<string, Bitmap>(thumbs));
         });
         _inputBitmapCache = fullCache;
         _inputThumbnailCache = thumbCache;

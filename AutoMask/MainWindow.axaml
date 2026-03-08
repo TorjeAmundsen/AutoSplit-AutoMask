@@ -93,8 +93,8 @@
         <Button HorizontalContentAlignment="Center" Name="BtnNextAlphaImage" IsEnabled="False" Content="&gt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="782,380,0,0" Width="28" Height="28" Click="BtnPrevAlphaImage_Click" />
 
         <!-- Row 5: output directory + save buttons -->
-        <Button HorizontalContentAlignment="Center" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,420,0,0" Width="112" Height="28" Click="BtnSelectOutputDirectory_Click" Content="Select directory" />
-        <TextBox Name="OutputDirectoryTextBox" Width="276" Height="28" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True" Focusable="True" Margin="126,420,0,0" VerticalContentAlignment="Center" />
+        <Button HorizontalContentAlignment="Center" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,420,0,0" Width="92" Height="28" Click="BtnSelectOutputDirectory_Click" Content="Set output" />
+        <TextBox Name="OutputDirectoryTextBox" Width="296" Height="28" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True" Focusable="True" Margin="106,420,0,0" VerticalContentAlignment="Center" />
         <Button HorizontalContentAlignment="Center" Name="BtnLoadCustomAlphaImage" Content="Load custom mask" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="418,420,0,0" Width="144" Height="28" Click="BtnLoadAlphaImage_Click" />
         <Button HorizontalContentAlignment="Center" Name="BtnSave" Content="Save masked image" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="566,420,0,0" Width="152" Height="28" Click="BtnAutoSave_Click" />
         <Button HorizontalContentAlignment="Center" Name="BtnSaveAs" Content="Save as..." VerticalAlignment="Top" HorizontalAlignment="Left" Margin="722,420,0,0" Width="88" Height="28" Click="BtnSaveImageAs_Click" />
