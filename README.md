@@ -12,7 +12,7 @@ Quick and easy way to instantly set up AutoSplit, given your desired category ha
 <img width="832" height="499" alt="image" src="https://github.com/user-attachments/assets/20f3feb4-ebd7-48f0-9fc4-05763aa28382" />
 
 # How to use
-First, make sure the game feed you use for AutoSplit has *no black borders* in its output, your feed needs to be cropped correctly for this to work. It will adjust automatically if your aspect ratio is off, but it can't detect black bars around your feed and correct for them.
+First, make sure the game feed you use for AutoSplit has *no black borders* in its output, your feed needs to be cropped correctly for this to work. It will adjust automatically if your aspect ratio is off, but it can't detect black bars around your feed and correct for them, nor will it correct for your feed being over-cropped.
 
 Select the images you want to mask with AutoMask by clicking the `Load input image(s)` button.
 

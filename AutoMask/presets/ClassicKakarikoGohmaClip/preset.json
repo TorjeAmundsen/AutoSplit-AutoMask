@@ -56,7 +56,7 @@
             "mask": "006_a_button_flip.png",
             "name": "EnterDeku",
             "threshold": 0.92,
-            "pauseTime": 15,
+            "pauseTime": 60,
             "delay": 1000
         },
         {
