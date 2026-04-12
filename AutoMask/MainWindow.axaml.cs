@@ -2,6 +2,9 @@ using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
+using Avalonia.Controls.Templates;
+using Avalonia.Data;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
@@ -19,10 +22,12 @@ public record InputImageItem(string FullPath, string FileName, Bitmap Thumbnail)
 
 public partial class MainWindow : Window
 {
-    public ObservableCollection<ComboBoxItem> presetComboBoxItems { get; set; }
+    public ObservableCollection<object> presetComboBoxItems { get; set; }
     public ObservableCollection<ComboBoxItem> splitsComboBoxItems { get; set; }
     public ObservableCollection<InputImageItem> inputImagesComboBoxItems { get; set; }
-    public int selectedPresetIndex { get; set; }
+    // Maps each ComboBox display index to a _splitPresets index (null = group header)
+    private List<int?> _presetDisplayMap = [];
+    private int selectedPresetIndex = -1;
     public int selectedSplitIndex { get; set; }
 
     private List<string>? _inputImagePaths;
@@ -44,7 +49,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        presetComboBoxItems = [];
+        presetComboBoxItems = new ObservableCollection<object>();
         splitsComboBoxItems = [];
         inputImagesComboBoxItems = new ObservableCollection<InputImageItem>();
 
@@ -68,6 +73,34 @@ public partial class MainWindow : Window
         DataContext = this;
 
         Title = "AutoMask v" + AutoMaskSemVer + (string.IsNullOrEmpty(VersionSuffix) ? string.Empty : "-" + VersionSuffix);
+
+        ComboBoxSelectPreset.ContainerPrepared += (_, e) =>
+        {
+            if (e.Container is ComboBoxItem item
+                && e.Index < _presetDisplayMap.Count
+                && _presetDisplayMap[e.Index] == null)
+            {
+                item.IsHitTestVisible = false;
+                item.Focusable = false;
+            }
+        };
+
+        // Override the selection-box ContentPresenter's ContentTemplate with a local value so
+        // it always shows just the preset name, regardless of what SelectionBoxItemTemplate
+        // (which automatically mirrors ItemTemplate) says.  Local values have higher priority
+        // than TemplateBindings in Avalonia, so this assignment wins.
+        ComboBoxSelectPreset.TemplateApplied += (_, e) =>
+        {
+            if (e.NameScope.Find<ContentControl>("ContentPresenter") is { } cp)
+            {
+                cp.ContentTemplate = new FuncDataTemplate<PresetComboItem>((_, _) =>
+                {
+                    var tb = new TextBlock();
+                    tb[!TextBlock.TextProperty] = new Binding(nameof(PresetComboItem.PresetName));
+                    return tb;
+                });
+            }
+        };
 
         Opened += async (_, _) => await RefreshPresetsAsync();
     }
@@ -98,34 +131,57 @@ public partial class MainWindow : Window
             DebugLog(Path.Combine(preset.PresetFolder!, "preset.json"));
         }
 
-        if (_splitPresets.Count > 0 && foundPresets.SequenceEqual(_splitPresets))
+        // Sort by game name then preset name so grouping is stable
+        var sortedPresets = foundPresets
+            .OrderBy(p => p.GameName ?? "")
+            .ThenBy(p => p.PresetName ?? "")
+            .ToList();
+
+        if (_splitPresets.Count > 0 && sortedPresets.SequenceEqual(_splitPresets))
         {
             DebugLog("No changes were detected");
             return;
         }
 
-        _splitPresets = foundPresets;
+        _splitPresets = sortedPresets;
         presetComboBoxItems.Clear();
+        _presetDisplayMap.Clear();
         selectedPresetIndex = -1;
         selectedSplitIndex = 0;
 
         List<string> invalidPresetFolders = [];
+        string? currentGame = null;
 
-        foreach (SplitPreset preset in foundPresets)
+        for (int i = 0; i < _splitPresets.Count; i++)
         {
+            var preset = _splitPresets[i];
+
             if (preset.Splits == null || preset.Splits.Count == 0)
             {
                 invalidPresetFolders.Add(preset.PresetFolder ?? "(unknown)");
                 continue;
             }
 
-            presetComboBoxItems.Add(new ComboBoxItem { Content = preset.PresetName });
+            if (preset.GameName != currentGame)
+            {
+                currentGame = preset.GameName;
+                presetComboBoxItems.Add(new PresetGroupHeader(currentGame ?? ""));
+                _presetDisplayMap.Add(null);
+            }
+
+            int splitCount = preset.Splits.Count(s =>
+                !s.Dummy &&
+                s.Name != "start_auto_splitter" &&
+                s.Name != "reset");
+            presetComboBoxItems.Add(new PresetComboItem(preset.PresetName ?? "", i, splitCount, preset.Splits.Count));
+            _presetDisplayMap.Add(i);
+
             DebugLog($"Found preset: {preset.PresetName}");
 
-            for (int i = 0; i < preset.Splits.Count; ++i)
+            for (int j = 0; j < preset.Splits.Count; ++j)
             {
-                var cur = preset.Splits[i];
-                DebugLog($"{i + 1}. {cur.Name}, threshold: {cur.Threshold}, filename: {preset.PresetFolder}");
+                var cur = preset.Splits[j];
+                DebugLog($"{j + 1}. {cur.Name}, threshold: {cur.Threshold}, filename: {preset.PresetFolder}");
             }
         }
 
@@ -134,9 +190,11 @@ public partial class MainWindow : Window
             await ShowMessage("Warning", $"Invalid preset format found in: {string.Join(", ", invalidPresetFolders)}", MsgBoxIcon.Warning);
         }
 
-        if (presetComboBoxItems.Count > 0)
+        // Select the first actual preset (skip the leading group header)
+        int firstPreset = _presetDisplayMap.FindIndex(m => m != null);
+        if (firstPreset >= 0)
         {
-            ComboBoxSelectPreset.SelectedIndex = 0;
+            ComboBoxSelectPreset.SelectedIndex = firstPreset;
         }
 
         CheckSavePossible();
@@ -144,6 +202,21 @@ public partial class MainWindow : Window
 
     private async void ComboBoxSelectPreset_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        int displayIdx = ComboBoxSelectPreset.SelectedIndex;
+        if (displayIdx < 0 || displayIdx >= _presetDisplayMap.Count)
+        {
+            return;
+        }
+
+        int? dataIdx = _presetDisplayMap[displayIdx];
+        if (dataIdx == null)
+        {
+            // Group header — not selectable, nothing to do
+            return;
+        }
+
+        selectedPresetIndex = dataIdx.Value;
+
         if (selectedPresetIndex < 0 || selectedPresetIndex >= _splitPresets.Count)
         {
             return;

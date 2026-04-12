@@ -13,12 +13,22 @@ namespace AutoSplit_AutoMask;
 
 public partial class PresetEditor : Window
 {
+    private enum UnsavedAction { Save, Discard, Cancel }
+
     private class EditablePreset
     {
         public string? OriginalFolder { get; set; }
         public string PresetName { get; set; } = "";
         public string GameName { get; set; } = "";
         public List<EditableSplit> Splits { get; } = [];
+        public bool IsDirty { get; set; }
+
+        public int SplitCount => Splits.Count(s =>
+            !s.Dummy &&
+            s.Name != "start_auto_splitter" &&
+            s.Name != "reset");
+
+        public int TotalImages => Splits.Count;
     }
 
     private class EditableSplit
@@ -35,16 +45,42 @@ public partial class PresetEditor : Window
         public bool Inverted { get; set; } = false;
     }
 
+    // Wraps either a group header or an EditablePreset for display in the ListBox.
+    // Using a private wrapper keeps EditablePreset private while still allowing
+    // a single DataTemplate to render both headers and preset items.
+    private sealed class PresetDisplayItem
+    {
+        public bool IsHeader { get; private init; }
+        public string GroupName { get; private init; } = "";
+        public EditablePreset? Preset { get; private init; }
+
+        public static PresetDisplayItem ForHeader(string gameName)
+            => new() { IsHeader = true, GroupName = gameName };
+
+        public static PresetDisplayItem ForPreset(EditablePreset p)
+            => new() { Preset = p };
+
+        // Properties forwarded to the DataTemplate bindings
+        public string PresetName => Preset?.PresetName ?? "";
+        public string GameName   => IsHeader ? GroupName : Preset?.GameName ?? "";
+        public int SplitCount    => Preset?.SplitCount ?? 0;
+        public int TotalImages   => Preset?.TotalImages ?? 0;
+        public bool IsDirty      => Preset?.IsDirty ?? false;
+    }
+
     // Characters forbidden in split names by the AutoSplit file naming spec
     private static readonly Regex InvalidNameChars = new(@"[#@{}\(\)\[\]\^]");
 
     private readonly string _presetsDirectory;
     private List<EditablePreset> _editablePresets = [];
+    private List<PresetDisplayItem> _presetDisplayItems = [];
     private EditablePreset? _selectedPreset;
     private EditableSplit? _selectedSplit;
 
     // Prevents form event handlers from writing back to the model while we're populating the form
     private bool _suppressFormEvents;
+    private bool _suppressPresetSelection;
+    private bool _closingConfirmed;
 
     private string? _baseImagePath;
     private Bitmap? _maskPreviewBitmap;
@@ -59,6 +95,36 @@ public partial class PresetEditor : Window
         _presetsDirectory = presetsDirectory;
         LoadFromPresets(presets);
         PopulatePresetList();
+
+        PresetListBox.ContainerPrepared += (_, e) =>
+        {
+            if (e.Container is not ListBoxItem item || e.Index >= _presetDisplayItems.Count)
+            {
+                return;
+            }
+
+            var displayItem = _presetDisplayItems[e.Index];
+
+            if (displayItem.IsHeader)
+            {
+                item.IsHitTestVisible = false;
+                item.Focusable = false;
+                item.Classes.Remove("Dirty");
+            }
+            else
+            {
+                item.IsHitTestVisible = true;
+                item.Focusable = true;
+                if (displayItem.IsDirty)
+                {
+                    item.Classes.Add("Dirty");
+                }
+                else
+                {
+                    item.Classes.Remove("Dirty");
+                }
+            }
+        };
     }
 
     private void LoadFromPresets(List<SplitPreset> presets)
@@ -94,10 +160,12 @@ public partial class PresetEditor : Window
                     Name = split.Name,
                     MaskAbsolutePath = Path.GetFullPath(Path.Combine(source.PresetFolder, split.Mask)),
                     ThresholdEnabled = true,
-                    Threshold = split.Threshold,
+                    // Round to 2 decimal places to match the TextBox display precision and avoid
+                    // float → double conversion noise causing false dirty comparisons.
+                    Threshold = Math.Round((double)split.Threshold, 2),
                     // Treat as explicitly set only when value differs from the record default
                     PauseTimeEnabled = Math.Abs(split.PauseTime - 3.0f) > 0.001f,
-                    PauseTime = split.PauseTime,
+                    PauseTime = Math.Round((double)split.PauseTime, 2),
                     DelayEnabled = split.Delay > 0,
                     Delay = (int)split.Delay,
                     Dummy = split.Dummy,
@@ -109,11 +177,70 @@ public partial class PresetEditor : Window
 
     private void PopulatePresetList()
     {
+        _presetDisplayItems.Clear();
         PresetListBox.Items.Clear();
-        foreach (var preset in _editablePresets)
+
+        var sorted = _editablePresets
+            .OrderBy(p => p.GameName)
+            .ThenBy(p => p.PresetName)
+            .ToList();
+
+        string? currentGame = null;
+
+        foreach (var preset in sorted)
         {
-            PresetListBox.Items.Add(preset.PresetName.Length > 0 ? preset.PresetName : "(unnamed preset)");
+            if (preset.GameName != currentGame)
+            {
+                currentGame = preset.GameName;
+                var header = PresetDisplayItem.ForHeader(currentGame);
+                _presetDisplayItems.Add(header);
+                PresetListBox.Items.Add(header);
+            }
+
+            var item = PresetDisplayItem.ForPreset(preset);
+            _presetDisplayItems.Add(item);
+            PresetListBox.Items.Add(item);
         }
+    }
+
+    // Forces the DataTemplate for a preset list item to re-render by replacing the wrapper.
+    // Necessary because EditablePreset doesn't implement INotifyPropertyChanged.
+    private void RefreshPresetListItem(EditablePreset preset)
+    {
+        int idx = _presetDisplayItems.FindIndex(d => d.Preset == preset);
+
+        if (idx < 0)
+        {
+            return;
+        }
+
+        var newItem = PresetDisplayItem.ForPreset(preset);
+        _presetDisplayItems[idx] = newItem;
+        PresetListBox.Items[idx] = newItem;
+
+        if (PresetListBox.ContainerFromIndex(idx) is ListBoxItem container)
+        {
+            if (preset.IsDirty)
+            {
+                container.Classes.Add("Dirty");
+            }
+            else
+            {
+                container.Classes.Remove("Dirty");
+            }
+        }
+    }
+
+    private void MarkCurrentPresetDirty()
+    {
+        if (_selectedPreset == null)
+        {
+            return;
+        }
+
+        _selectedPreset.IsDirty = true;
+        RefreshPresetListItem(_selectedPreset);
+        UpdateSaveButtonState();
     }
 
     private void SelectPreset(EditablePreset preset)
@@ -127,7 +254,14 @@ public partial class PresetEditor : Window
 
         PopulateSplitsList();
         ShowSplitForm(false);
-        ClearSplitForm();
+
+        // Clear only the split-related visuals — form controls stay as-is since the form
+        // is hidden and will be fully repopulated by SelectSplit when a split is picked.
+        MaskPreviewImage.Source = null;
+        _maskPreviewBitmap?.Dispose();
+        _maskPreviewBitmap = null;
+        FilenamePreviewLabel.Text = "";
+
         _suppressFormEvents = false;
     }
 
@@ -227,14 +361,16 @@ public partial class PresetEditor : Window
             return "";
         }
 
-        if (_selectedPreset?.OriginalFolder != null)
+        if (_selectedPreset?.OriginalFolder is null)
         {
-            string folderFull = Path.GetFullPath(_selectedPreset.OriginalFolder);
-            string maskFull = Path.GetFullPath(split.MaskAbsolutePath);
-            if (maskFull.StartsWith(folderFull, StringComparison.OrdinalIgnoreCase))
-            {
-                return Path.GetRelativePath(folderFull, maskFull);
-            }
+            return split.MaskAbsolutePath;
+        }
+
+        string folderFull = Path.GetFullPath(_selectedPreset.OriginalFolder);
+        string maskFull = Path.GetFullPath(split.MaskAbsolutePath);
+        if (maskFull.StartsWith(folderFull, StringComparison.OrdinalIgnoreCase))
+        {
+            return Path.GetRelativePath(folderFull, maskFull);
         }
 
         return split.MaskAbsolutePath;
@@ -343,6 +479,7 @@ public partial class PresetEditor : Window
         if (_selectedPreset == null)
         {
             BtnSave.IsEnabled = false;
+            BtnSaveAll.IsEnabled = false;
             BtnSaveAsNew.IsEnabled = false;
             return;
         }
@@ -351,18 +488,74 @@ public partial class PresetEditor : Window
         bool nameValid = !string.IsNullOrWhiteSpace(_selectedPreset.PresetName);
 
         BtnSave.IsEnabled = nameValid && !anyInvalidName;
+        BtnSaveAll.IsEnabled = _editablePresets.Any(p => p != _selectedPreset && p.IsDirty);
         BtnSaveAsNew.IsEnabled = nameValid && !anyInvalidName;
     }
 
-    private void PresetListBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private async void PresetListBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        int index = PresetListBox.SelectedIndex;
-        if (index < 0 || index >= _editablePresets.Count)
+        if (_suppressPresetSelection)
         {
             return;
         }
 
-        SelectPreset(_editablePresets[index]);
+        int displayIdx = PresetListBox.SelectedIndex;
+        if (displayIdx < 0 || displayIdx >= _presetDisplayItems.Count)
+        {
+            return;
+        }
+
+        // Ignore clicks on group headers (shouldn't reach here since they're non-interactive)
+        if (_presetDisplayItems[displayIdx].IsHeader)
+        {
+            return;
+        }
+
+        EditablePreset? newPreset = _presetDisplayItems[displayIdx].Preset;
+        if (newPreset == null)
+        {
+            return;
+        }
+
+        if (_selectedPreset?.IsDirty == true)
+        {
+            // Revert the visual selection while we ask the user
+            _suppressPresetSelection = true;
+            PresetListBox.SelectedIndex = _presetDisplayItems.FindIndex(d => d.Preset == _selectedPreset);
+            _suppressPresetSelection = false;
+
+            var action = await ShowUnsavedChangesDialogAsync(_selectedPreset.PresetName);
+
+            if (action == UnsavedAction.Cancel)
+            {
+                return;
+            }
+
+            if (action == UnsavedAction.Save)
+            {
+                if (_selectedPreset.OriginalFolder != null)
+                {
+                    await SavePreset(_selectedPreset, _selectedPreset.OriginalFolder);
+                }
+                else
+                {
+                    await SaveToNewFolder(_selectedPreset);
+                }
+
+                // If save was cancelled (e.g. user dismissed the rename prompt), abort the switch
+                if (_selectedPreset.IsDirty)
+                {
+                    return;
+                }
+            }
+
+            // Commit the switch
+            _suppressPresetSelection = true;
+            PresetListBox.SelectedIndex = displayIdx;
+            _suppressPresetSelection = false;
+        }
+
+        SelectPreset(newPreset);
         UpdateSaveButtonState();
     }
 
@@ -371,7 +564,11 @@ public partial class PresetEditor : Window
         var newPreset = new EditablePreset { PresetName = "New Preset" };
         _editablePresets.Add(newPreset);
         PopulatePresetList();
-        PresetListBox.SelectedIndex = _editablePresets.Count - 1;
+        int displayIdx = _presetDisplayItems.FindIndex(d => d.Preset == newPreset);
+        if (displayIdx >= 0)
+        {
+            PresetListBox.SelectedIndex = displayIdx;
+        }
     }
 
     private void PresetNameBox_TextChanged(object? sender, TextChangedEventArgs e)
@@ -381,17 +578,14 @@ public partial class PresetEditor : Window
             return;
         }
 
-        _selectedPreset.PresetName = PresetNameBox.Text ?? "";
-
-        // Refresh the preset list label for the currently selected item
-        int index = PresetListBox.SelectedIndex;
-        if (index >= 0)
+        string newPresetName = PresetNameBox.Text ?? "";
+        if (newPresetName == _selectedPreset.PresetName)
         {
-            PresetListBox.Items[index] = _selectedPreset.PresetName.Length > 0
-                ? _selectedPreset.PresetName
-                : "(unnamed preset)";
+            return;
         }
 
+        _selectedPreset.PresetName = newPresetName;
+        MarkCurrentPresetDirty();
         UpdateSaveButtonState();
     }
 
@@ -402,11 +596,23 @@ public partial class PresetEditor : Window
             return;
         }
 
-        _selectedPreset.GameName = GameNameBox.Text ?? "";
+        string newGameName = GameNameBox.Text ?? "";
+        if (newGameName == _selectedPreset.GameName)
+        {
+            return;
+        }
+
+        _selectedPreset.GameName = newGameName;
+        MarkCurrentPresetDirty();
     }
 
     private void SplitsListBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
+        if (_suppressFormEvents)
+        {
+            return;
+        }
+
         int index = SplitsListBox.SelectedIndex;
         if (_selectedPreset == null || index < 0 || index >= _selectedPreset.Splits.Count)
         {
@@ -434,6 +640,7 @@ public partial class PresetEditor : Window
         _selectedPreset.Splits.Insert(insertAt, newSplit);
         PopulateSplitsList();
         SplitsListBox.SelectedIndex = insertAt;
+        MarkCurrentPresetDirty();
     }
 
     private void BtnRemoveSplit_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -451,6 +658,7 @@ public partial class PresetEditor : Window
 
         _selectedPreset.Splits.RemoveAt(index);
         PopulateSplitsList();
+        MarkCurrentPresetDirty();
 
         int nextIndex = Math.Min(index, _selectedPreset.Splits.Count - 1);
         SplitsListBox.SelectedIndex = nextIndex;
@@ -481,6 +689,7 @@ public partial class PresetEditor : Window
 
         PopulateSplitsList();
         SplitsListBox.SelectedIndex = index - 1;
+        MarkCurrentPresetDirty();
     }
 
     private void BtnMoveSplitDown_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -501,6 +710,7 @@ public partial class PresetEditor : Window
 
         PopulateSplitsList();
         SplitsListBox.SelectedIndex = index + 1;
+        MarkCurrentPresetDirty();
     }
 
     private void SplitNameBox_TextChanged(object? sender, TextChangedEventArgs e)
@@ -511,10 +721,16 @@ public partial class PresetEditor : Window
         }
 
         string name = SplitNameBox.Text ?? "";
+        if (name == _selectedSplit.Name)
+        {
+            return;
+        }
+
         _selectedSplit.Name = name;
         ValidateSplitName(name);
         RefreshSelectedSplitLabel();
         UpdateFilenamePreview();
+        MarkCurrentPresetDirty();
     }
 
     private async void BtnBrowseMask_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -549,6 +765,7 @@ public partial class PresetEditor : Window
         UpdateMaskPreview(pickedPath);
         await UpdateOutputPreview();
         RefreshSelectedSplitLabel();
+        MarkCurrentPresetDirty();
     }
 
     private void SplitThresholdEnabledCheck_IsCheckedChanged(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -560,6 +777,7 @@ public partial class PresetEditor : Window
 
         _selectedSplit.ThresholdEnabled = SplitThresholdEnabledCheck.IsChecked == true;
         UpdateFilenamePreview();
+        MarkCurrentPresetDirty();
     }
 
     private void SplitPauseTimeEnabledCheck_IsCheckedChanged(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -571,6 +789,7 @@ public partial class PresetEditor : Window
 
         _selectedSplit.PauseTimeEnabled = SplitPauseTimeEnabledCheck.IsChecked == true;
         UpdateFilenamePreview();
+        MarkCurrentPresetDirty();
     }
 
     private void SplitDelayEnabledCheck_IsCheckedChanged(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -582,6 +801,7 @@ public partial class PresetEditor : Window
 
         _selectedSplit.DelayEnabled = SplitDelayEnabledCheck.IsChecked == true;
         UpdateFilenamePreview();
+        MarkCurrentPresetDirty();
     }
 
     private void SplitThresholdBox_TextChanged(object? sender, TextChangedEventArgs e)
@@ -595,12 +815,18 @@ public partial class PresetEditor : Window
                 System.Globalization.CultureInfo.InvariantCulture, out double value)
             && value is >= 0 and <= 1)
         {
+            if (value == _selectedSplit.Threshold)
+            {
+                return;
+            }
+
             _selectedSplit.Threshold = value;
             _suppressFormEvents = true;
             SplitThresholdSlider.Value = value;
             _suppressFormEvents = false;
             SplitThresholdBox.Classes.Remove("Invalid");
             UpdateFilenamePreview();
+            MarkCurrentPresetDirty();
         }
         else
         {
@@ -636,6 +862,7 @@ public partial class PresetEditor : Window
         SplitThresholdBox.Classes.Remove("Invalid");
         _suppressFormEvents = false;
         UpdateFilenamePreview();
+        MarkCurrentPresetDirty();
     }
 
     private void SplitPauseTimeBox_TextChanged(object? sender, TextChangedEventArgs e)
@@ -648,9 +875,15 @@ public partial class PresetEditor : Window
         if (double.TryParse(SplitPauseTimeBox.Text, System.Globalization.NumberStyles.Float,
                 System.Globalization.CultureInfo.InvariantCulture, out double value) && value >= 0)
         {
+            if (value == _selectedSplit.PauseTime)
+            {
+                return;
+            }
+
             _selectedSplit.PauseTime = value;
             SplitPauseTimeBox.Classes.Remove("Invalid");
             UpdateFilenamePreview();
+            MarkCurrentPresetDirty();
         }
         else
         {
@@ -680,9 +913,15 @@ public partial class PresetEditor : Window
 
         if (int.TryParse(SplitDelayBox.Text, out int value) && value >= 0)
         {
+            if (value == _selectedSplit.Delay)
+            {
+                return;
+            }
+
             _selectedSplit.Delay = value;
             SplitDelayBox.Classes.Remove("Invalid");
             UpdateFilenamePreview();
+            MarkCurrentPresetDirty();
         }
         else
         {
@@ -712,6 +951,7 @@ public partial class PresetEditor : Window
 
         _selectedSplit.Dummy = SplitDummyCheck.IsChecked == true;
         UpdateFilenamePreview();
+        MarkCurrentPresetDirty();
     }
 
     private void SplitInvertedCheck_IsCheckedChanged(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -723,6 +963,7 @@ public partial class PresetEditor : Window
 
         _selectedSplit.Inverted = SplitInvertedCheck.IsChecked == true;
         UpdateFilenamePreview();
+        MarkCurrentPresetDirty();
     }
 
     private void RefreshSelectedSplitLabel()
@@ -758,6 +999,22 @@ public partial class PresetEditor : Window
         }
     }
 
+    private async void BtnSaveAll_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var dirtyPresets = _editablePresets.Where(p => p.IsDirty).ToList();
+        foreach (var preset in dirtyPresets)
+        {
+            if (preset.OriginalFolder != null)
+            {
+                await SavePreset(preset, preset.OriginalFolder);
+            }
+            else
+            {
+                await SaveToNewFolder(preset);
+            }
+        }
+    }
+
     private async void BtnSaveAsNew_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if (_selectedPreset == null)
@@ -785,14 +1042,10 @@ public partial class PresetEditor : Window
             }
 
             preset.PresetName = newName;
-            int idx = PresetListBox.SelectedIndex;
-            if (idx >= 0)
-            {
-                PresetListBox.Items[idx] = newName;
-            }
             _suppressFormEvents = true;
             PresetNameBox.Text = newName;
             _suppressFormEvents = false;
+            RefreshPresetListItem(preset);
 
             folderName = SanitizeFolderName(newName);
             targetFolder = Path.Combine(_presetsDirectory, folderName);
@@ -983,7 +1236,19 @@ public partial class PresetEditor : Window
             await File.WriteAllTextAsync(Path.Combine(targetFolderFull, "preset.json"), json);
 
             preset.OriginalFolder = targetFolderFull;
+            preset.IsDirty = false;
             PresetsModified = true;
+
+            // Rebuild the grouped list — the game name may have changed, moving this
+            // preset to a different group or creating/removing a group header.
+            _suppressPresetSelection = true;
+            PopulatePresetList();
+            int newDisplayIdx = _presetDisplayItems.FindIndex(d => d.Preset == preset);
+            if (newDisplayIdx >= 0)
+            {
+                PresetListBox.SelectedIndex = newDisplayIdx;
+            }
+            _suppressPresetSelection = false;
 
             await MessageBoxManager
                 .GetMessageBoxStandard("Saved", $"Preset saved to \"{folderName(targetFolderFull)}\".")
@@ -1006,6 +1271,52 @@ public partial class PresetEditor : Window
         string sanitized = presetName.Replace(' ', '_');
         sanitized = new string(sanitized.Where(c => !invalidChars.Contains(c)).ToArray());
         return sanitized.Length > 0 ? sanitized : "NewPreset";
+    }
+
+    protected override async void OnClosing(WindowClosingEventArgs e)
+    {
+        if (!_closingConfirmed && _editablePresets.Any(p => p.IsDirty))
+        {
+            e.Cancel = true;
+
+            var dirtyNames = _editablePresets
+                .Where(p => p.IsDirty)
+                .Select(p => string.IsNullOrWhiteSpace(p.PresetName) ? "(unnamed)" : p.PresetName);
+
+            var result = await MessageBoxManager
+                .GetMessageBoxStandard(
+                    "Unsaved changes",
+                    $"The following presets have unsaved changes:\n\n{string.Join("\n", dirtyNames)}\n\nClose and discard changes?",
+                    ButtonEnum.YesNo,
+                    MsgBoxIcon.Warning)
+                .ShowWindowDialogAsync(this);
+
+            if (result == ButtonResult.Yes)
+            {
+                _closingConfirmed = true;
+                Close();
+            }
+        }
+
+        base.OnClosing(e);
+    }
+
+    private async Task<UnsavedAction> ShowUnsavedChangesDialogAsync(string presetName)
+    {
+        var result = await MessageBoxManager
+            .GetMessageBoxStandard(
+                "Unsaved changes",
+                $"\"{presetName}\" has unsaved changes. Save before switching?",
+                ButtonEnum.YesNoCancel,
+                MsgBoxIcon.Warning)
+            .ShowWindowDialogAsync(this);
+
+        return result switch
+        {
+            ButtonResult.Yes => UnsavedAction.Save,
+            ButtonResult.No  => UnsavedAction.Discard,
+            _                => UnsavedAction.Cancel,
+        };
     }
 
     private void BtnClose_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

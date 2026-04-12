@@ -34,6 +34,15 @@
             <Setter Property="Padding" Value="6,3"/>
             <Setter Property="MinHeight" Value="0"/>
         </Style>
+        <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1C3A58"/>
+        </Style>
+        <Style Selector="ListBoxItem.Dirty /template/ ContentPresenter">
+            <Setter Property="Background" Value="#3A2800"/>
+        </Style>
+        <Style Selector="ListBoxItem.Dirty:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="#5A3C00"/>
+        </Style>
         <Style Selector="NumericUpDown">
             <Setter Property="MinHeight" Value="0"/>
             <Setter Property="Padding" Value="4,2"/>
@@ -56,6 +65,7 @@
         <Border DockPanel.Dock="Bottom" BorderBrush="#444444" BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,8,0,0">
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <Button Name="BtnSave" Content="Save" Click="BtnSave_Click" Width="80"/>
+                <Button Name="BtnSaveAll" Content="Save All" Click="BtnSaveAll_Click" Width="80"/>
                 <Button Name="BtnSaveAsNew" Content="Save As New Preset..." Click="BtnSaveAsNew_Click" Width="160"/>
                 <Button Content="Close" Click="BtnClose_Click" Width="80"/>
             </StackPanel>
@@ -74,7 +84,32 @@
                 <Button DockPanel.Dock="Bottom" Content="New Preset" Click="BtnNewPreset_Click"
                         Margin="0,6,0,0" HorizontalAlignment="Stretch"/>
                 <Border BorderBrush="#444444" BorderThickness="1">
-                    <ListBox Name="PresetListBox" SelectionChanged="PresetListBox_SelectionChanged"/>
+                    <ListBox Name="PresetListBox" SelectionChanged="PresetListBox_SelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <!-- Group header row -->
+                                    <TextBlock IsVisible="{Binding IsHeader}"
+                                               Text="{Binding GroupName}"
+                                               FontWeight="SemiBold" FontSize="11"
+                                               Foreground="#AAAAAA"
+                                               Margin="4,4,0,2"/>
+                                    <!-- Preset row -->
+                                    <Grid IsVisible="{Binding !IsHeader}">
+                                        <Rectangle Fill="#CC8800" Width="3" HorizontalAlignment="Left"
+                                                   IsVisible="{Binding IsDirty}"/>
+                                        <StackPanel Spacing="1" Margin="6,2,0,2">
+                                            <TextBlock Text="{Binding PresetName}"/>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="{Binding SplitCount, StringFormat='{}Splits: {0}'}" FontSize="10" Foreground="#888888"/>
+                                                <TextBlock Text="{Binding TotalImages, StringFormat='{}Total images: {0}'}" FontSize="10" Foreground="#888888"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Grid>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </Border>
             </DockPanel>
 
