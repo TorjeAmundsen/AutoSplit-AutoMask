@@ -259,6 +259,7 @@ public partial class PresetEditor : Window
         UpdateMaskPreview(split.MaskAbsolutePath);
         UpdateFilenamePreview();
         _ = UpdateOutputPreview();
+        BtnDuplicateSplit.IsEnabled = true;
 
         _suppressFormEvents = false;
     }
@@ -438,6 +439,11 @@ public partial class PresetEditor : Window
             BtnSave.IsEnabled = false;
             BtnSaveAll.IsEnabled = false;
             BtnSaveAsNew.IsEnabled = false;
+            BtnAddSplit.IsEnabled = false;
+            BtnDuplicateSplit.IsEnabled = false;
+            BtnRemoveSplit.IsEnabled = false;
+            BtnMoveSplitUp.IsEnabled = false;
+            BtnMoveSplitDown.IsEnabled = false;
             return;
         }
 
@@ -447,6 +453,11 @@ public partial class PresetEditor : Window
         BtnSave.IsEnabled = nameValid && !anyInvalidName;
         BtnSaveAll.IsEnabled = _editablePresets.Any(p => p != _selectedPreset && p.IsDirty);
         BtnSaveAsNew.IsEnabled = nameValid && !anyInvalidName;
+        BtnAddSplit.IsEnabled = true;
+        BtnDuplicateSplit.IsEnabled = _selectedSplit != null;
+        BtnRemoveSplit.IsEnabled = true;
+        BtnMoveSplitUp.IsEnabled = true;
+        BtnMoveSplitDown.IsEnabled = true;
     }
 
     private async void PresetListBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -573,6 +584,7 @@ public partial class PresetEditor : Window
         int index = SplitsListBox.SelectedIndex;
         if (_selectedPreset == null || index < 0 || index >= _selectedPreset.Splits.Count)
         {
+            BtnDuplicateSplit.IsEnabled = false;
             return;
         }
 
@@ -597,6 +609,39 @@ public partial class PresetEditor : Window
         _selectedPreset.Splits.Insert(insertAt, newSplit);
         PopulateSplitsList();
         SplitsListBox.SelectedIndex = insertAt;
+        MarkCurrentPresetDirty();
+    }
+
+    private void BtnDuplicateSplit_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_selectedPreset == null || _selectedSplit == null)
+        {
+            return;
+        }
+
+        int index = _selectedPreset.Splits.IndexOf(_selectedSplit);
+        if (index < 0)
+        {
+            return;
+        }
+
+        var copy = new EditableSplit
+        {
+            Name = _selectedSplit.Name,
+            MaskAbsolutePath = _selectedSplit.MaskAbsolutePath,
+            ThresholdEnabled = _selectedSplit.ThresholdEnabled,
+            Threshold = _selectedSplit.Threshold,
+            PauseTimeEnabled = _selectedSplit.PauseTimeEnabled,
+            PauseTime = _selectedSplit.PauseTime,
+            DelayEnabled = _selectedSplit.DelayEnabled,
+            Delay = _selectedSplit.Delay,
+            Dummy = _selectedSplit.Dummy,
+            Inverted = _selectedSplit.Inverted,
+        };
+
+        _selectedPreset.Splits.Insert(index + 1, copy);
+        PopulateSplitsList();
+        SplitsListBox.SelectedIndex = index + 1;
         MarkCurrentPresetDirty();
     }
 

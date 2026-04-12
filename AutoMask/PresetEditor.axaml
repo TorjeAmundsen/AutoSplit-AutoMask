@@ -59,6 +59,8 @@
         <Style Selector="Button">
             <Setter Property="MinHeight" Value="0"/>
             <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
         <Style Selector="CheckBox">
             <Setter Property="MinHeight" Value="0"/>
@@ -70,12 +72,14 @@
 
         <!-- Bottom action bar -->
         <Border DockPanel.Dock="Bottom" BorderBrush="#444444" BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,8,0,0">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <Button Name="BtnSave" Content="Save" Click="BtnSave_Click" Width="80"/>
-                <Button Name="BtnSaveAll" Content="Save All" Click="BtnSaveAll_Click" Width="80"/>
-                <Button Name="BtnSaveAsNew" Content="Save As New Preset..." Click="BtnSaveAsNew_Click" Width="160"/>
-                <Button Content="Close" Click="BtnClose_Click" Width="80"/>
-            </StackPanel>
+            <Grid>
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left">
+                    <Button Name="BtnSave" Content="Save" Click="BtnSave_Click" Width="80"/>
+                    <Button Name="BtnSaveAll" Content="Save All" Click="BtnSaveAll_Click" Width="80"/>
+                    <Button Name="BtnSaveAsNew" Content="Save As New Preset..." Click="BtnSaveAsNew_Click" Width="160"/>
+                </StackPanel>
+                <Button Content="Close" Click="BtnClose_Click" Width="80" HorizontalAlignment="Right"/>
+            </Grid>
         </Border>
 
         <!-- Main two-panel layout: preset list | preset editor -->
@@ -154,10 +158,11 @@
                     <!-- Splits list + toolbar -->
                     <DockPanel Grid.Column="0">
                         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
-                            <Button Name="BtnAddSplit" Content="+" Width="28" Click="BtnAddSplit_Click" ToolTip.Tip="Add split after selected"/>
-                            <Button Name="BtnRemoveSplit" Content="-" Width="28" Click="BtnRemoveSplit_Click" ToolTip.Tip="Remove selected split"/>
-                            <Button Name="BtnMoveSplitUp" Content="↑" Width="28" Click="BtnMoveSplitUp_Click" ToolTip.Tip="Move split up"/>
-                            <Button Name="BtnMoveSplitDown" Content="↓" Width="28" Click="BtnMoveSplitDown_Click" ToolTip.Tip="Move split down"/>
+                            <Button Name="BtnAddSplit" Content="+" Width="30" Height="24" IsEnabled="False" Click="BtnAddSplit_Click" ToolTip.Tip="Add split after selected"/>
+                            <Button Name="BtnRemoveSplit" Content="-" Width="30" Height="24" IsEnabled="False" Click="BtnRemoveSplit_Click" ToolTip.Tip="Remove selected split"/>
+                            <Button Name="BtnDuplicateSplit" Content="⧉" Width="34" Height="24" IsEnabled="False" Click="BtnDuplicateSplit_Click" ToolTip.Tip="Duplicate selected split"/>
+                            <Button Name="BtnMoveSplitUp" Content="↑" Width="30" Height="24" IsEnabled="False" Click="BtnMoveSplitUp_Click" ToolTip.Tip="Move split up"/>
+                            <Button Name="BtnMoveSplitDown" Content="↓" Width="30" Height="24" IsEnabled="False" Click="BtnMoveSplitDown_Click" ToolTip.Tip="Move split down"/>
                         </StackPanel>
                         <Border BorderBrush="#444444" BorderThickness="1">
                             <ListBox Name="SplitsListBox" SelectionChanged="SplitsListBox_SelectionChanged"/>
