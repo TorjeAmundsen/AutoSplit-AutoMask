@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Avalonia.Controls;
+using Avalonia.VisualTree;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using SkiaSharp;
@@ -16,6 +17,8 @@ public partial class PresetEditor : Window
     private static readonly Regex InvalidNameChars = new(@"[#@{}\(\)\[\]\^]");
 
     private readonly string _presetsDirectory;
+    private readonly HashSet<string> _collapsedGroups = new(StringComparer.OrdinalIgnoreCase);
+    private string? _hoveredHeaderGroup;
     private List<EditablePreset> _editablePresets = [];
     private List<PresetDisplayItem> _presetDisplayItems = [];
     private EditablePreset? _selectedPreset;
@@ -52,7 +55,7 @@ public partial class PresetEditor : Window
 
             if (displayItem.IsHeader)
             {
-                item.IsHitTestVisible = false;
+                item.IsHitTestVisible = true;
                 item.Focusable = false;
                 item.Classes.Remove("Dirty");
             }
@@ -70,6 +73,103 @@ public partial class PresetEditor : Window
                 }
             }
         };
+
+        PresetListBox.Tapped += (_, e) =>
+        {
+            var source = e.Source as Avalonia.Visual;
+            while (source != null && source is not ListBoxItem)
+            {
+                source = source.GetVisualParent() as Avalonia.Visual;
+            }
+
+            if (source is not ListBoxItem container)
+            {
+                return;
+            }
+
+            int idx = PresetListBox.IndexFromContainer(container);
+            if (idx < 0 || idx >= _presetDisplayItems.Count || !_presetDisplayItems[idx].IsHeader)
+            {
+                return;
+            }
+
+            string gameName = _presetDisplayItems[idx].GroupName;
+            if (!_collapsedGroups.Remove(gameName))
+            {
+                _collapsedGroups.Add(gameName);
+            }
+
+            _suppressPresetSelection = true;
+            PopulatePresetList();
+            if (_selectedPreset != null)
+            {
+                int newIdx = _presetDisplayItems.FindIndex(d => d.Preset == _selectedPreset);
+                if (newIdx >= 0)
+                {
+                    PresetListBox.SelectedIndex = newIdx;
+                }
+            }
+            _suppressPresetSelection = false;
+        };
+
+        PresetListBox.PointerMoved += (_, e) =>
+        {
+            var source = e.Source as Avalonia.Visual;
+            while (source != null && source is not ListBoxItem && source != PresetListBox)
+            {
+                source = source.GetVisualParent() as Avalonia.Visual;
+            }
+
+            int idx = source is ListBoxItem li ? PresetListBox.IndexFromContainer(li) : -1;
+            string? newGroup = null;
+            if (idx >= 0 && idx < _presetDisplayItems.Count && _presetDisplayItems[idx].IsHeader)
+            {
+                newGroup = _presetDisplayItems[idx].GroupName;
+            }
+
+            if (newGroup == _hoveredHeaderGroup)
+            {
+                return;
+            }
+
+            _hoveredHeaderGroup = newGroup;
+            UpdateGroupHoverHighlight();
+        };
+
+        PresetListBox.PointerExited += (_, _) =>
+        {
+            if (_hoveredHeaderGroup == null)
+            {
+                return;
+            }
+
+            _hoveredHeaderGroup = null;
+            UpdateGroupHoverHighlight();
+        };
+    }
+
+    private void UpdateGroupHoverHighlight()
+    {
+        for (int i = 0; i < _presetDisplayItems.Count; i++)
+        {
+            if (PresetListBox.ContainerFromIndex(i) is not ListBoxItem container)
+            {
+                continue;
+            }
+
+            var item = _presetDisplayItems[i];
+            bool highlight = _hoveredHeaderGroup != null &&
+                (item.IsHeader ? item.GroupName : item.Preset?.GameName) == _hoveredHeaderGroup;
+
+            if (highlight)
+            {
+                container.Classes.Add("GroupHover");
+            }
+            else
+            {
+                container.Classes.Remove("GroupHover");
+            }
+        }
     }
 
     private void LoadFromPresets(List<SplitPreset> presets)
@@ -137,9 +237,15 @@ public partial class PresetEditor : Window
             if (preset.GameName != currentGame)
             {
                 currentGame = preset.GameName;
-                var header = PresetDisplayItem.ForHeader(currentGame);
+                bool collapsed = _collapsedGroups.Contains(currentGame);
+                var header = PresetDisplayItem.ForHeader(currentGame, collapsed);
                 _presetDisplayItems.Add(header);
                 PresetListBox.Items.Add(header);
+            }
+
+            if (_collapsedGroups.Contains(preset.GameName))
+            {
+                continue;
             }
 
             var item = PresetDisplayItem.ForPreset(preset);

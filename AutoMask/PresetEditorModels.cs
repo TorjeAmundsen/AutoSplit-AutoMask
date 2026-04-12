@@ -40,8 +40,11 @@ internal sealed class PresetDisplayItem
     public string GroupName { get; private init; } = "";
     public EditablePreset? Preset { get; private init; }
 
-    public static PresetDisplayItem ForHeader(string gameName)
-        => new() { IsHeader = true, GroupName = gameName };
+    public bool IsCollapsed { get; private init; }
+    public string CollapseArrow => IsCollapsed ? "▶" : "▼";
+
+    public static PresetDisplayItem ForHeader(string gameName, bool isCollapsed = false)
+        => new() { IsHeader = true, GroupName = gameName, IsCollapsed = isCollapsed };
 
     public static PresetDisplayItem ForPreset(EditablePreset p)
         => new() { Preset = p };

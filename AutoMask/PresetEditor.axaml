@@ -50,6 +50,9 @@
         <Style Selector="ListBoxItem.Dirty:selected /template/ ContentPresenter">
             <Setter Property="Background" Value="#5A3C00"/>
         </Style>
+        <Style Selector="ListBoxItem.GroupHover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#303030"/>
+        </Style>
         <Style Selector="NumericUpDown">
             <Setter Property="MinHeight" Value="0"/>
             <Setter Property="Padding" Value="4,2"/>
@@ -100,11 +103,17 @@
                             <DataTemplate>
                                 <Grid>
                                     <!-- Group header row -->
-                                    <TextBlock IsVisible="{Binding IsHeader}"
-                                               Text="{Binding GroupName}"
-                                               FontWeight="SemiBold" FontSize="11"
-                                               Foreground="#AAAAAA"
-                                               Margin="4,4,0,2"/>
+                                    <Grid IsVisible="{Binding IsHeader}"
+                                          ColumnDefinitions="*,5,Auto"
+                                          Cursor="Hand" Margin="4,4,0,2">
+                                        <TextBlock Grid.Column="0" Text="{Binding GroupName}"
+                                                   FontWeight="SemiBold" FontSize="11"
+                                                   Foreground="#AAAAAA" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding CollapseArrow}"
+                                                   FontSize="10" Foreground="#AAAAAA"
+                                                   VerticalAlignment="Center"/>
+                                    </Grid>
                                     <!-- Preset row -->
                                     <Grid IsVisible="{Binding !IsHeader}">
                                         <Rectangle Fill="#CC8800" Width="3" HorizontalAlignment="Left"
