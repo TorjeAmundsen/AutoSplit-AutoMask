@@ -334,7 +334,7 @@ public partial class PresetEditor : Window
         return split.MaskAbsolutePath;
     }
 
-    private void UpdateMaskPreview(string absolutePath)
+    private bool UpdateMaskPreview(string absolutePath)
     {
         _maskPreviewBitmap?.Dispose();
         _maskPreviewBitmap = null;
@@ -342,17 +342,18 @@ public partial class PresetEditor : Window
 
         if (string.IsNullOrEmpty(absolutePath) || !File.Exists(absolutePath))
         {
-            return;
+            return false;
         }
 
         try
         {
             _maskPreviewBitmap = new Bitmap(absolutePath);
             MaskPreviewImage.Source = _maskPreviewBitmap;
+            return true;
         }
         catch
         {
-            // If the file can't be loaded as a bitmap, simply don't show a preview
+            return false;
         }
     }
 
@@ -375,7 +376,18 @@ public partial class PresetEditor : Window
 
         _baseImagePath = files[0].Path.LocalPath;
         OutputPreviewHint.IsVisible = false;
+        BtnClearBaseImage.IsEnabled = true;
         await UpdateOutputPreview();
+    }
+
+    private void BtnClearBaseImage_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        _baseImagePath = null;
+        _outputPreviewBitmap?.Dispose();
+        _outputPreviewBitmap = null;
+        OutputPreviewImage.Source = null;
+        OutputPreviewHint.IsVisible = true;
+        BtnClearBaseImage.IsEnabled = false;
     }
 
     private async Task UpdateOutputPreview()
@@ -764,7 +776,18 @@ public partial class PresetEditor : Window
         SplitMaskBox.Text = MaskDisplayPath(_selectedSplit);
         _suppressFormEvents = false;
 
-        UpdateMaskPreview(pickedPath);
+        bool loaded = UpdateMaskPreview(pickedPath);
+        if (!loaded)
+        {
+            await MessageBoxManager
+                .GetMessageBoxStandard(
+                    "Invalid mask image",
+                    $"\"{Path.GetFileName(pickedPath)}\" could not be loaded as a bitmap. Make sure it is a valid PNG, JPG, or BMP file.",
+                    ButtonEnum.Ok,
+                    MsgBoxIcon.Error)
+                .ShowWindowDialogAsync(this);
+        }
+
         await UpdateOutputPreview();
         RefreshSelectedSplitLabel();
         MarkCurrentPresetDirty();
