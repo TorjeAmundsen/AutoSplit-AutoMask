@@ -39,6 +39,7 @@ public partial class PresetEditor : Window
         _presetsDirectory = presetsDirectory;
         LoadFromPresets(presets);
         PopulatePresetList();
+        RefreshGameNameSuggestions();
 
         PresetListBox.ContainerPrepared += (_, e) =>
         {
@@ -145,6 +146,18 @@ public partial class PresetEditor : Window
             _presetDisplayItems.Add(item);
             PresetListBox.Items.Add(item);
         }
+    }
+
+    private void RefreshGameNameSuggestions()
+    {
+        var gameNames = _editablePresets
+            .Select(p => p.GameName)
+            .Where(g => !string.IsNullOrWhiteSpace(g))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(g => g)
+            .ToList();
+
+        GameNameBox.ItemsSource = gameNames;
     }
 
     // Forces the DataTemplate for a preset list item to re-render by replacing the wrapper.
@@ -1100,6 +1113,7 @@ public partial class PresetEditor : Window
             // preset to a different group or creating/removing a group header.
             _suppressPresetSelection = true;
             PopulatePresetList();
+            RefreshGameNameSuggestions();
             int newDisplayIdx = _presetDisplayItems.FindIndex(d => d.Preset == preset);
             if (newDisplayIdx >= 0)
             {

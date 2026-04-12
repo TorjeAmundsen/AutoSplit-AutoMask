@@ -22,6 +22,13 @@
             <Setter Property="SelectionBrush" Value="#4D9ECA"/>
             <Setter Property="SelectionForegroundBrush" Value="White"/>
         </Style>
+        <Style Selector="AutoCompleteBox">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Background" Value="#363636"/>
+        </Style>
         <Style Selector="TextBox.Invalid">
             <Setter Property="BorderBrush" Value="#CC3333"/>
         </Style>
@@ -131,7 +138,9 @@
                     <TextBlock Grid.Column="0" Text="Preset Name:" VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <TextBox Grid.Column="1" Name="PresetNameBox" Height="24" TextChanged="PresetNameBox_TextChanged"/>
                     <TextBlock Grid.Column="3" Text="Game Name:" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <TextBox Grid.Column="4" Name="GameNameBox" Height="24" TextChanged="GameNameBox_TextChanged"/>
+                    <AutoCompleteBox Grid.Column="4" Name="GameNameBox" Height="24"
+                                     FilterMode="Contains"
+                                     TextChanged="GameNameBox_TextChanged"/>
                 </Grid>
 
                 <!-- Splits editor: list | form -->
