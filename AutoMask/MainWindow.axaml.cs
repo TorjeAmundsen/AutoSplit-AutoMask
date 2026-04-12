@@ -2,9 +2,7 @@ using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Avalonia.Controls;
-using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Templates;
-using Avalonia.Data;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
@@ -94,10 +92,9 @@ public partial class MainWindow : Window
         {
             if (e.NameScope.Find<ContentControl>("ContentPresenter") is { } cp)
             {
-                cp.ContentTemplate = new FuncDataTemplate<PresetComboItem>((_, _) =>
+                cp.ContentTemplate = new FuncDataTemplate<PresetComboItem>((item, _) =>
                 {
-                    var tb = new TextBlock();
-                    tb[!TextBlock.TextProperty] = new Binding(nameof(PresetComboItem.PresetName));
+                    var tb = new TextBlock { Text = item?.PresetName ?? "" };
                     return tb;
                 });
             }

@@ -10,18 +10,43 @@ function Build($rid, $selfContained) {
 
     Write-Host "Building AutoMask ($rid, $type)..."
 
+    # Native AOT requires building on the target OS.
+    # Use Docker for Linux AOT builds when running on Windows.
+    $currentOs = if ($IsWindows) { "win" } elseif ($IsLinux) { "linux" } else { "osx" }
+    $needsDocker = $selfContained -and -not $rid.StartsWith($currentOs)
+
+    if ($needsDocker -and $rid.StartsWith("linux")) {
+        Write-Host "  Using Docker for cross-OS AOT compilation..."
+
+        docker run --rm `
+            -v "${PSScriptRoot}:/src" `
+            -w /src `
+            mcr.microsoft.com/dotnet/sdk:10.0 `
+            bash -c "apt-get update && apt-get install -y clang zlib1g-dev && dotnet publish $project -c Release -r $rid --self-contained true /p:PublishAot=true -o /src/build/$rid/$type" `
+            | Out-Host
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Docker build failed for $rid ($type) with exit code $LASTEXITCODE"
+            exit $LASTEXITCODE
+        }
+
+        Write-Host "  Output: $output"
+        return $output
+    }
+
     $dotnetArgs = @(
         "publish", $project,
         "-c", "Release",
         "-r", $rid,
         "--self-contained", ($selfContained ? "true" : "false"),
-        "/p:PublishSingleFile=true",
-        "/p:IncludeNativeLibrariesForSelfExtract=true",
         "-o", $output
     )
 
     if ($selfContained) {
-        $dotnetArgs += "/p:PublishReadyToRun=true"
+        $dotnetArgs += "/p:PublishAot=true"
+    } else {
+        $dotnetArgs += "/p:PublishAot=false"
+        $dotnetArgs += "/p:PublishSingleFile=true"
     }
 
     dotnet @dotnetArgs | Out-Host
