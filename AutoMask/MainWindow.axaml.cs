@@ -6,10 +6,6 @@ using Avalonia.Controls.Templates;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
-using MessageBox.Avalonia.Enums;
-using MsBox.Avalonia;
-using MsBox.Avalonia.Enums;
-using MsgBoxIcon = MsBox.Avalonia.Enums.Icon;
 using SkiaSharp;
 
 namespace AutoSplit_AutoMask;
@@ -185,7 +181,7 @@ public partial class MainWindow : Window
 
         if (invalidPresetFolders.Count > 0)
         {
-            await ShowMessage("Warning", $"Invalid preset format found in: {string.Join(", ", invalidPresetFolders)}", MsgBoxIcon.Warning);
+            await ShowMessage("Warning", $"Invalid preset format found in: {string.Join(", ", invalidPresetFolders)}");
         }
 
         // Select the first actual preset (skip the leading group header)
@@ -392,7 +388,7 @@ public partial class MainWindow : Window
     {
         if (string.IsNullOrEmpty(_selectedInputImagePath) || string.IsNullOrEmpty(_alphaImagePath))
         {
-            await ShowMessage("Error", "Please load both the input image and the mask image.", MsgBoxIcon.Error);
+            await ShowMessage("Error", "Please load both the input image and the mask image.");
             return;
         }
 
@@ -444,19 +440,19 @@ public partial class MainWindow : Window
     {
         if (_maskedImage == null)
         {
-            await ShowMessage("Error", "Error getting masked output image.", MsgBoxIcon.Error);
+            await ShowMessage("Error", "Error getting masked output image.");
             return;
         }
 
         if (string.IsNullOrEmpty(_outputDirectoryPath))
         {
-            await ShowMessage("Error", "Please select an output directory.", MsgBoxIcon.Error);
+            await ShowMessage("Error", "Please select an output directory.");
             return;
         }
 
         if (!Directory.Exists(_outputDirectoryPath))
         {
-            await ShowMessage("Error", "Specified directory not found!", MsgBoxIcon.Error);
+            await ShowMessage("Error", "Specified directory not found!");
             return;
         }
 
@@ -464,11 +460,9 @@ public partial class MainWindow : Window
 
         if (File.Exists(outputPath))
         {
-            var result = await MessageBoxManager
-                .GetMessageBoxStandard("Alert", "File already exists! Do you want to overwrite it?", ButtonEnum.YesNo)
-                .ShowWindowDialogAsync(this);
+            var result = await MessageBox.Show(this, "Alert", "File already exists! Do you want to overwrite it?", MessageBoxButton.YesNo);
 
-            if (result != ButtonResult.Yes)
+            if (result != MessageBoxResult.Yes)
             {
                 return;
             }
@@ -560,7 +554,7 @@ public partial class MainWindow : Window
 
         if (currentPreset.Splits == null)
         {
-            await ShowMessage("Error", "Error loading selected split!", MsgBoxIcon.Error);
+            await ShowMessage("Error", "Error loading selected split!");
             _alphaImagePath = "";
             await UpdateOutputPreview();
             return;
@@ -600,7 +594,7 @@ public partial class MainWindow : Window
 
         if (_inputImagePaths == null)
         {
-            await ShowMessage("Error", "No input images loaded!", MsgBoxIcon.Error);
+            await ShowMessage("Error", "No input images loaded!");
             await UpdateOutputPreview();
             return;
         }
@@ -616,7 +610,7 @@ public partial class MainWindow : Window
     {
         if (string.IsNullOrEmpty(_outputDirectoryPath))
         {
-            await ShowMessage("Error", "Please select an output directory below.", MsgBoxIcon.Error);
+            await ShowMessage("Error", "Please select an output directory below.");
             return;
         }
 
@@ -646,11 +640,9 @@ public partial class MainWindow : Window
         BtnNextAlphaImage.IsEnabled = splitIndex >= 0 && splitIndex < splitCount - 1;
     }
 
-    private async Task ShowMessage(string title, string message, Icon icon = MsgBoxIcon.None, string? detail = null)
+    private async Task ShowMessage(string title, string message, string? detail = null)
     {
         var fullMessage = detail is null ? message : $"{message}\n\n{detail}";
-        await MessageBoxManager
-            .GetMessageBoxStandard(title, fullMessage, ButtonEnum.Ok, icon)
-            .ShowWindowDialogAsync(this);
+        await MessageBox.Show(this, title, fullMessage);
     }
 }

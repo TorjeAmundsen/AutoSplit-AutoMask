@@ -4,10 +4,6 @@ using Avalonia.VisualTree;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using SkiaSharp;
-using MessageBox.Avalonia.Enums;
-using MsBox.Avalonia;
-using MsBox.Avalonia.Enums;
-using MsgBoxIcon = MsBox.Avalonia.Enums.Icon;
 
 namespace AutoSplit_AutoMask;
 
@@ -893,13 +889,9 @@ public partial class PresetEditor : Window
         bool loaded = UpdateMaskPreview(pickedPath);
         if (!loaded)
         {
-            await MessageBoxManager
-                .GetMessageBoxStandard(
+            await MessageBox.Show(this,
                     "Invalid mask image",
-                    $"\"{Path.GetFileName(pickedPath)}\" could not be loaded as a bitmap. Make sure it is a valid PNG, JPG, or BMP file.",
-                    ButtonEnum.Ok,
-                    MsgBoxIcon.Error)
-                .ShowWindowDialogAsync(this);
+                    $"\"{Path.GetFileName(pickedPath)}\" could not be loaded as a bitmap. Make sure it is a valid PNG file.");
         }
 
         await UpdateOutputPreview();
@@ -1191,15 +1183,12 @@ public partial class PresetEditor : Window
 
             if (Directory.Exists(targetFolder))
             {
-                var overwrite = await MessageBoxManager
-                    .GetMessageBoxStandard(
+                var overwrite = await MessageBox.Show(this,
                         "Folder already exists",
                         $"A preset folder named \"{folderName}\" already exists. Overwrite it?",
-                        ButtonEnum.YesNo,
-                        MsgBoxIcon.Warning)
-                    .ShowWindowDialogAsync(this);
+                        MessageBoxButton.YesNo);
 
-                if (overwrite != ButtonResult.Yes)
+                if (overwrite != MessageBoxResult.Yes)
                 {
                     return;
                 }
@@ -1305,15 +1294,11 @@ public partial class PresetEditor : Window
 
             string folderLabel = Path.GetFileName(
                 preset.OriginalFolder!.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-            await MessageBoxManager
-                .GetMessageBoxStandard("Saved", $"Preset saved to \"{folderLabel}\".")
-                .ShowWindowDialogAsync(this);
+            await MessageBox.Show(this, "Saved", $"Preset saved to \"{folderLabel}\".");
         }
         catch (Exception ex)
         {
-            await MessageBoxManager
-                .GetMessageBoxStandard("Save failed", ex.Message, ButtonEnum.Ok, MsgBoxIcon.Error)
-                .ShowWindowDialogAsync(this);
+            await MessageBox.Show(this, "Save failed", ex.Message);
         }
     }
 
@@ -1327,15 +1312,12 @@ public partial class PresetEditor : Window
                 .Where(p => p.IsDirty)
                 .Select(p => string.IsNullOrWhiteSpace(p.PresetName) ? "(unnamed)" : p.PresetName);
 
-            var result = await MessageBoxManager
-                .GetMessageBoxStandard(
+            var result = await MessageBox.Show(this,
                     "Unsaved changes",
                     $"The following presets have unsaved changes:\n\n{string.Join("\n", dirtyNames)}\n\nClose and discard changes?",
-                    ButtonEnum.YesNo,
-                    MsgBoxIcon.Warning)
-                .ShowWindowDialogAsync(this);
+                    MessageBoxButton.YesNo);
 
-            if (result == ButtonResult.Yes)
+            if (result == MessageBoxResult.Yes)
             {
                 _closingConfirmed = true;
                 Close();
@@ -1347,19 +1329,16 @@ public partial class PresetEditor : Window
 
     private async Task<UnsavedAction> ShowUnsavedChangesDialogAsync(string presetName)
     {
-        var result = await MessageBoxManager
-            .GetMessageBoxStandard(
+        var result = await MessageBox.Show(this,
                 "Unsaved changes",
                 $"\"{presetName}\" has unsaved changes. Save before switching?",
-                ButtonEnum.YesNoCancel,
-                MsgBoxIcon.Warning)
-            .ShowWindowDialogAsync(this);
+                MessageBoxButton.YesNoCancel);
 
         return result switch
         {
-            ButtonResult.Yes => UnsavedAction.Save,
-            ButtonResult.No  => UnsavedAction.Discard,
-            _                => UnsavedAction.Cancel,
+            MessageBoxResult.Yes => UnsavedAction.Save,
+            MessageBoxResult.No  => UnsavedAction.Discard,
+            _                    => UnsavedAction.Cancel,
         };
     }
 
