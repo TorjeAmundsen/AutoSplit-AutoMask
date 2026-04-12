@@ -76,13 +76,14 @@ public partial class MainWindow : Window
 
         ComboBoxSelectPreset.ContainerPrepared += (_, e) =>
         {
-            if (e.Container is ComboBoxItem item
-                && e.Index < _presetDisplayMap.Count
-                && _presetDisplayMap[e.Index] == null)
+            if (e.Container is not ComboBoxItem item || e.Index >= _presetDisplayMap.Count)
             {
-                item.IsHitTestVisible = false;
-                item.Focusable = false;
+                return;
             }
+
+            bool isHeader = _presetDisplayMap[e.Index] == null;
+            item.IsHitTestVisible = !isHeader;
+            item.Focusable = !isHeader;
         };
 
         // Override the selection-box ContentPresenter's ContentTemplate with a local value so
