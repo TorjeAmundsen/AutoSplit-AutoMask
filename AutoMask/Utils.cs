@@ -4,7 +4,7 @@ namespace AutoSplit_AutoMask;
 
 public static class Utils
 {
-    public const string AutoMaskSemVer = "0.3.0";
+    public const string AutoMaskSemVer = "0.4.0";
     public const string VersionSuffix = "alpha";
 
     public static void OpenInFileManager(string path)
