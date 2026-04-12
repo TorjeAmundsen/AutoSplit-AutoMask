@@ -33,31 +33,43 @@ public static class PresetService
         var split = preset.Splits![splitIndex];
         int totalSplits = preset.Splits.Count;
 
-        string prefix = split.Name switch
+        float? pauseTime = Math.Abs(split.PauseTime - 3.0f) > 0.01f ? split.PauseTime : null;
+        uint? delay = split.Delay > 0 ? split.Delay : null;
+
+        return BuildFilename(split.Name, splitIndex, totalSplits,
+            split.Threshold, pauseTime, delay, split.Dummy, split.Inverted);
+    }
+
+    public static string BuildFilename(string name, int splitIndex, int totalSplits,
+        float? threshold, float? pauseTime, uint? delay, bool dummy, bool inverted)
+    {
+        string prefix = name switch
         {
             "reset" => "reset",
             "start_auto_splitter" => "start_auto_splitter",
-            _ => $"{splitIndex.ToString().PadLeft(totalSplits.ToString().Length, '0')}_{split.Name}"
+            _ => $"{splitIndex.ToString().PadLeft(totalSplits.ToString().Length, '0')}_{name}"
         };
 
-        string output = $"{prefix}_({split.Threshold.ToString(System.Globalization.CultureInfo.InvariantCulture)})";
+        string output = threshold is { } t
+            ? $"{prefix}_({t.ToString(System.Globalization.CultureInfo.InvariantCulture)})"
+            : prefix;
 
-        if (!(Math.Abs(split.PauseTime - 3.0) < 0.01f))
+        if (pauseTime is { } pt)
         {
-            output += $"_[{split.PauseTime.ToString(System.Globalization.CultureInfo.InvariantCulture)}]";
+            output += $"_[{pt.ToString(System.Globalization.CultureInfo.InvariantCulture)}]";
         }
 
-        if (split.Delay > 0)
+        if (delay is { } d)
         {
-            output += $"_#{split.Delay}#";
+            output += $"_#{d}#";
         }
 
-        if (split.Dummy)
+        if (dummy)
         {
             output += "_{d}";
         }
 
-        if (split.Inverted)
+        if (inverted)
         {
             output += "_{b}";
         }

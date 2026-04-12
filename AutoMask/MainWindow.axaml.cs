@@ -142,11 +142,6 @@ public partial class MainWindow : Window
         CheckSavePossible();
     }
 
-    private async void BtnRefreshPresets_Click(object sender, RoutedEventArgs e)
-    {
-        await RefreshPresetsAsync();
-    }
-
     private async void ComboBoxSelectPreset_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (selectedPresetIndex < 0 || selectedPresetIndex >= _splitPresets.Count)
@@ -560,8 +555,12 @@ public partial class MainWindow : Window
 
     private async void BtnOpenPresetEditor_Click(object sender, RoutedEventArgs e)
     {
-        var editorWindow = new PresetEditor(_splitPresets);
+        var editorWindow = new PresetEditor(_splitPresets, _currentPresetsDirectory);
         await editorWindow.ShowDialog(this);
+        if (editorWindow.PresetsModified)
+        {
+            await RefreshPresetsAsync();
+        }
     }
 
     private void UpdateNavigationButtons()

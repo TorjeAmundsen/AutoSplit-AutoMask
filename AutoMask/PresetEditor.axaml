@@ -1,9 +1,245 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="AutoSplit_AutoMask.PresetEditor"
-        Title="PresetEditor" Height="800" Width="600">
-    <Grid Name="MainGrid">
-        <!--<Button HorizontalContentAlignment="Left" Padding="5,0,0,0" Width="150" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10">Create new preset</Button>
-        <Button HorizontalContentAlignment="Left" Padding="5,0,0,0" Width="150" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10, 42, 10, 10">Edit existing preset</Button>-->
-    </Grid>
+        Title="Preset Editor" Height="720" Width="960"
+        CanResize="False" FontSize="12"
+        Background="#2C2C2C">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#3C3C3C"/>
+        <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#565656"/>
+        <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#3C3C3C"/>
+        <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#565656"/>
+    </Window.Resources>
+
+    <Window.Styles>
+        <Style Selector="TextBox">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Background" Value="#363636"/>
+            <Setter Property="SelectionBrush" Value="#4D9ECA"/>
+            <Setter Property="SelectionForegroundBrush" Value="White"/>
+        </Style>
+        <Style Selector="TextBox.Invalid">
+            <Setter Property="BorderBrush" Value="#CC3333"/>
+        </Style>
+        <Style Selector="ListBox">
+            <Setter Property="Background" Value="#252525"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="6,3"/>
+            <Setter Property="MinHeight" Value="0"/>
+        </Style>
+        <Style Selector="NumericUpDown">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Background" Value="#363636"/>
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="8,3"/>
+        </Style>
+        <Style Selector="CheckBox">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="6,0,0,0"/>
+        </Style>
+    </Window.Styles>
+
+    <DockPanel Margin="8">
+
+        <!-- Bottom action bar -->
+        <Border DockPanel.Dock="Bottom" BorderBrush="#444444" BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,8,0,0">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Name="BtnSave" Content="Save" Click="BtnSave_Click" Width="80"/>
+                <Button Name="BtnSaveAsNew" Content="Save As New Preset..." Click="BtnSaveAsNew_Click" Width="160"/>
+                <Button Content="Close" Click="BtnClose_Click" Width="80"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Main two-panel layout: preset list | preset editor -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="240"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: preset list -->
+            <DockPanel Grid.Column="0">
+                <Button DockPanel.Dock="Bottom" Content="New Preset" Click="BtnNewPreset_Click"
+                        Margin="0,6,0,0" HorizontalAlignment="Stretch"/>
+                <Border BorderBrush="#444444" BorderThickness="1">
+                    <ListBox Name="PresetListBox" SelectionChanged="PresetListBox_SelectionChanged"/>
+                </Border>
+            </DockPanel>
+
+            <!-- Divider -->
+            <Border Grid.Column="1" BorderBrush="#444444" BorderThickness="1,0,0,0" Margin="3,0"/>
+
+            <!-- Right: preset editor -->
+            <DockPanel Grid.Column="2">
+
+                <!-- Preset metadata -->
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Preset Name:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBox Grid.Column="1" Name="PresetNameBox" Height="24" TextChanged="PresetNameBox_TextChanged"/>
+                    <TextBlock Grid.Column="3" Text="Game Name:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBox Grid.Column="4" Name="GameNameBox" Height="24" TextChanged="GameNameBox_TextChanged"/>
+                </Grid>
+
+                <!-- Splits editor: list | form -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="170"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Splits list + toolbar -->
+                    <DockPanel Grid.Column="0">
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                            <Button Name="BtnAddSplit" Content="+" Width="28" Click="BtnAddSplit_Click" ToolTip.Tip="Add split after selected"/>
+                            <Button Name="BtnRemoveSplit" Content="-" Width="28" Click="BtnRemoveSplit_Click" ToolTip.Tip="Remove selected split"/>
+                            <Button Name="BtnMoveSplitUp" Content="↑" Width="28" Click="BtnMoveSplitUp_Click" ToolTip.Tip="Move split up"/>
+                            <Button Name="BtnMoveSplitDown" Content="↓" Width="28" Click="BtnMoveSplitDown_Click" ToolTip.Tip="Move split down"/>
+                        </StackPanel>
+                        <Border BorderBrush="#444444" BorderThickness="1">
+                            <ListBox Name="SplitsListBox" SelectionChanged="SplitsListBox_SelectionChanged"/>
+                        </Border>
+                    </DockPanel>
+
+                    <!-- Divider -->
+                    <Border Grid.Column="1" BorderBrush="#444444" BorderThickness="1,0,0,0" Margin="3,0"/>
+
+                    <!-- Split property form -->
+                    <DockPanel Grid.Column="2">
+
+                    <!-- Image previews -->
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="8"
+                                Margin="6,8,0,0">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Mask preview" Foreground="#888888" FontSize="11"/>
+                            <Border Name="MaskPreviewBorder" BorderBrush="#444444" BorderThickness="1"
+                                    Background="#151515" Width="252" Height="189">
+                                <Image Name="MaskPreviewImage" Stretch="Uniform"/>
+                            </Border>
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Output preview" Foreground="#888888" FontSize="11"/>
+                            <Border Name="OutputPreviewBorder" BorderBrush="#444444" BorderThickness="1"
+                                    Background="#151515" Width="252" Height="189"
+                                    Cursor="Hand" PointerPressed="OutputPreviewBorder_PointerPressed">
+                                <Grid>
+                                    <TextBlock Name="OutputPreviewHint"
+                                               Text="Click to load base image"
+                                               Foreground="#555555"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                    <Image Name="OutputPreviewImage" Stretch="Uniform"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Grid>
+                    <TextBlock Name="NoSplitSelectedHint"
+                               Text="Select a split to edit it"
+                               Foreground="#666666"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               IsVisible="True"/>
+                    <ScrollViewer Name="SplitFormScrollViewer" VerticalScrollBarVisibility="Auto" IsVisible="False">
+                        <StackPanel Name="SplitFormPanel" Spacing="6" Margin="6,0,0,0">
+
+                            <TextBlock Text="Name:"/>
+                            <TextBox Name="SplitNameBox" Height="24" TextChanged="SplitNameBox_TextChanged"/>
+                            <TextBlock Name="FilenamePreviewLabel" FontSize="11" Foreground="#888888"
+                                       TextTrimming="CharacterEllipsis" Margin="0,-2,0,0"/>
+
+                            <TextBlock Text="Mask image:"/>
+                            <Grid ColumnDefinitions="*,6,Auto">
+                                <TextBox Grid.Column="0" Name="SplitMaskBox" Height="24" IsReadOnly="True"/>
+                                <Button Grid.Column="2" Content="Browse..." Height="24" Click="BtnBrowseMask_Click"/>
+                            </Grid>
+
+                            <StackPanel Spacing="4">
+                                <CheckBox Name="SplitThresholdEnabledCheck" Content="Threshold"
+                                          IsCheckedChanged="SplitThresholdEnabledCheck_IsCheckedChanged"/>
+                                <Grid ColumnDefinitions="60,8,*">
+                                    <TextBox Grid.Column="0" Name="SplitThresholdBox" Height="24"
+                                             IsEnabled="{Binding #SplitThresholdEnabledCheck.IsChecked}"
+                                             TextChanged="SplitThresholdBox_TextChanged"
+                                             LostFocus="SplitThresholdBox_LostFocus"/>
+                                    <Slider Grid.Column="2" Name="SplitThresholdSlider"
+                                            Minimum="0" Maximum="1" SmallChange="0.01" LargeChange="0.05"
+                                            IsEnabled="{Binding #SplitThresholdEnabledCheck.IsChecked}"
+                                            VerticalAlignment="Center"
+                                            ValueChanged="SplitThresholdSlider_ValueChanged"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <!-- Pause time box -->
+                                <Border BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="5,4">
+                                    <Grid ColumnDefinitions="Auto,5,Auto,3,Auto">
+                                        <CheckBox Grid.Column="0" Name="SplitPauseTimeEnabledCheck" Content="Pause"
+                                                  IsCheckedChanged="SplitPauseTimeEnabledCheck_IsCheckedChanged"/>
+                                        <TextBox Grid.Column="2" Name="SplitPauseTimeBox" Width="40" Height="24"
+                                                 IsEnabled="{Binding #SplitPauseTimeEnabledCheck.IsChecked}"
+                                                 TextChanged="SplitPauseTimeBox_TextChanged"
+                                                 LostFocus="SplitPauseTimeBox_LostFocus"/>
+                                        <TextBlock Grid.Column="4" Text="s" VerticalAlignment="Center" Foreground="#888888"
+                                                   IsEnabled="{Binding #SplitPauseTimeEnabledCheck.IsChecked}"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Delay box -->
+                                <Border BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="5,4">
+                                    <Grid ColumnDefinitions="Auto,5,Auto,3,Auto">
+                                        <CheckBox Grid.Column="0" Name="SplitDelayEnabledCheck" Content="Delay"
+                                                  IsCheckedChanged="SplitDelayEnabledCheck_IsCheckedChanged"/>
+                                        <TextBox Grid.Column="2" Name="SplitDelayBox" Width="42" Height="24"
+                                                 IsEnabled="{Binding #SplitDelayEnabledCheck.IsChecked}"
+                                                 TextChanged="SplitDelayBox_TextChanged"
+                                                 LostFocus="SplitDelayBox_LostFocus"/>
+                                        <TextBlock Grid.Column="4" Text="ms" VerticalAlignment="Center" Foreground="#888888"
+                                                   IsEnabled="{Binding #SplitDelayEnabledCheck.IsChecked}"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Dummy box -->
+                                <Border BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="6,4">
+                                    <CheckBox Name="SplitDummyCheck" Content="Dummy"
+                                              IsCheckedChanged="SplitDummyCheck_IsCheckedChanged"/>
+                                </Border>
+
+                                <!-- Inverted box -->
+                                <Border BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="6,4">
+                                    <CheckBox Name="SplitInvertedCheck" Content="Inverted"
+                                              IsCheckedChanged="SplitInvertedCheck_IsCheckedChanged"/>
+                                </Border>
+                            </StackPanel>
+
+                        </StackPanel>
+                    </ScrollViewer>
+                    </Grid>
+
+                    </DockPanel>
+
+                </Grid>
+            </DockPanel>
+
+        </Grid>
+    </DockPanel>
 </Window>
