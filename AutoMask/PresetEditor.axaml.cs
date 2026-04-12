@@ -339,9 +339,16 @@ public partial class PresetEditor : Window
         _maskPreviewBitmap?.Dispose();
         _maskPreviewBitmap = null;
         MaskPreviewImage.Source = null;
+        MaskPreviewError.IsVisible = false;
 
-        if (string.IsNullOrEmpty(absolutePath) || !File.Exists(absolutePath))
+        if (string.IsNullOrEmpty(absolutePath))
         {
+            return false;
+        }
+
+        if (!File.Exists(absolutePath))
+        {
+            MaskPreviewError.IsVisible = true;
             return false;
         }
 
@@ -353,6 +360,7 @@ public partial class PresetEditor : Window
         }
         catch
         {
+            MaskPreviewError.IsVisible = true;
             return false;
         }
     }
@@ -365,7 +373,7 @@ public partial class PresetEditor : Window
             AllowMultiple = false,
             FileTypeFilter =
             [
-                new FilePickerFileType("Image files") { Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp"] }
+                new FilePickerFileType("PNG Files") { Patterns = ["*.png"] }
             ]
         });
 

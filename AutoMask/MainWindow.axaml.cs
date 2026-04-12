@@ -319,8 +319,7 @@ public partial class MainWindow : Window
             Title = "Select Input Image",
             FileTypeFilter =
             [
-                new FilePickerFileType("Image Files") { Patterns = ["*.jpg", "*.jpeg", "*.png", "*.bmp"] },
-                new FilePickerFileType("All Files") { Patterns = ["*"] }
+                new FilePickerFileType("PNG Files") { Patterns = ["*.png"] },
             ]
         });
 

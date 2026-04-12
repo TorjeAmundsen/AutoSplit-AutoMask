@@ -182,7 +182,15 @@
                             <TextBlock Text="Mask preview" Foreground="#888888" FontSize="11"/>
                             <Border Name="MaskPreviewBorder" BorderBrush="#444444" BorderThickness="1"
                                     Background="#151515" Width="252" Height="189">
-                                <Image Name="MaskPreviewImage" Stretch="Uniform"/>
+                                <Grid>
+                                    <TextBlock Name="MaskPreviewError"
+                                               Text="Failed to load image"
+                                               Foreground="#CC4444"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               IsVisible="False"/>
+                                    <Image Name="MaskPreviewImage" Stretch="Uniform"/>
+                                </Grid>
                             </Border>
                         </StackPanel>
                         <StackPanel Spacing="4">
