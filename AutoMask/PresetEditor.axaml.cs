@@ -13,6 +13,7 @@ public partial class PresetEditor : Window
     private static readonly Regex InvalidNameChars = new(@"[#@{}\(\)\[\]\^]");
 
     private readonly string _presetsDirectory;
+    private readonly string _splitsDirectory;
     private readonly HashSet<string> _collapsedGroups = new(StringComparer.OrdinalIgnoreCase);
     private string? _hoveredHeaderGroup;
     private List<EditablePreset> _editablePresets = [];
@@ -32,10 +33,11 @@ public partial class PresetEditor : Window
 
     public bool PresetsModified { get; private set; }
 
-    public PresetEditor(List<SplitPreset> presets, string presetsDirectory)
+    public PresetEditor(List<SplitPreset> presets, string presetsDirectory, string splitsDirectory)
     {
         InitializeComponent();
         _presetsDirectory = presetsDirectory;
+        _splitsDirectory = splitsDirectory;
         LoadFromPresets(presets);
         PopulatePresetList();
         RefreshGameNameSuggestions();
@@ -566,6 +568,7 @@ public partial class PresetEditor : Window
             BtnRemoveSplit.IsEnabled = false;
             BtnMoveSplitUp.IsEnabled = false;
             BtnMoveSplitDown.IsEnabled = false;
+            BtnImportSplits.IsEnabled = false;
             return;
         }
 
@@ -580,6 +583,7 @@ public partial class PresetEditor : Window
         BtnRemoveSplit.IsEnabled = true;
         BtnMoveSplitUp.IsEnabled = true;
         BtnMoveSplitDown.IsEnabled = true;
+        BtnImportSplits.IsEnabled = true;
     }
 
     private async void PresetListBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -834,6 +838,72 @@ public partial class PresetEditor : Window
 
         PopulateSplitsList();
         SplitsListBox.SelectedIndex = index + 1;
+        MarkCurrentPresetDirty();
+    }
+
+    private async void BtnImportSplits_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_selectedPreset == null)
+        {
+            return;
+        }
+
+        List<PremadeSplitsFile> premadeSplits;
+        try
+        {
+            premadeSplits = await PresetService.LoadPremadeSplitsAsync(_splitsDirectory);
+        }
+        catch (Exception ex)
+        {
+            await MessageBox.Show(this, "Error", $"Failed to load pre-made splits: {ex.Message}");
+            return;
+        }
+
+        if (premadeSplits.Count == 0)
+        {
+            await MessageBox.Show(this, "No Splits Found",
+                "No pre-made split files were found in the splits folder.");
+            return;
+        }
+
+        var dialog = new ImportSplitsDialog(premadeSplits);
+        await dialog.ShowDialog(this);
+
+        if (dialog.SelectedSplits.Count == 0)
+        {
+            return;
+        }
+
+        int insertAt = SplitsListBox.SelectedIndex + 1;
+        if (insertAt <= 0 || insertAt > _selectedPreset.Splits.Count)
+        {
+            insertAt = _selectedPreset.Splits.Count;
+        }
+
+        foreach (var (file, split) in dialog.SelectedSplits)
+        {
+            string maskAbsolutePath = string.IsNullOrEmpty(split.Mask)
+                ? ""
+                : Path.GetFullPath(Path.Combine(file.FolderPath!, split.Mask));
+
+            _selectedPreset.Splits.Insert(insertAt, new EditableSplit
+            {
+                Name = split.Name,
+                MaskAbsolutePath = maskAbsolutePath,
+                ThresholdEnabled = true,
+                Threshold = Math.Round((double)split.Threshold, 2),
+                PauseTimeEnabled = Math.Abs(split.PauseTime - 3.0f) > 0.001f,
+                PauseTime = Math.Round((double)split.PauseTime, 2),
+                DelayEnabled = split.Delay > 0,
+                Delay = (int)split.Delay,
+                Dummy = split.Dummy,
+                Inverted = split.Inverted,
+            });
+            insertAt++;
+        }
+
+        PopulateSplitsList();
+        SplitsListBox.SelectedIndex = insertAt - 1;
         MarkCurrentPresetDirty();
     }
 

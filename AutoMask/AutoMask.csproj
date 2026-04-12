@@ -147,6 +147,16 @@
     </ItemGroup>
 
     <ItemGroup>
+      <None Remove="splits\**\*" />
+      <Content Include="splits\**\*">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="ImportSplitsDialog.axaml.cs">
+        <DependentUpon>ImportSplitsDialog.axaml</DependentUpon>
+      </Compile>
       <Compile Update="PresetEditor.axaml.cs">
         <DependentUpon>PresetEditor.axaml</DependentUpon>
       </Compile>

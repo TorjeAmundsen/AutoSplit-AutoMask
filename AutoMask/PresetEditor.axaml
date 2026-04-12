@@ -173,6 +173,7 @@
                             <Button Name="BtnDuplicateSplit" Content="⧉" Width="34" Height="24" IsEnabled="False" Click="BtnDuplicateSplit_Click" ToolTip.Tip="Duplicate selected split"/>
                             <Button Name="BtnMoveSplitUp" Content="↑" Width="30" Height="24" IsEnabled="False" Click="BtnMoveSplitUp_Click" ToolTip.Tip="Move split up"/>
                             <Button Name="BtnMoveSplitDown" Content="↓" Width="30" Height="24" IsEnabled="False" Click="BtnMoveSplitDown_Click" ToolTip.Tip="Move split down"/>
+                            <Button Name="BtnImportSplits" Content="📥" Width="34" Height="24" IsEnabled="False" Click="BtnImportSplits_Click" ToolTip.Tip="Import pre-made splits"/>
                         </StackPanel>
                         <Border BorderBrush="#444444" BorderThickness="1">
                             <ListBox Name="SplitsListBox" SelectionChanged="SplitsListBox_SelectionChanged"/>

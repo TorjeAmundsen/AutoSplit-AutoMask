@@ -1,0 +1,52 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "AutoMask Pre-made Splits",
+    "$id": "splits-schema.json",
+    "type": "object",
+    "required": ["gameName", "splits"],
+    "properties": {
+        "$schema": { "type": "string" },
+        "gameName": { "type": "string" },
+        "splits": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/Split" }
+        }
+    },
+    "additionalProperties": false,
+    "$defs": {
+        "Split": {
+            "type": "object",
+            "required": ["mask", "name"],
+            "properties": {
+                "mask": {
+                    "type": "string",
+                    "description": "File path to mask image (png) relative to splits.json",
+                    "pattern": "^.*\\.png$"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name of the split",
+                    "pattern": "^[^#@{}\\(\\)\\[\\]\\^]*$"
+                },
+                "threshold": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "pauseTime": {
+                    "type": "number"
+                },
+                "delay": {
+                    "type": "integer"
+                },
+                "dummy": {
+                    "type": "boolean"
+                },
+                "inverted": {
+                    "type": "boolean"
+                }
+            },
+            "additionalProperties": false
+        }
+    }
+}
