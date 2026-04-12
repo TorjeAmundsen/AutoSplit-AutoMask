@@ -188,7 +188,7 @@
                     <!-- Image previews -->
                     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="8"
                                 Margin="6,8,0,0">
-                        <StackPanel Spacing="4">
+                        <StackPanel Spacing="4" VerticalAlignment="Bottom">
                             <TextBlock Text="Mask preview" Foreground="#888888" FontSize="11"/>
                             <Border Name="MaskPreviewBorder" BorderBrush="#444444" BorderThickness="1"
                                     Background="#151515" Width="252" Height="189">
