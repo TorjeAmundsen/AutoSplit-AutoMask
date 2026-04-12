@@ -43,8 +43,8 @@
         <Button HorizontalContentAlignment="Center" Name="BtnLoadInputImage" Content="Load input image(s)" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,12,0,0" Width="152" Height="28" Click="BtnLoadInputImages_Click" />
         <Button HorizontalContentAlignment="Center" Content="Show output" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="170,12,0,0" Width="107" Height="28" Click="BtnShowOutput_Click" />
         <Button HorizontalContentAlignment="Center" Name="BtnOpenOutputFolder" Content="Show presets" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="285,12,0,0" Width="117" Height="28" Click="BtnOpenPresetsFolder_Click" />
-        <ComboBox Name="ComboBoxSelectPreset" Width="323" Height="28" ItemsSource="{Binding presetComboBoxItems}" SelectedIndex="{Binding selectedPresetIndex}" SelectionChanged="ComboBoxSelectPreset_SelectionChanged" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="418,12,0,0" />
-        <Button HorizontalContentAlignment="Center" Name="BtnOpenPresetEditor" Content="Edit presets" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="749,12,0,0" Width="61" Height="28" Click="BtnOpenPresetEditor_Click" />
+        <ComboBox Name="ComboBoxSelectPreset" Width="333" Height="28" ItemsSource="{Binding presetComboBoxItems}" SelectedIndex="{Binding selectedPresetIndex}" SelectionChanged="ComboBoxSelectPreset_SelectionChanged" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="418,12,0,0" />
+        <Button HorizontalContentAlignment="Center" Name="BtnOpenPresetEditor" Content="Edit" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="759,12,0,0" Width="51" Height="28" Click="BtnOpenPresetEditor_Click" />
 
         <!-- Row 2: preview labels -->
         <TextBlock Text="Input image preview" Name="InputImageLabel" Width="392" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Margin="10,52,0,0" />

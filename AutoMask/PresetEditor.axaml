@@ -15,6 +15,7 @@
     <Window.Styles>
         <Style Selector="TextBox">
             <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="MinWidth" Value="0"/>
             <Setter Property="Padding" Value="4,2"/>
             <Setter Property="BorderBrush" Value="#444444"/>
             <Setter Property="Background" Value="#363636"/>
@@ -173,29 +174,29 @@
                                 <Button Grid.Column="2" Content="Browse..." Height="24" Click="BtnBrowseMask_Click"/>
                             </Grid>
 
-                            <StackPanel Spacing="4">
-                                <CheckBox Name="SplitThresholdEnabledCheck" Content="Threshold"
-                                          IsCheckedChanged="SplitThresholdEnabledCheck_IsCheckedChanged"/>
-                                <Grid ColumnDefinitions="60,8,*">
-                                    <TextBox Grid.Column="0" Name="SplitThresholdBox" Height="24"
+                            <Border BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="10,0">
+                                <Grid ColumnDefinitions="Auto,8,60,8,*">
+                                    <CheckBox Grid.Column="0" Name="SplitThresholdEnabledCheck" Content="Threshold"
+                                              IsCheckedChanged="SplitThresholdEnabledCheck_IsCheckedChanged"/>
+                                    <TextBox Grid.Column="2" Name="SplitThresholdBox" Height="24"
                                              IsEnabled="{Binding #SplitThresholdEnabledCheck.IsChecked}"
                                              TextChanged="SplitThresholdBox_TextChanged"
                                              LostFocus="SplitThresholdBox_LostFocus"/>
-                                    <Slider Grid.Column="2" Name="SplitThresholdSlider"
+                                    <Slider Grid.Column="4" Name="SplitThresholdSlider"
                                             Minimum="0" Maximum="1" SmallChange="0.01" LargeChange="0.05"
                                             IsEnabled="{Binding #SplitThresholdEnabledCheck.IsChecked}"
                                             VerticalAlignment="Center"
                                             ValueChanged="SplitThresholdSlider_ValueChanged"/>
                                 </Grid>
-                            </StackPanel>
+                            </Border>
 
                             <StackPanel Orientation="Horizontal" Spacing="4">
                                 <!-- Pause time box -->
-                                <Border BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="5,4">
+                                <Border BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="10,4">
                                     <Grid ColumnDefinitions="Auto,5,Auto,3,Auto">
                                         <CheckBox Grid.Column="0" Name="SplitPauseTimeEnabledCheck" Content="Pause"
                                                   IsCheckedChanged="SplitPauseTimeEnabledCheck_IsCheckedChanged"/>
-                                        <TextBox Grid.Column="2" Name="SplitPauseTimeBox" Width="40" Height="24"
+                                        <TextBox Grid.Column="2" Name="SplitPauseTimeBox" Width="55" Height="24"
                                                  IsEnabled="{Binding #SplitPauseTimeEnabledCheck.IsChecked}"
                                                  TextChanged="SplitPauseTimeBox_TextChanged"
                                                  LostFocus="SplitPauseTimeBox_LostFocus"/>
@@ -205,11 +206,11 @@
                                 </Border>
 
                                 <!-- Delay box -->
-                                <Border BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="5,4">
-                                    <Grid ColumnDefinitions="Auto,5,Auto,3,Auto">
+                                <Border BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="10,4">
+                                    <Grid ColumnDefinitions="Auto,5,Auto,4,Auto">
                                         <CheckBox Grid.Column="0" Name="SplitDelayEnabledCheck" Content="Delay"
                                                   IsCheckedChanged="SplitDelayEnabledCheck_IsCheckedChanged"/>
-                                        <TextBox Grid.Column="2" Name="SplitDelayBox" Width="42" Height="24"
+                                        <TextBox Grid.Column="2" Name="SplitDelayBox" Width="55" Height="24"
                                                  IsEnabled="{Binding #SplitDelayEnabledCheck.IsChecked}"
                                                  TextChanged="SplitDelayBox_TextChanged"
                                                  LostFocus="SplitDelayBox_LostFocus"/>
@@ -219,13 +220,13 @@
                                 </Border>
 
                                 <!-- Dummy box -->
-                                <Border BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="6,4">
+                                <Border BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="10,4">
                                     <CheckBox Name="SplitDummyCheck" Content="Dummy"
                                               IsCheckedChanged="SplitDummyCheck_IsCheckedChanged"/>
                                 </Border>
 
                                 <!-- Inverted box -->
-                                <Border BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="6,4">
+                                <Border BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="10,4">
                                     <CheckBox Name="SplitInvertedCheck" Content="Inverted"
                                               IsCheckedChanged="SplitInvertedCheck_IsCheckedChanged"/>
                                 </Border>

@@ -354,8 +354,6 @@ public partial class PresetEditor : Window
         BtnSaveAsNew.IsEnabled = nameValid && !anyInvalidName;
     }
 
-    // --- Preset list events ---
-
     private void PresetListBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         int index = PresetListBox.SelectedIndex;
@@ -375,8 +373,6 @@ public partial class PresetEditor : Window
         PopulatePresetList();
         PresetListBox.SelectedIndex = _editablePresets.Count - 1;
     }
-
-    // --- Preset metadata events ---
 
     private void PresetNameBox_TextChanged(object? sender, TextChangedEventArgs e)
     {
@@ -408,8 +404,6 @@ public partial class PresetEditor : Window
 
         _selectedPreset.GameName = GameNameBox.Text ?? "";
     }
-
-    // --- Splits list events ---
 
     private void SplitsListBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
@@ -508,8 +502,6 @@ public partial class PresetEditor : Window
         PopulateSplitsList();
         SplitsListBox.SelectedIndex = index + 1;
     }
-
-    // --- Split form events ---
 
     private void SplitNameBox_TextChanged(object? sender, TextChangedEventArgs e)
     {
@@ -748,9 +740,7 @@ public partial class PresetEditor : Window
 
         SplitsListBox.Items[index] = $"{index + 1}. {_selectedPreset.Splits[index].Name}";
     }
-
-    // --- Save ---
-
+    
     private async void BtnSave_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if (_selectedPreset == null)
@@ -785,21 +775,119 @@ public partial class PresetEditor : Window
 
         if (Directory.Exists(targetFolder))
         {
-            var result = await MessageBoxManager
-                .GetMessageBoxStandard(
-                    "Folder already exists",
-                    $"A preset folder named \"{folderName}\" already exists. Overwrite it?",
-                    ButtonEnum.YesNo,
-                    MsgBoxIcon.Warning)
-                .ShowWindowDialogAsync(this);
+            string? newName = await ShowRenamePromptAsync(
+                $"A preset folder named \"{folderName}\" already exists. Enter a new name:",
+                preset.PresetName);
 
-            if (result != ButtonResult.Yes)
+            if (string.IsNullOrWhiteSpace(newName))
             {
                 return;
+            }
+
+            preset.PresetName = newName;
+            int idx = PresetListBox.SelectedIndex;
+            if (idx >= 0)
+            {
+                PresetListBox.Items[idx] = newName;
+            }
+            _suppressFormEvents = true;
+            PresetNameBox.Text = newName;
+            _suppressFormEvents = false;
+
+            folderName = SanitizeFolderName(newName);
+            targetFolder = Path.Combine(_presetsDirectory, folderName);
+
+            if (Directory.Exists(targetFolder))
+            {
+                var overwrite = await MessageBoxManager
+                    .GetMessageBoxStandard(
+                        "Folder already exists",
+                        $"A preset folder named \"{folderName}\" already exists. Overwrite it?",
+                        ButtonEnum.YesNo,
+                        MsgBoxIcon.Warning)
+                    .ShowWindowDialogAsync(this);
+
+                if (overwrite != ButtonResult.Yes)
+                {
+                    return;
+                }
             }
         }
 
         await SavePreset(preset, targetFolder);
+    }
+
+    private async Task<string?> ShowRenamePromptAsync(string message, string initialValue)
+    {
+        var tcs = new TaskCompletionSource<string?>();
+
+        var textBox = new TextBox
+        {
+            Text = initialValue,
+            Height = 24,
+            Margin = new Avalonia.Thickness(0, 6, 0, 10),
+        };
+
+        var okBtn = new Button
+        {
+            Content = "OK",
+            Width = 72,
+            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+        };
+        var cancelBtn = new Button
+        {
+            Content = "Cancel",
+            Width = 72,
+            Margin = new Avalonia.Thickness(8, 0, 0, 0),
+            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+        };
+
+        var dialog = new Window
+        {
+            Title = "Name already exists",
+            Width = 360,
+            SizeToContent = SizeToContent.Height,
+            CanResize = false,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#2C2C2C")),
+            FontSize = 12,
+            Content = new StackPanel
+            {
+                Margin = new Avalonia.Thickness(12),
+                Children =
+                {
+                    new TextBlock { Text = message, TextWrapping = Avalonia.Media.TextWrapping.Wrap },
+                    textBox,
+                    new StackPanel
+                    {
+                        Orientation = Avalonia.Layout.Orientation.Horizontal,
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+                        Children = { okBtn, cancelBtn },
+                    },
+                },
+            },
+        };
+
+        okBtn.Click += (_, _) => { tcs.TrySetResult(textBox.Text); dialog.Close(); };
+        cancelBtn.Click += (_, _) => { tcs.TrySetResult(null); dialog.Close(); };
+        dialog.Closed += (_, _) => tcs.TrySetResult(null);
+        textBox.KeyDown += (_, e) =>
+        {
+            if (e.Key == Avalonia.Input.Key.Enter)
+            {
+                tcs.TrySetResult(textBox.Text);
+                dialog.Close();
+            }
+            else if (e.Key == Avalonia.Input.Key.Escape)
+            {
+                tcs.TrySetResult(null);
+                dialog.Close();
+            }
+        };
+        dialog.Opened += (_, _) => { textBox.Focus(); textBox.SelectAll(); };
+
+        await dialog.ShowDialog(this);
+        return await tcs.Task;
     }
 
     private async Task SavePreset(EditablePreset preset, string targetFolder)
@@ -898,7 +986,7 @@ public partial class PresetEditor : Window
             PresetsModified = true;
 
             await MessageBoxManager
-                .GetMessageBoxStandard("Saved", $"Preset saved to \"{folderName(targetFolderFull)}\".", ButtonEnum.Ok, MsgBoxIcon.Success)
+                .GetMessageBoxStandard("Saved", $"Preset saved to \"{folderName(targetFolderFull)}\".")
                 .ShowWindowDialogAsync(this);
         }
         catch (Exception ex)
