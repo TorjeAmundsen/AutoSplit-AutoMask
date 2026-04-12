@@ -15,9 +15,9 @@ public static class PresetService
 
         foreach (string presetPath in presetPaths)
         {
-            SplitPreset? preset = JsonSerializer.Deserialize<SplitPreset>(
+            SplitPreset? preset = JsonSerializer.Deserialize(
                 await File.ReadAllTextAsync(Path.Combine(presetPath, "preset.json")),
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                AppJsonContext.Default.SplitPreset);
 
             if (preset is not null)
             {
@@ -166,7 +166,7 @@ public static class PresetService
                 splitObj["inverted"] = true;
             }
 
-            splitsArray.Add(splitObj);
+            splitsArray.Add((JsonNode)splitObj);
         }
 
         var jsonObj = new JsonObject
