@@ -2,7 +2,7 @@ namespace AutoSplit_AutoMask;
 
 internal enum UnsavedAction { Save, Discard, Cancel }
 
-internal class EditablePreset
+public class EditablePreset
 {
     public string? OriginalFolder { get; set; }
     public string PresetName { get; set; } = "";
@@ -18,7 +18,7 @@ internal class EditablePreset
     public int TotalImages => Splits.Count;
 }
 
-internal class EditableSplit
+public class EditableSplit
 {
     public string Name { get; set; } = "";
     public string MaskAbsolutePath { get; set; } = "";
@@ -34,7 +34,7 @@ internal class EditableSplit
 
 // Wraps either a group header or an EditablePreset for display in the preset ListBox.
 // A single DataTemplate can render both types by checking IsHeader.
-internal sealed class PresetDisplayItem
+public sealed class PresetDisplayItem
 {
     public bool IsHeader { get; private init; }
     public string GroupName { get; private init; } = "";

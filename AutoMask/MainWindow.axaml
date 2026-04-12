@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:AutoSplit_AutoMask"
         x:Class="AutoSplit_AutoMask.MainWindow"
+        x:DataType="local:MainWindow"
         CanResize="False"
         Title="AutoMask for AutoSplit" Height="506" Width="836" FontSize="12"
         Background="#2C2C2C">
@@ -95,7 +96,7 @@
         <Button HorizontalContentAlignment="Center" Name="BtnInputImagePrev" IsEnabled="False" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,380,0,0" Width="28" Height="28" Click="BtnNextInputImage_Click">&lt;</Button>
         <ComboBox Name="ComboBoxSelectInputImage" SelectionChanged="ComboBoxSelectInputImage_OnSelectionChanged" ItemsSource="{Binding inputImagesComboBoxItems}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="42,380,0,0" Width="328" Height="28">
             <ComboBox.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="local:InputImageItem">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>

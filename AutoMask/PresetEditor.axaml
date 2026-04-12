@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:AutoSplit_AutoMask"
         x:Class="AutoSplit_AutoMask.PresetEditor"
         Title="Preset Editor" Height="720" Width="960"
         CanResize="False" FontSize="12"
@@ -100,7 +101,7 @@
                 <Border BorderBrush="#444444" BorderThickness="1">
                     <ListBox Name="PresetListBox" SelectionChanged="PresetListBox_SelectionChanged">
                         <ListBox.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="local:PresetDisplayItem">
                                 <Grid>
                                     <!-- Group header row -->
                                     <Grid IsVisible="{Binding IsHeader}"
