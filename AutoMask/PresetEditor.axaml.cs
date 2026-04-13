@@ -13,6 +13,7 @@ public partial class PresetEditor : Window
     private static readonly Regex InvalidNameChars = new(@"[#@{}\(\)\[\]\^]");
 
     private readonly string _presetsDirectory;
+    private readonly string _splitsDirectory;
     private readonly HashSet<string> _collapsedGroups = new(StringComparer.OrdinalIgnoreCase);
     private string? _hoveredHeaderGroup;
     private List<EditablePreset> _editablePresets = [];
@@ -25,6 +26,10 @@ public partial class PresetEditor : Window
     private bool _suppressPresetSelection;
     private bool _closingConfirmed;
 
+    private int _dragStartIndex = -1;
+    private bool _isDraggingSplit;
+    private Avalonia.Point _dragStartPoint;
+
     private string? _baseImagePath;
     private Bitmap? _maskPreviewBitmap;
     private Bitmap? _outputPreviewBitmap;
@@ -32,10 +37,11 @@ public partial class PresetEditor : Window
 
     public bool PresetsModified { get; private set; }
 
-    public PresetEditor(List<SplitPreset> presets, string presetsDirectory)
+    public PresetEditor(List<SplitPreset> presets, string presetsDirectory, string splitsDirectory)
     {
         InitializeComponent();
         _presetsDirectory = presetsDirectory;
+        _splitsDirectory = splitsDirectory;
         LoadFromPresets(presets);
         PopulatePresetList();
         RefreshGameNameSuggestions();
@@ -142,6 +148,13 @@ public partial class PresetEditor : Window
             _hoveredHeaderGroup = null;
             UpdateGroupHoverHighlight();
         };
+
+        SplitsListBox.AddHandler(Avalonia.Input.InputElement.PointerPressedEvent,
+            SplitsListBox_PointerPressed, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+        SplitsListBox.AddHandler(Avalonia.Input.InputElement.PointerMovedEvent,
+            SplitsListBox_PointerMoved, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+        SplitsListBox.AddHandler(Avalonia.Input.InputElement.PointerReleasedEvent,
+            SplitsListBox_PointerReleased, Avalonia.Interactivity.RoutingStrategies.Tunnel);
     }
 
     private void UpdateGroupHoverHighlight()
@@ -166,6 +179,104 @@ public partial class PresetEditor : Window
                 container.Classes.Remove("GroupHover");
             }
         }
+    }
+
+    private int GetSplitsListIndexFromPointer(Avalonia.Input.PointerEventArgs e)
+    {
+        for (int i = 0; i < SplitsListBox.ItemCount; i++)
+        {
+            if (SplitsListBox.ContainerFromIndex(i) is not ListBoxItem container)
+            {
+                continue;
+            }
+
+            var point = e.GetPosition(container);
+            if (point.Y >= 0 && point.Y < container.Bounds.Height)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private void SplitsListBox_PointerPressed(object? sender, Avalonia.Input.PointerPressedEventArgs e)
+    {
+        if (_selectedPreset == null)
+        {
+            return;
+        }
+
+        var properties = e.GetCurrentPoint(SplitsListBox).Properties;
+        if (!properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+
+        int index = GetSplitsListIndexFromPointer(e);
+        if (index < 0)
+        {
+            return;
+        }
+
+        _dragStartIndex = index;
+        _dragStartPoint = e.GetPosition(SplitsListBox);
+        _isDraggingSplit = false;
+    }
+
+    private void SplitsListBox_PointerMoved(object? sender, Avalonia.Input.PointerEventArgs e)
+    {
+        if (_dragStartIndex < 0 || _selectedPreset == null)
+        {
+            return;
+        }
+
+        var currentPoint = e.GetPosition(SplitsListBox);
+        var delta = currentPoint - _dragStartPoint;
+
+        if (!_isDraggingSplit && Math.Abs(delta.Y) < 5)
+        {
+            return;
+        }
+
+        _isDraggingSplit = true;
+
+        int targetIndex = GetSplitsListIndexFromPointer(e);
+        if (targetIndex < 0 || targetIndex == _dragStartIndex)
+        {
+            return;
+        }
+
+        var split = _selectedPreset.Splits[_dragStartIndex];
+        _selectedPreset.Splits.RemoveAt(_dragStartIndex);
+        _selectedPreset.Splits.Insert(targetIndex, split);
+
+        int rangeStart = Math.Min(_dragStartIndex, targetIndex);
+        int rangeEnd = Math.Max(_dragStartIndex, targetIndex);
+        for (int i = rangeStart; i <= rangeEnd; i++)
+        {
+            SplitsListBox.Items[i] = $"{i + 1}. {_selectedPreset.Splits[i].Name}";
+        }
+
+        _suppressFormEvents = true;
+        SplitsListBox.SelectedIndex = targetIndex;
+        _suppressFormEvents = false;
+
+        _dragStartIndex = targetIndex;
+        MarkCurrentPresetDirty();
+    }
+
+    private void SplitsListBox_PointerReleased(object? sender, Avalonia.Input.PointerReleasedEventArgs e)
+    {
+        if (_isDraggingSplit && _selectedPreset != null)
+        {
+            int selected = SplitsListBox.SelectedIndex;
+            PopulateSplitsList();
+            SplitsListBox.SelectedIndex = selected;
+        }
+
+        _dragStartIndex = -1;
+        _isDraggingSplit = false;
     }
 
     private void LoadFromPresets(List<SplitPreset> presets)
@@ -564,8 +675,7 @@ public partial class PresetEditor : Window
             BtnAddSplit.IsEnabled = false;
             BtnDuplicateSplit.IsEnabled = false;
             BtnRemoveSplit.IsEnabled = false;
-            BtnMoveSplitUp.IsEnabled = false;
-            BtnMoveSplitDown.IsEnabled = false;
+            BtnImportSplits.IsEnabled = false;
             return;
         }
 
@@ -578,8 +688,7 @@ public partial class PresetEditor : Window
         BtnAddSplit.IsEnabled = true;
         BtnDuplicateSplit.IsEnabled = _selectedSplit != null;
         BtnRemoveSplit.IsEnabled = true;
-        BtnMoveSplitUp.IsEnabled = true;
-        BtnMoveSplitDown.IsEnabled = true;
+        BtnImportSplits.IsEnabled = true;
     }
 
     private async void PresetListBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -767,7 +876,7 @@ public partial class PresetEditor : Window
         MarkCurrentPresetDirty();
     }
 
-    private void BtnRemoveSplit_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private async void BtnRemoveSplit_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if (_selectedPreset == null)
         {
@@ -776,6 +885,17 @@ public partial class PresetEditor : Window
 
         int index = SplitsListBox.SelectedIndex;
         if (index < 0 || index >= _selectedPreset.Splits.Count)
+        {
+            return;
+        }
+
+        string splitName = _selectedPreset.Splits[index].Name ?? "this split";
+        var result = await MessageBox.Show(this,
+                "Delete Split",
+                $"Are you sure you want to delete \"{splitName}\"?",
+                MessageBoxButton.YesNo);
+
+        if (result != MessageBoxResult.Yes)
         {
             return;
         }
@@ -795,45 +915,69 @@ public partial class PresetEditor : Window
         }
     }
 
-    private void BtnMoveSplitUp_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private async void BtnImportSplits_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if (_selectedPreset == null)
         {
             return;
         }
 
-        int index = SplitsListBox.SelectedIndex;
-        if (index <= 0)
+        List<PremadeSplitsFile> premadeSplits;
+        try
+        {
+            premadeSplits = await PresetService.LoadPremadeSplitsAsync(_splitsDirectory);
+        }
+        catch (Exception ex)
+        {
+            await MessageBox.Show(this, "Error", $"Failed to load pre-made splits: {ex.Message}");
+            return;
+        }
+
+        if (premadeSplits.Count == 0)
+        {
+            await MessageBox.Show(this, "No Splits Found",
+                "No pre-made split files were found in the splits folder.");
+            return;
+        }
+
+        var dialog = new ImportSplitsDialog(premadeSplits);
+        await dialog.ShowDialog(this);
+
+        if (dialog.SelectedSplits.Count == 0)
         {
             return;
         }
 
-        (_selectedPreset.Splits[index], _selectedPreset.Splits[index - 1]) =
-            (_selectedPreset.Splits[index - 1], _selectedPreset.Splits[index]);
+        int insertAt = SplitsListBox.SelectedIndex + 1;
+        if (insertAt <= 0 || insertAt > _selectedPreset.Splits.Count)
+        {
+            insertAt = _selectedPreset.Splits.Count;
+        }
+
+        foreach (var (file, split) in dialog.SelectedSplits)
+        {
+            string maskAbsolutePath = string.IsNullOrEmpty(split.Mask)
+                ? ""
+                : Path.GetFullPath(Path.Combine(file.FolderPath!, split.Mask));
+
+            _selectedPreset.Splits.Insert(insertAt, new EditableSplit
+            {
+                Name = split.Name,
+                MaskAbsolutePath = maskAbsolutePath,
+                ThresholdEnabled = true,
+                Threshold = Math.Round((double)split.Threshold, 2),
+                PauseTimeEnabled = Math.Abs(split.PauseTime - 3.0f) > 0.001f,
+                PauseTime = Math.Round((double)split.PauseTime, 2),
+                DelayEnabled = split.Delay > 0,
+                Delay = (int)split.Delay,
+                Dummy = split.Dummy,
+                Inverted = split.Inverted,
+            });
+            insertAt++;
+        }
 
         PopulateSplitsList();
-        SplitsListBox.SelectedIndex = index - 1;
-        MarkCurrentPresetDirty();
-    }
-
-    private void BtnMoveSplitDown_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        if (_selectedPreset == null)
-        {
-            return;
-        }
-
-        int index = SplitsListBox.SelectedIndex;
-        if (index < 0 || index >= _selectedPreset.Splits.Count - 1)
-        {
-            return;
-        }
-
-        (_selectedPreset.Splits[index], _selectedPreset.Splits[index + 1]) =
-            (_selectedPreset.Splits[index + 1], _selectedPreset.Splits[index]);
-
-        PopulateSplitsList();
-        SplitsListBox.SelectedIndex = index + 1;
+        SplitsListBox.SelectedIndex = insertAt - 1;
         MarkCurrentPresetDirty();
     }
 

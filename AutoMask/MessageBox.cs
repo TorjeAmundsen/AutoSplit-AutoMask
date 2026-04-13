@@ -86,7 +86,7 @@ public class MessageBox : Window
         };
 
         var tcs = new TaskCompletionSource<MessageBoxResult>();
-        msgBox.Closed += (_, _) => tcs.SetResult(msgBox._result);
+        msgBox.Closed += (_, _) => tcs.TrySetResult(msgBox._result);
         msgBox.ShowDialog(owner);
         return tcs.Task;
     }

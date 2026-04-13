@@ -33,6 +33,7 @@ public partial class MainWindow : Window
     private List<SplitPreset> _splitPresets;
     private string _createdFilename;
     private readonly string _currentPresetsDirectory;
+    private readonly string _currentSplitsDirectory;
 
     private Dictionary<string, Bitmap> _inputBitmapCache = new();
     private Dictionary<string, Bitmap> _inputThumbnailCache = new();
@@ -58,6 +59,7 @@ public partial class MainWindow : Window
         }
 
         _currentPresetsDirectory = Path.Combine(rootDir, "presets") + Path.DirectorySeparatorChar;
+        _currentSplitsDirectory = Path.Combine(rootDir, "splits") + Path.DirectorySeparatorChar;
 
         Directory.CreateDirectory(_currentPresetsDirectory);
 
@@ -619,7 +621,7 @@ public partial class MainWindow : Window
 
     private async void BtnOpenPresetEditor_Click(object sender, RoutedEventArgs e)
     {
-        var editorWindow = new PresetEditor(_splitPresets, _currentPresetsDirectory);
+        var editorWindow = new PresetEditor(_splitPresets, _currentPresetsDirectory, _currentSplitsDirectory);
         await editorWindow.ShowDialog(this);
         if (editorWindow.PresetsModified)
         {

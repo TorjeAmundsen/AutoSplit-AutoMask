@@ -1,0 +1,43 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="AutoSplit_AutoMask.ImportSplitsDialog"
+        Title="Import Pre-made Splits" Height="550" Width="520"
+        CanResize="False" FontSize="12"
+        WindowStartupLocation="CenterOwner"
+        Background="#2C2C2C">
+
+    <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="CheckBox">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="6,0,0,0"/>
+        </Style>
+    </Window.Styles>
+
+    <DockPanel Margin="12">
+
+        <Border DockPanel.Dock="Bottom" BorderBrush="#444444" BorderThickness="0,1,0,0"
+                Padding="0,8,0,0" Margin="0,8,0,0">
+            <Grid>
+                <Button Name="BtnImportSelected" Content="Import Selected" Width="120"
+                        IsEnabled="False" Click="BtnImportSelected_Click" HorizontalAlignment="Left"/>
+                <Button Content="Cancel" Width="80" Click="BtnCancel_Click" HorizontalAlignment="Right"/>
+            </Grid>
+        </Border>
+
+        <TextBlock DockPanel.Dock="Top" Text="Select splits to import:" Foreground="#AAAAAA"
+                   Margin="0,0,0,6"/>
+
+        <Border BorderBrush="#444444" BorderThickness="1" Background="#252525">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Name="SplitsPanel" Spacing="2" Margin="6,4"/>
+            </ScrollViewer>
+        </Border>
+
+    </DockPanel>
+</Window>

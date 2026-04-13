@@ -29,6 +29,35 @@ public static class PresetService
         return foundPresets;
     }
 
+    public static async Task<List<PremadeSplitsFile>> LoadPremadeSplitsAsync(string splitsDirectory)
+    {
+        if (!Directory.Exists(splitsDirectory))
+        {
+            return [];
+        }
+
+        var splitPaths = Directory.EnumerateDirectories(splitsDirectory)
+            .Where(dir => Directory.EnumerateFiles(dir, "splits.json", SearchOption.TopDirectoryOnly).Any())
+            .ToArray();
+
+        List<PremadeSplitsFile> foundSplitFiles = [];
+
+        foreach (string splitPath in splitPaths)
+        {
+            PremadeSplitsFile? splitsFile = JsonSerializer.Deserialize(
+                await File.ReadAllTextAsync(Path.Combine(splitPath, "splits.json")),
+                AppJsonContext.Default.PremadeSplitsFile);
+
+            if (splitsFile is not null)
+            {
+                splitsFile.FolderPath = splitPath;
+                foundSplitFiles.Add(splitsFile);
+            }
+        }
+
+        return foundSplitFiles.OrderBy(f => f.GameName).ToList();
+    }
+
     public static string CreateFilenameForSplit(SplitPreset preset, int splitIndex)
     {
         var split = preset.Splits![splitIndex];
