@@ -5,12 +5,16 @@
         {
             "mask": "reset.png",
             "name": "reset",
+            "description": "Automatically reset when pressing C-up in Link's house",
+            "baseImage": "base_links_house.png",
             "threshold": 0.96,
             "pauseTime": 0.1
         },
         {
             "mask": "start.png",
             "name": "start_auto_splitter",
+            "description": "Starts the auto splitter when you move after pressing C-up",
+            "baseImage": "base_links_house.png",
             "threshold": 0.96,
             "pauseTime": 10,
             "inverted": true
@@ -18,25 +22,33 @@
         {
             "mask": "escape.png",
             "name": "Escape",
+            "description": "Aqua escape, splits on full white fade",
+            "baseImage": "base_aqua_escape.png",
             "threshold": 0.97,
             "delay": 150
         },
         {
-            "mask": "full_fade.png",
-            "name": "Ganondoor",
-            "threshold": 0.97,
-            "pauseTime": 30
+            "mask": "bottle.png",
+            "name": "Bottle",
+            "description": "Splits on bottle model over head, common manual split timing",
+            "baseImage": "base_bottle.png",
+            "threshold": 0.93,
+            "pauseTime": 35,
+            "delay": 1100,
+            "inverted": true
         },
         {
             "mask": "full_fade.png",
-            "name": "Collapse",
-            "threshold": 0.97,
-            "pauseTime": 60,
-            "delay": 50
+            "name": "Full white fade",
+            "description": "Generic white fade transition or white flash after successful wrong warp",
+            "baseImage": "base_white_fade.png",
+            "threshold": 0.97
         },
         {
             "mask": "final_slash_zelda.png",
             "name": "Ganon",
+            "description": "Final slash on Ganon",
+            "baseImage": "base_ganon.png",
             "threshold": 0.92
         }
     ]

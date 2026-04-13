@@ -42,6 +42,9 @@
             <Setter Property="Padding" Value="6,3"/>
             <Setter Property="MinHeight" Value="0"/>
         </Style>
+        <Style Selector="ListBox.SplitsList ListBoxItem">
+            <Setter Property="Padding" Value="6,6"/>
+        </Style>
         <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
             <Setter Property="Background" Value="#1C3A58"/>
         </Style>
@@ -171,12 +174,10 @@
                             <Button Name="BtnAddSplit" Content="+" Width="30" Height="24" IsEnabled="False" Click="BtnAddSplit_Click" ToolTip.Tip="Add split after selected"/>
                             <Button Name="BtnRemoveSplit" Content="-" Width="30" Height="24" IsEnabled="False" Click="BtnRemoveSplit_Click" ToolTip.Tip="Remove selected split"/>
                             <Button Name="BtnDuplicateSplit" Content="⧉" Width="34" Height="24" IsEnabled="False" Click="BtnDuplicateSplit_Click" ToolTip.Tip="Duplicate selected split"/>
-                            <Button Name="BtnMoveSplitUp" Content="↑" Width="30" Height="24" IsEnabled="False" Click="BtnMoveSplitUp_Click" ToolTip.Tip="Move split up"/>
-                            <Button Name="BtnMoveSplitDown" Content="↓" Width="30" Height="24" IsEnabled="False" Click="BtnMoveSplitDown_Click" ToolTip.Tip="Move split down"/>
                             <Button Name="BtnImportSplits" Content="📥" Width="34" Height="24" IsEnabled="False" Click="BtnImportSplits_Click" ToolTip.Tip="Import pre-made splits"/>
                         </StackPanel>
                         <Border BorderBrush="#444444" BorderThickness="1">
-                            <ListBox Name="SplitsListBox" SelectionChanged="SplitsListBox_SelectionChanged"/>
+                            <ListBox Name="SplitsListBox" Classes="SplitsList" SelectionChanged="SplitsListBox_SelectionChanged"/>
                         </Border>
                     </DockPanel>
 

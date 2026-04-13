@@ -28,6 +28,15 @@
                     "description": "Name of the split",
                     "pattern": "^[^#@{}\\(\\)\\[\\]\\^]*$"
                 },
+                "description": {
+                    "type": "string",
+                    "description": "Human-readable description of what this split detects"
+                },
+                "baseImage": {
+                    "type": "string",
+                    "description": "File path to a recommended base image (png) relative to splits.json",
+                    "pattern": "^.*\\.png$"
+                },
                 "threshold": {
                     "type": "number",
                     "minimum": 0,

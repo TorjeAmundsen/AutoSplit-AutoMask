@@ -26,6 +26,10 @@ public partial class PresetEditor : Window
     private bool _suppressPresetSelection;
     private bool _closingConfirmed;
 
+    private int _dragStartIndex = -1;
+    private bool _isDraggingSplit;
+    private Avalonia.Point _dragStartPoint;
+
     private string? _baseImagePath;
     private Bitmap? _maskPreviewBitmap;
     private Bitmap? _outputPreviewBitmap;
@@ -144,6 +148,13 @@ public partial class PresetEditor : Window
             _hoveredHeaderGroup = null;
             UpdateGroupHoverHighlight();
         };
+
+        SplitsListBox.AddHandler(Avalonia.Input.InputElement.PointerPressedEvent,
+            SplitsListBox_PointerPressed, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+        SplitsListBox.AddHandler(Avalonia.Input.InputElement.PointerMovedEvent,
+            SplitsListBox_PointerMoved, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+        SplitsListBox.AddHandler(Avalonia.Input.InputElement.PointerReleasedEvent,
+            SplitsListBox_PointerReleased, Avalonia.Interactivity.RoutingStrategies.Tunnel);
     }
 
     private void UpdateGroupHoverHighlight()
@@ -168,6 +179,104 @@ public partial class PresetEditor : Window
                 container.Classes.Remove("GroupHover");
             }
         }
+    }
+
+    private int GetSplitsListIndexFromPointer(Avalonia.Input.PointerEventArgs e)
+    {
+        for (int i = 0; i < SplitsListBox.ItemCount; i++)
+        {
+            if (SplitsListBox.ContainerFromIndex(i) is not ListBoxItem container)
+            {
+                continue;
+            }
+
+            var point = e.GetPosition(container);
+            if (point.Y >= 0 && point.Y < container.Bounds.Height)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private void SplitsListBox_PointerPressed(object? sender, Avalonia.Input.PointerPressedEventArgs e)
+    {
+        if (_selectedPreset == null)
+        {
+            return;
+        }
+
+        var properties = e.GetCurrentPoint(SplitsListBox).Properties;
+        if (!properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+
+        int index = GetSplitsListIndexFromPointer(e);
+        if (index < 0)
+        {
+            return;
+        }
+
+        _dragStartIndex = index;
+        _dragStartPoint = e.GetPosition(SplitsListBox);
+        _isDraggingSplit = false;
+    }
+
+    private void SplitsListBox_PointerMoved(object? sender, Avalonia.Input.PointerEventArgs e)
+    {
+        if (_dragStartIndex < 0 || _selectedPreset == null)
+        {
+            return;
+        }
+
+        var currentPoint = e.GetPosition(SplitsListBox);
+        var delta = currentPoint - _dragStartPoint;
+
+        if (!_isDraggingSplit && Math.Abs(delta.Y) < 5)
+        {
+            return;
+        }
+
+        _isDraggingSplit = true;
+
+        int targetIndex = GetSplitsListIndexFromPointer(e);
+        if (targetIndex < 0 || targetIndex == _dragStartIndex)
+        {
+            return;
+        }
+
+        var split = _selectedPreset.Splits[_dragStartIndex];
+        _selectedPreset.Splits.RemoveAt(_dragStartIndex);
+        _selectedPreset.Splits.Insert(targetIndex, split);
+
+        int rangeStart = Math.Min(_dragStartIndex, targetIndex);
+        int rangeEnd = Math.Max(_dragStartIndex, targetIndex);
+        for (int i = rangeStart; i <= rangeEnd; i++)
+        {
+            SplitsListBox.Items[i] = $"{i + 1}. {_selectedPreset.Splits[i].Name}";
+        }
+
+        _suppressFormEvents = true;
+        SplitsListBox.SelectedIndex = targetIndex;
+        _suppressFormEvents = false;
+
+        _dragStartIndex = targetIndex;
+        MarkCurrentPresetDirty();
+    }
+
+    private void SplitsListBox_PointerReleased(object? sender, Avalonia.Input.PointerReleasedEventArgs e)
+    {
+        if (_isDraggingSplit && _selectedPreset != null)
+        {
+            int selected = SplitsListBox.SelectedIndex;
+            PopulateSplitsList();
+            SplitsListBox.SelectedIndex = selected;
+        }
+
+        _dragStartIndex = -1;
+        _isDraggingSplit = false;
     }
 
     private void LoadFromPresets(List<SplitPreset> presets)
@@ -566,8 +675,6 @@ public partial class PresetEditor : Window
             BtnAddSplit.IsEnabled = false;
             BtnDuplicateSplit.IsEnabled = false;
             BtnRemoveSplit.IsEnabled = false;
-            BtnMoveSplitUp.IsEnabled = false;
-            BtnMoveSplitDown.IsEnabled = false;
             BtnImportSplits.IsEnabled = false;
             return;
         }
@@ -581,8 +688,6 @@ public partial class PresetEditor : Window
         BtnAddSplit.IsEnabled = true;
         BtnDuplicateSplit.IsEnabled = _selectedSplit != null;
         BtnRemoveSplit.IsEnabled = true;
-        BtnMoveSplitUp.IsEnabled = true;
-        BtnMoveSplitDown.IsEnabled = true;
         BtnImportSplits.IsEnabled = true;
     }
 
@@ -797,48 +902,6 @@ public partial class PresetEditor : Window
             ShowSplitForm(false);
             ClearSplitForm();
         }
-    }
-
-    private void BtnMoveSplitUp_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        if (_selectedPreset == null)
-        {
-            return;
-        }
-
-        int index = SplitsListBox.SelectedIndex;
-        if (index <= 0)
-        {
-            return;
-        }
-
-        (_selectedPreset.Splits[index], _selectedPreset.Splits[index - 1]) =
-            (_selectedPreset.Splits[index - 1], _selectedPreset.Splits[index]);
-
-        PopulateSplitsList();
-        SplitsListBox.SelectedIndex = index - 1;
-        MarkCurrentPresetDirty();
-    }
-
-    private void BtnMoveSplitDown_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        if (_selectedPreset == null)
-        {
-            return;
-        }
-
-        int index = SplitsListBox.SelectedIndex;
-        if (index < 0 || index >= _selectedPreset.Splits.Count - 1)
-        {
-            return;
-        }
-
-        (_selectedPreset.Splits[index], _selectedPreset.Splits[index + 1]) =
-            (_selectedPreset.Splits[index + 1], _selectedPreset.Splits[index]);
-
-        PopulateSplitsList();
-        SplitsListBox.SelectedIndex = index + 1;
-        MarkCurrentPresetDirty();
     }
 
     private async void BtnImportSplits_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

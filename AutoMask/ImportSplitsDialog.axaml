@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="AutoSplit_AutoMask.ImportSplitsDialog"
-        Title="Import Pre-made Splits" Height="450" Width="420"
+        Title="Import Pre-made Splits" Height="550" Width="520"
         CanResize="False" FontSize="12"
         WindowStartupLocation="CenterOwner"
         Background="#2C2C2C">

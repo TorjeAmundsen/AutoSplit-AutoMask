@@ -5,7 +5,7 @@ public class SplitPreset
     public string? PresetFolder { get; set; }
     public string? GameName { get; init; }
     public string? PresetName { get; init; }
-    public IList<Split>? Splits { get; init; }
+    public List<Split>? Splits { get; init; }
 
     public override bool Equals(object? obj)
     {
