@@ -36,12 +36,15 @@ Below the preset fields is a list of the splits that make up the preset, shown a
 | Button | Action                                                    | Enabled when        |
 | ------ | --------------------------------------------------------- | ------------------- |
 | **+**  | Insert a new split after the selected one (or at the end) | Preset is selected  |
-| **⧉**  | Duplicate the selected split, inserting the copy below it | A split is selected |
 | **−**  | Delete the selected split                                 | Preset is selected  |
-| **↑**  | Move the selected split up                                | Preset is selected  |
-| **↓**  | Move the selected split down                              | Preset is selected  |
+| **⧉**  | Duplicate the selected split, inserting the copy below it | A split is selected |
+| **📥** | Import pre-made splits (see [below](#pre-made-splits))    | Preset is selected  |
 
 All toolbar buttons are disabled when no preset is selected.
+
+### Reordering
+
+Splits can be reordered by dragging them up or down in the list.
 
 ---
 
@@ -177,6 +180,16 @@ If the current preset has unsaved changes when you click a different preset, a d
 ### Closing the editor
 
 If any presets have unsaved changes when you click **Close** (or close the window), a dialog lists them and asks whether to close and discard. Choosing **No** returns you to the editor.
+
+---
+
+## Pre-made Splits
+
+The **📥** toolbar button opens a dialog where you can import common, ready-to-use splits into the currently selected preset. Pre-made splits come bundled with the application and include mask images and recommended properties already configured.
+
+In the import dialog, splits are grouped by game. Each split is shown as a card with its name, a short description, property summary (threshold, pause, delay, etc.), and a thumbnail of the recommended base image when available. Check the splits you want and click **Import Selected** - they are inserted after the currently selected split in the preset.
+
+Mask images are copied into the preset folder when you save.
 
 ---
 
