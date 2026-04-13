@@ -876,7 +876,7 @@ public partial class PresetEditor : Window
         MarkCurrentPresetDirty();
     }
 
-    private void BtnRemoveSplit_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private async void BtnRemoveSplit_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if (_selectedPreset == null)
         {
@@ -885,6 +885,17 @@ public partial class PresetEditor : Window
 
         int index = SplitsListBox.SelectedIndex;
         if (index < 0 || index >= _selectedPreset.Splits.Count)
+        {
+            return;
+        }
+
+        string splitName = _selectedPreset.Splits[index].Name ?? "this split";
+        var result = await MessageBox.Show(this,
+                "Delete Split",
+                $"Are you sure you want to delete \"{splitName}\"?",
+                MessageBoxButton.YesNo);
+
+        if (result != MessageBoxResult.Yes)
         {
             return;
         }

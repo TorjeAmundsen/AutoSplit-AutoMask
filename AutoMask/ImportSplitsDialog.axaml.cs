@@ -10,6 +10,8 @@ public partial class ImportSplitsDialog : Window
 {
     private static readonly SolidColorBrush DimTextBrush = new(Color.Parse("#888888"));
     private static readonly SolidColorBrush CardBorderBrush = new(Color.Parse("#444444"));
+    private static readonly SolidColorBrush CardBackgroundBrush = new(Color.Parse("#2A2A2A"));
+    private static readonly SolidColorBrush CardSelectedBrush = new(Color.Parse("#1E3A5C"));
 
     private readonly List<(PremadeSplitsFile File, PremadeSplit Split, CheckBox CheckBox)> _splitEntries = [];
 
@@ -55,7 +57,14 @@ public partial class ImportSplitsDialog : Window
             Content = new TextBlock { Text = split.Name, FontWeight = FontWeight.SemiBold },
             VerticalAlignment = VerticalAlignment.Top,
         };
-        checkBox.IsCheckedChanged += (_, _) => UpdateImportButtonState();
+        checkBox.IsCheckedChanged += (_, _) =>
+        {
+            UpdateImportButtonState();
+            if (checkBox.Parent?.Parent?.Parent is Border card)
+            {
+                card.Background = checkBox.IsChecked == true ? CardSelectedBrush : CardBackgroundBrush;
+            }
+        };
         _splitEntries.Add((splitsFile, split, checkBox));
 
         var infoStack = new StackPanel { Spacing = 2 };
@@ -128,7 +137,7 @@ public partial class ImportSplitsDialog : Window
             BorderBrush = CardBorderBrush,
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(3),
-            Background = new SolidColorBrush(Color.Parse("#2A2A2A")),
+            Background = CardBackgroundBrush,
             Padding = new Thickness(6),
             Margin = new Thickness(8, 2, 0, 2),
             Child = cardContent,
