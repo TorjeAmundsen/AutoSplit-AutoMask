@@ -4,7 +4,7 @@
         x:Class="AutoSplit_AutoMask.MainWindow"
         x:DataType="local:MainWindow"
         CanResize="False"
-        Title="AutoMask for AutoSplit" Height="506" Width="836" FontSize="12"
+        Title="AutoMask for AutoSplit" Height="542" Width="836" FontSize="12"
         Background="#2C2C2C">
     <Window.DataTemplates>
         <!-- Group headers: used both in the dropdown and (if ever selected) in the collapsed display -->
@@ -122,6 +122,8 @@
         <Button HorizontalContentAlignment="Center" Name="BtnSaveAs" Content="Save as..." VerticalAlignment="Top" HorizontalAlignment="Left" Margin="722,420,0,0" Width="88" Height="28" Click="BtnSaveImageAs_Click" />
 
         <Button HorizontalContentAlignment="Center" Name="BtnSaveAllSplits" Content="Save all split images" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="418, 460, 0, 0" Width="392" Click="BtnSaveAllSplits_Click"/>
+
+        <Button HorizontalContentAlignment="Center" Name="BtnOpenTestOutput" Content="Open Test Output Window" VerticalAlignment="Top" HorizontalAlignment="Stretch" Margin="10,500,10,0" Height="28" Click="BtnOpenTestOutput_Click"/>
 
     </Grid>
 </Window>

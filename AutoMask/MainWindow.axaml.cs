@@ -629,6 +629,17 @@ public partial class MainWindow : Window
         }
     }
 
+    private void BtnOpenTestOutput_Click(object? sender, RoutedEventArgs e)
+    {
+        SplitPreset? preset = selectedPresetIndex >= 0 && selectedPresetIndex < _splitPresets.Count
+            ? _splitPresets[selectedPresetIndex]
+            : null;
+
+        var win = new TestOutputWindow();
+        win.InitializeFromMainWindow(preset, selectedSplitIndex, _selectedInputImagePath, _maskSkBitmapCache);
+        win.Show(this);
+    }
+
     private void UpdateNavigationButtons()
     {
         int inputIndex = ComboBoxSelectInputImage.SelectedIndex;

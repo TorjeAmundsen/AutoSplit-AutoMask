@@ -1,0 +1,154 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:AutoSplit_AutoMask"
+        x:Class="AutoSplit_AutoMask.TestOutputWindow"
+        Title="Test Output Image"
+        Width="780" Height="560" CanResize="False"
+        FontSize="12" Background="#2C2C2C">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#3C3C3C"/>
+        <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#565656"/>
+        <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#3C3C3C"/>
+        <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="#565656"/>
+        <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#3C3C3C"/>
+        <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#565656"/>
+        <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#3C3C3C"/>
+        <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#565656"/>
+    </Window.Resources>
+
+    <Window.Styles>
+        <Style Selector="ComboBox">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Background" Value="#363636"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        </Style>
+        <Style Selector="ComboBoxItem">
+            <Setter Property="Padding" Value="8,2"/>
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Background" Value="#363636"/>
+        </Style>
+        <Style Selector="NumericUpDown">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="FormatString" Value="0"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Background" Value="#363636"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid Margin="10">
+        <!-- Reference source row -->
+        <TextBlock Text="Reference:" Foreground="#BBBBBB" VerticalAlignment="Top" HorizontalAlignment="Left"
+                   Margin="0,6,0,0" Width="60"/>
+        <ComboBox Name="ComboBoxReferenceSource" VerticalAlignment="Top" HorizontalAlignment="Left"
+                  Margin="62,0,0,0" Width="230" Height="28"
+                  SelectionChanged="ComboBoxReferenceSource_SelectionChanged">
+            <ComboBoxItem Content="Current preset + split"/>
+            <ComboBoxItem Content="Custom PNG..."/>
+        </ComboBox>
+        <Button Name="BtnRefreshReference" Content="Refresh reference"
+                VerticalAlignment="Top" HorizontalAlignment="Left"
+                Margin="298,0,0,0" Width="124" Height="28"
+                Click="BtnRefreshReference_Click"/>
+        <TextBlock Name="ReferenceStatusLabel" Foreground="#888888" VerticalAlignment="Top"
+                   HorizontalAlignment="Left" Margin="430,6,0,0" Width="330" TextTrimming="CharacterEllipsis"/>
+
+        <!-- Preview captions -->
+        <TextBlock Text="Reference (320×240)" Name="ReferenceCaption"
+                   Foreground="#CCCCCC" VerticalAlignment="Top" HorizontalAlignment="Left"
+                   Margin="40,40,0,0" Width="320" TextAlignment="Center"/>
+        <TextBlock Text="Live feed (320×240)" Name="LiveCaption"
+                   Foreground="#CCCCCC" VerticalAlignment="Top" HorizontalAlignment="Left"
+                   Margin="400,40,0,0" Width="320" TextAlignment="Center"/>
+
+        <!-- Preview boxes -->
+        <Border BorderBrush="#484848" BorderThickness="1"
+                HorizontalAlignment="Left" VerticalAlignment="Top"
+                Margin="40,60,0,0" Width="320" Height="240" Background="#151515">
+            <Image Name="ReferenceImageView" Stretch="None"/>
+        </Border>
+        <Border BorderBrush="#484848" BorderThickness="1"
+                HorizontalAlignment="Left" VerticalAlignment="Top"
+                Margin="400,60,0,0" Width="320" Height="240" Background="#151515">
+            <Image Name="LiveImageView" Stretch="None"/>
+        </Border>
+
+        <!-- Feed source row -->
+        <TextBlock Text="Feed:" Foreground="#BBBBBB" VerticalAlignment="Top" HorizontalAlignment="Left"
+                   Margin="0,316,0,0" Width="60"/>
+        <ComboBox Name="ComboBoxFeedSource" VerticalAlignment="Top" HorizontalAlignment="Left"
+                  Margin="62,310,0,0" Width="534" Height="28"
+                  SelectionChanged="ComboBoxFeedSource_SelectionChanged"/>
+        <Button Name="BtnRefreshFeed" Content="Refresh list"
+                VerticalAlignment="Top" HorizontalAlignment="Left"
+                Margin="602,310,0,0" Width="158" Height="28"
+                Click="BtnRefreshFeed_Click"/>
+
+        <!-- Crop row -->
+        <TextBlock Text="Crop:" Foreground="#BBBBBB" VerticalAlignment="Top" HorizontalAlignment="Left"
+                   Margin="0,352,0,0" Width="60"/>
+        <TextBlock Text="X" Foreground="#888888" VerticalAlignment="Top" HorizontalAlignment="Left"
+                   Margin="62,352,0,0"/>
+        <NumericUpDown Name="CropX" Minimum="-8192" Maximum="16384" Increment="1"
+                       VerticalAlignment="Top" HorizontalAlignment="Left"
+                       Margin="78,346,0,0" Width="130" Height="28"
+                       ValueChanged="CropValueChanged"/>
+        <TextBlock Text="Y" Foreground="#888888" VerticalAlignment="Top" HorizontalAlignment="Left"
+                   Margin="214,352,0,0"/>
+        <NumericUpDown Name="CropY" Minimum="-8192" Maximum="16384" Increment="1"
+                       VerticalAlignment="Top" HorizontalAlignment="Left"
+                       Margin="230,346,0,0" Width="130" Height="28"
+                       ValueChanged="CropValueChanged"/>
+        <TextBlock Text="W" Foreground="#888888" VerticalAlignment="Top" HorizontalAlignment="Left"
+                   Margin="366,352,0,0"/>
+        <NumericUpDown Name="CropW" Minimum="1" Maximum="16384" Increment="1"
+                       VerticalAlignment="Top" HorizontalAlignment="Left"
+                       Margin="384,346,0,0" Width="130" Height="28"
+                       ValueChanged="CropValueChanged"/>
+        <TextBlock Text="H" Foreground="#888888" VerticalAlignment="Top" HorizontalAlignment="Left"
+                   Margin="520,352,0,0"/>
+        <NumericUpDown Name="CropH" Minimum="1" Maximum="16384" Increment="1"
+                       VerticalAlignment="Top" HorizontalAlignment="Left"
+                       Margin="538,346,0,0" Width="130" Height="28"
+                       ValueChanged="CropValueChanged"/>
+        <Button Name="BtnResetCrop" Content="Reset" VerticalAlignment="Top" HorizontalAlignment="Left"
+                Margin="674,346,0,0" Width="86" Height="28" Click="BtnResetCrop_Click"/>
+
+        <!-- Similarity panel -->
+        <Border BorderBrush="#444444" BorderThickness="1" Background="#232323"
+                HorizontalAlignment="Left" VerticalAlignment="Top"
+                Margin="0,388,0,0" Width="760" Height="112">
+            <Grid Margin="12">
+                <TextBlock Text="Current" Foreground="#888888" HorizontalAlignment="Left" VerticalAlignment="Top"
+                           Margin="0,0,0,0" Width="240" TextAlignment="Center"/>
+                <TextBlock Name="CurrentLabel" Text="—" Foreground="White" FontSize="32"
+                           HorizontalAlignment="Left" VerticalAlignment="Top"
+                           Margin="0,20,0,0" Width="240" TextAlignment="Center"/>
+
+                <TextBlock Text="Highest" Foreground="#888888" HorizontalAlignment="Left" VerticalAlignment="Top"
+                           Margin="248,0,0,0" Width="240" TextAlignment="Center"/>
+                <TextBlock Name="HighestLabel" Text="—" Foreground="White" FontSize="32"
+                           HorizontalAlignment="Left" VerticalAlignment="Top"
+                           Margin="248,20,0,0" Width="240" TextAlignment="Center"/>
+
+                <TextBlock Text="Required" Foreground="#888888" HorizontalAlignment="Left" VerticalAlignment="Top"
+                           Margin="496,0,0,0" Width="240" TextAlignment="Center"/>
+                <TextBlock Name="RequiredLabel" Text="—" Foreground="#AAAAAA" FontSize="32"
+                           HorizontalAlignment="Left" VerticalAlignment="Top"
+                           Margin="496,20,0,0" Width="240" TextAlignment="Center"/>
+
+                <Button Name="BtnResetHighest" Content="Reset highest"
+                        HorizontalAlignment="Left" VerticalAlignment="Top"
+                        Margin="304,70,0,0" Width="128" Height="24" Click="BtnResetHighest_Click"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
