@@ -98,7 +98,7 @@
             </Border>
             <Border Name="OutputLoadingOverlay" Background="#99000000" IsVisible="False"
                     Width="328" Height="248">
-                <TextBlock Text="Loading..." HorizontalAlignment="Center"
+                <TextBlock Name="OutputLoadingText" Text="Loading..." HorizontalAlignment="Center"
                            VerticalAlignment="Center" Foreground="White"/>
             </Border>
         </Panel>

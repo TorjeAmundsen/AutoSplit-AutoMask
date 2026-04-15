@@ -279,16 +279,24 @@ public partial class MainWindow : Window
             return;
         }
 
+        OutputLoadingText.Text = "Loading...";
+        OutputLoadingText.Foreground = Avalonia.Media.Brushes.White;
         OutputLoadingOverlay.IsVisible = true;
 
         if (!File.Exists(_selectedInputImagePath))
         {
+            OutputImageView.Source = null;
+            ShowOutputError("Failed to load image");
+            UpdateNavigationButtons();
             await ShowMessage("Error", "Specified input image not found!", detail: _selectedInputImagePath);
             return;
         }
 
         if (!File.Exists(_alphaImagePath))
         {
+            OutputImageView.Source = null;
+            ShowOutputError("Failed to load image");
+            UpdateNavigationButtons();
             await ShowMessage("Error", "Specified mask image not found!", detail: _alphaImagePath);
             return;
         }
@@ -657,6 +665,12 @@ public partial class MainWindow : Window
         int splitCount = splitsComboBoxItems.Count;
         BtnPrevAlphaImage.IsEnabled = splitIndex > 0;
         BtnNextAlphaImage.IsEnabled = splitIndex >= 0 && splitIndex < splitCount - 1;
+    }
+
+    private void ShowOutputError(string message)
+    {
+        OutputLoadingText.Text = message;
+        OutputLoadingText.Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#CC4444"));
     }
 
     private async Task ShowMessage(string title, string message, string? detail = null)
