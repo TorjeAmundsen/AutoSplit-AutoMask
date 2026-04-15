@@ -3,12 +3,14 @@
         xmlns:local="clr-namespace:AutoSplit_AutoMask"
         x:Class="AutoSplit_AutoMask.TestOutputWindow"
         Title="Test Output Image"
-        Width="780" Height="560" CanResize="False"
+        Width="780" Height="526" CanResize="False"
         FontSize="12" Background="#2C2C2C">
 
     <Window.Styles>
         <Style Selector="TextBox">
             <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="SelectionBrush" Value="#4D9ECA"/>
+            <Setter Property="SelectionForegroundBrush" Value="White"/>
         </Style>
         <Style Selector="NumericUpDown">
             <Setter Property="MinHeight" Value="0"/>
@@ -72,35 +74,79 @@
                    Margin="0,352,0,0" Width="60"/>
         <TextBlock Text="X" Foreground="#888888" VerticalAlignment="Top" HorizontalAlignment="Left"
                    Margin="62,352,0,0"/>
-        <NumericUpDown Name="CropX" Minimum="-8192" Maximum="16384" Increment="1"
-                       VerticalAlignment="Top" HorizontalAlignment="Left"
-                       Margin="78,346,0,0" Width="130" Height="28"
-                       ValueChanged="CropValueChanged"/>
+        <Grid VerticalAlignment="Top" HorizontalAlignment="Left"
+              Margin="78,346,0,0" ColumnDefinitions="Auto,*,Auto">
+            <Button Grid.Column="0" Content="&lt;" Tag="CropX"
+                    HorizontalContentAlignment="Center" Width="24" Height="28"
+                    CornerRadius="4,0,0,4" Margin="0,0,-1,0"
+                    Click="BtnCropDecrement_Click"/>
+            <NumericUpDown Grid.Column="1" Name="CropX" Minimum="-8192" Maximum="16384" Increment="1"
+                           Width="82" Height="28" ShowButtonSpinner="False"
+                           CornerRadius="0" Margin="0,0,-1,0"
+                           ValueChanged="CropValueChanged"/>
+            <Button Grid.Column="2" Content="&gt;" Tag="CropX"
+                    HorizontalContentAlignment="Center" Width="24" Height="28"
+                    CornerRadius="0,4,4,0"
+                    Click="BtnCropIncrement_Click"/>
+        </Grid>
         <TextBlock Text="Y" Foreground="#888888" VerticalAlignment="Top" HorizontalAlignment="Left"
                    Margin="214,352,0,0"/>
-        <NumericUpDown Name="CropY" Minimum="-8192" Maximum="16384" Increment="1"
-                       VerticalAlignment="Top" HorizontalAlignment="Left"
-                       Margin="230,346,0,0" Width="130" Height="28"
-                       ValueChanged="CropValueChanged"/>
+        <Grid VerticalAlignment="Top" HorizontalAlignment="Left"
+              Margin="230,346,0,0" ColumnDefinitions="Auto,*,Auto">
+            <Button Grid.Column="0" Content="&lt;" Tag="CropY"
+                    HorizontalContentAlignment="Center" Width="24" Height="28"
+                    CornerRadius="4,0,0,4" Margin="0,0,-1,0"
+                    Click="BtnCropDecrement_Click"/>
+            <NumericUpDown Grid.Column="1" Name="CropY" Minimum="-8192" Maximum="16384" Increment="1"
+                           Width="82" Height="28" ShowButtonSpinner="False"
+                           CornerRadius="0" Margin="0,0,-1,0"
+                           ValueChanged="CropValueChanged"/>
+            <Button Grid.Column="2" Content="&gt;" Tag="CropY"
+                    HorizontalContentAlignment="Center" Width="24" Height="28"
+                    CornerRadius="0,4,4,0"
+                    Click="BtnCropIncrement_Click"/>
+        </Grid>
         <TextBlock Text="W" Foreground="#888888" VerticalAlignment="Top" HorizontalAlignment="Left"
                    Margin="366,352,0,0"/>
-        <NumericUpDown Name="CropW" Minimum="1" Maximum="16384" Increment="1"
-                       VerticalAlignment="Top" HorizontalAlignment="Left"
-                       Margin="384,346,0,0" Width="130" Height="28"
-                       ValueChanged="CropValueChanged"/>
+        <Grid VerticalAlignment="Top" HorizontalAlignment="Left"
+              Margin="384,346,0,0" ColumnDefinitions="Auto,*,Auto">
+            <Button Grid.Column="0" Content="&lt;" Tag="CropW"
+                    HorizontalContentAlignment="Center" Width="24" Height="28"
+                    CornerRadius="4,0,0,4" Margin="0,0,-1,0"
+                    Click="BtnCropDecrement_Click"/>
+            <NumericUpDown Grid.Column="1" Name="CropW" Minimum="1" Maximum="16384" Increment="1"
+                           Width="82" Height="28" ShowButtonSpinner="False"
+                           CornerRadius="0" Margin="0,0,-1,0"
+                           ValueChanged="CropValueChanged"/>
+            <Button Grid.Column="2" Content="&gt;" Tag="CropW"
+                    HorizontalContentAlignment="Center" Width="24" Height="28"
+                    CornerRadius="0,4,4,0"
+                    Click="BtnCropIncrement_Click"/>
+        </Grid>
         <TextBlock Text="H" Foreground="#888888" VerticalAlignment="Top" HorizontalAlignment="Left"
                    Margin="520,352,0,0"/>
-        <NumericUpDown Name="CropH" Minimum="1" Maximum="16384" Increment="1"
-                       VerticalAlignment="Top" HorizontalAlignment="Left"
-                       Margin="538,346,0,0" Width="130" Height="28"
-                       ValueChanged="CropValueChanged"/>
+        <Grid VerticalAlignment="Top" HorizontalAlignment="Left"
+              Margin="538,346,0,0" ColumnDefinitions="Auto,*,Auto">
+            <Button Grid.Column="0" Content="&lt;" Tag="CropH"
+                    HorizontalContentAlignment="Center" Width="24" Height="28"
+                    CornerRadius="4,0,0,4" Margin="0,0,-1,0"
+                    Click="BtnCropDecrement_Click"/>
+            <NumericUpDown Grid.Column="1" Name="CropH" Minimum="1" Maximum="16384" Increment="1"
+                           Width="82" Height="28" ShowButtonSpinner="False"
+                           CornerRadius="0" Margin="0,0,-1,0"
+                           ValueChanged="CropValueChanged"/>
+            <Button Grid.Column="2" Content="&gt;" Tag="CropH"
+                    HorizontalContentAlignment="Center" Width="24" Height="28"
+                    CornerRadius="0,4,4,0"
+                    Click="BtnCropIncrement_Click"/>
+        </Grid>
         <Button Name="BtnResetCrop" Content="Reset" VerticalAlignment="Top" HorizontalAlignment="Left"
                 Margin="674,346,0,0" Width="86" Height="28" Click="BtnResetCrop_Click"/>
 
         <!-- Similarity panel -->
         <Border BorderBrush="#444444" BorderThickness="1" Background="#232323"
                 HorizontalAlignment="Left" VerticalAlignment="Top"
-                Margin="0,388,0,0" Width="760" Height="112">
+                Margin="0,388,0,0" Width="760" Height="120">
             <Grid Margin="12">
                 <TextBlock Text="Current" Foreground="#888888" HorizontalAlignment="Left" VerticalAlignment="Top"
                            Margin="0,0,0,0" Width="240" TextAlignment="Center"/>
@@ -122,7 +168,7 @@
 
                 <Button Name="BtnResetHighest" Content="Reset highest"
                         HorizontalAlignment="Left" VerticalAlignment="Top"
-                        Margin="304,70,0,0" Width="128" Height="24" Click="BtnResetHighest_Click"/>
+                        Margin="304,66,0,0" Width="128" Height="28" Click="BtnResetHighest_Click"/>
             </Grid>
         </Border>
     </Grid>
