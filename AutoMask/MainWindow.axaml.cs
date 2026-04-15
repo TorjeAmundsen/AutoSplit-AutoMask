@@ -39,6 +39,7 @@ public partial class MainWindow : Window
     private Dictionary<string, Bitmap> _inputThumbnailCache = new();
     private Dictionary<string, SKBitmap> _maskSkBitmapCache = new();
     private CancellationTokenSource? _savedNotificationCts;
+    private TestOutputWindow? _testOutputWindow;
 
     public MainWindow()
     {
@@ -316,6 +317,14 @@ public partial class MainWindow : Window
 
         _createdFilename = CreateCurrentFilename();
         PreviewImageLabel.Text = _createdFilename;
+
+        if (_testOutputWindow is not null)
+        {
+            SplitPreset? preset = selectedPresetIndex >= 0 && selectedPresetIndex < _splitPresets.Count
+                ? _splitPresets[selectedPresetIndex]
+                : null;
+            _testOutputWindow.UpdateFromMainWindow(preset, selectedSplitIndex, _selectedInputImagePath, _maskSkBitmapCache);
+        }
     }
 
     private async void BtnLoadInputImages_Click(object sender, RoutedEventArgs e)
@@ -644,6 +653,12 @@ public partial class MainWindow : Window
 
     private void BtnOpenTestOutput_Click(object? sender, RoutedEventArgs e)
     {
+        if (_testOutputWindow is not null)
+        {
+            _testOutputWindow.Activate();
+            return;
+        }
+
         SplitPreset? preset = selectedPresetIndex >= 0 && selectedPresetIndex < _splitPresets.Count
             ? _splitPresets[selectedPresetIndex]
             : null;
@@ -651,6 +666,8 @@ public partial class MainWindow : Window
         var prefsPath = Path.Combine(_currentPresetsDirectory, "capture-prefs.json");
         var win = new TestOutputWindow();
         win.InitializeFromMainWindow(preset, selectedSplitIndex, _selectedInputImagePath, _maskSkBitmapCache, prefsPath);
+        win.Closed += (_, _) => _testOutputWindow = null;
+        _testOutputWindow = win;
         win.Show(this);
     }
 

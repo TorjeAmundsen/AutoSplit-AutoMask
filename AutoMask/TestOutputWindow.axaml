@@ -2,8 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:AutoSplit_AutoMask"
         x:Class="AutoSplit_AutoMask.TestOutputWindow"
-        Title="Test Output Image"
-        Width="720" Height="520" CanResize="False"
+        Title="Live output tester"
+        Width="680" Height="488" CanResize="False"
         FontSize="12" Background="#2C2C2C">
 
     <Window.Styles>
@@ -63,29 +63,23 @@
         </Style>
     </Window.Styles>
 
-    <Grid Margin="10" RowDefinitions="Auto,6,Auto,4,Auto,8,Auto"
-          ColumnDefinitions="*,20,*">
+    <Grid Margin="12,8" RowDefinitions="Auto,6,Auto,4,Auto,8,Auto"
+          ColumnDefinitions="320,16,320">
 
-        <!-- Row 0: Reference source (full width) -->
+        <!-- Row 0: Reference status + custom load (full width) -->
         <Grid Grid.Row="0" Grid.ColumnSpan="3"
-              ColumnDefinitions="Auto,6,Auto,6,Auto,6,*">
-            <TextBlock Text="Reference:" Foreground="#BBBBBB" VerticalAlignment="Center"/>
-            <ComboBox Grid.Column="2" Name="ComboBoxReferenceSource" Width="230" Height="28"
-                      SelectionChanged="ComboBoxReferenceSource_SelectionChanged">
-                <ComboBoxItem Content="Current preset + split"/>
-                <ComboBoxItem Content="Custom PNG..."/>
-            </ComboBox>
-            <Button Grid.Column="4" Name="BtnRefreshReference" Content="Refresh reference"
-                    Width="124" Height="28" Click="BtnRefreshReference_Click"/>
-            <TextBlock Grid.Column="6" Name="ReferenceStatusLabel" Foreground="#888888"
+              ColumnDefinitions="Auto,8,*">
+            <Button Name="BtnLoadCustomReference" Content="Load custom image"
+                    Height="28" Click="BtnLoadCustomReference_Click"/>
+            <TextBlock Grid.Column="2" Name="ReferenceStatusLabel" Foreground="#888888"
                        VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
         </Grid>
 
         <!-- Row 2: Captions -->
         <TextBlock Grid.Row="2" Grid.Column="0" Name="ReferenceCaption"
-                   Text="Reference (320×240)" Foreground="#CCCCCC" TextAlignment="Center"/>
+                   Text="Reference" Foreground="#CCCCCC" TextAlignment="Center"/>
         <TextBlock Grid.Row="2" Grid.Column="2" Name="LiveCaption"
-                   Text="Live feed (320×240)" Foreground="#CCCCCC" TextAlignment="Center"/>
+                   Text="Live feed" Foreground="#CCCCCC" TextAlignment="Center"/>
 
         <!-- Row 4: Image previews -->
         <Border Grid.Row="4" Grid.Column="0" BorderBrush="#484848" BorderThickness="1"

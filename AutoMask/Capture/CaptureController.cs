@@ -106,7 +106,7 @@ public sealed class CaptureController : IAsyncDisposable
             double required = _required;
             CropRect crop = _crop;
 
-            if (src is null || refPixels is null || refMask is null)
+            if (src is null)
             {
                 Thread.Sleep(20);
                 continue;
@@ -127,17 +127,24 @@ public sealed class CaptureController : IAsyncDisposable
                     continue;
                 }
 
-                byte[] livePixels = ReadBgraBytes(scaled);
-                double similarity = Comparison.L2NormComparer.Compare(refPixels, refMask, livePixels);
+                double cur = 0;
+                double high = _highest;
 
-                if (similarity > _highest)
+                if (refPixels is not null && refMask is not null)
                 {
-                    _highest = similarity;
+                    byte[] livePixels = ReadBgraBytes(scaled);
+                    double similarity = Comparison.L2NormComparer.Compare(refPixels, refMask, livePixels);
+
+                    if (similarity > _highest)
+                    {
+                        _highest = similarity;
+                    }
+
+                    cur = similarity;
+                    high = _highest;
                 }
 
                 Bitmap uiBitmap = ImageProcessor.ToAvaloniaBitmap(scaled);
-                double cur = similarity;
-                double high = _highest;
 
                 Dispatcher.UIThread.Post(
                     () => FrameReady?.Invoke(uiBitmap, cur, high, required),

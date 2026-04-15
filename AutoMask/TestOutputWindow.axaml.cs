@@ -12,8 +12,6 @@ namespace AutoSplit_AutoMask;
 
 public partial class TestOutputWindow : Window
 {
-    private enum ReferenceMode { PresetSplit = 0, CustomPng = 1 }
-
     private enum FeedKind { Window, Region, Webcam }
 
     private sealed class FeedOption
@@ -33,6 +31,7 @@ public partial class TestOutputWindow : Window
     private int _splitIndexFromMain = -1;
     private string? _inputPathFromMain;
     private Dictionary<string, SKBitmap>? _maskCacheFromMain;
+    private bool _useCustomReference;
 
     private bool _loadingFeeds;
     private bool _suppressCropEvents;
@@ -92,7 +91,6 @@ public partial class TestOutputWindow : Window
     {
         _loadedPrefs = LoadPrefs();
 
-        ComboBoxReferenceSource.SelectedIndex = 0;
         await RefreshFeedListAsync(selectAfter: _loadedPrefs?.FeedName);
 
         // RefreshFeedListAsync sets the index while _loadingFeeds is true,
@@ -119,33 +117,26 @@ public partial class TestOutputWindow : Window
         await _controller.DisposeAsync();
     }
 
-    private async void ComboBoxReferenceSource_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    public async void UpdateFromMainWindow(
+        SplitPreset? preset,
+        int selectedSplitIndex,
+        string? selectedInputImagePath,
+        Dictionary<string, SKBitmap>? maskCache)
     {
-        if (!IsLoaded)
-        {
-            return;
-        }
+        _presetFromMain = preset;
+        _splitIndexFromMain = selectedSplitIndex;
+        _inputPathFromMain = selectedInputImagePath;
+        _maskCacheFromMain = maskCache;
 
-        if (ComboBoxReferenceSource.SelectedIndex == (int)ReferenceMode.CustomPng)
-        {
-            await LoadCustomReferenceAsync();
-        }
-        else
+        if (IsLoaded && !_useCustomReference)
         {
             await RebuildReferenceFromPresetAsync();
         }
     }
 
-    private async void BtnRefreshReference_Click(object? sender, RoutedEventArgs e)
+    private async void BtnLoadCustomReference_Click(object? sender, RoutedEventArgs e)
     {
-        if (ComboBoxReferenceSource.SelectedIndex == (int)ReferenceMode.CustomPng)
-        {
-            await LoadCustomReferenceAsync();
-        }
-        else
-        {
-            await RebuildReferenceFromPresetAsync();
-        }
+        await LoadCustomReferenceAsync();
     }
 
     private async Task RebuildReferenceFromPresetAsync()
@@ -211,6 +202,8 @@ public partial class TestOutputWindow : Window
         {
             return;
         }
+
+        _useCustomReference = true;
 
         var path = files[0].Path.LocalPath;
         ReferenceStatusLabel.Text = "Loading PNG…";
@@ -509,8 +502,10 @@ public partial class TestOutputWindow : Window
     private void OnFrameReady(Bitmap live, double current, double highest, double required)
     {
         LiveImageView.Source = live;
-        CurrentLabel.Text = current.ToString("F4");
-        HighestLabel.Text = highest.ToString("F4");
+
+        bool hasReference = ReferenceImageView.Source is not null;
+        CurrentLabel.Text = hasReference ? current.ToString("F4") : "—";
+        HighestLabel.Text = hasReference ? highest.ToString("F4") : "—";
         RequiredLabel.Text = required > 0 ? required.ToString("F4") : "—";
         CurrentLabel.Foreground = required > 0 && current >= required ? _metGreen : _metWhite;
 
