@@ -4,7 +4,7 @@
         x:Class="AutoSplit_AutoMask.MainWindow"
         x:DataType="local:MainWindow"
         CanResize="False"
-        Title="AutoMask for AutoSplit" Height="474" Width="696" FontSize="12"
+        Title="AutoMask for AutoSplit" Height="426" Width="696" FontSize="12"
         Background="#2C2C2C">
     <Window.DataTemplates>
         <DataTemplate DataType="{x:Type local:PresetGroupHeader}">
@@ -24,21 +24,21 @@
                    TextTrimming="CharacterEllipsis"/>
     </Border>
 
-    <Grid Margin="12,8" RowDefinitions="Auto,8,Auto,4,Auto,8,Auto,8,Auto,8,Auto"
+    <Grid Margin="12,8" RowDefinitions="Auto,8,Auto,4,Auto,8,Auto,8,Auto"
           ColumnDefinitions="328,16,328">
 
         <!-- Row 0: Toolbar (spans all columns) -->
         <Grid Grid.Row="0" Grid.Column="0"
-              ColumnDefinitions="Auto,8,Auto,8,Auto">
+              ColumnDefinitions="*,8,Auto,8,Auto">
             <Button Grid.Column="0" Name="BtnLoadInputImage" Content="Load base image(s)"
-                    HorizontalContentAlignment="Center" Height="28"
+                    HorizontalContentAlignment="Center" Height="28" HorizontalAlignment="Stretch"
                     Click="BtnLoadInputImages_Click"/>
             <Button Grid.Column="2" Content="Show output"
                     HorizontalContentAlignment="Center" Height="28"
                     Click="BtnShowOutput_Click"/>
-            <Button Grid.Column="4" Name="BtnOpenOutputFolder" Content="Show presets"
+            <Button Grid.Column="4" Name="BtnOpenOutputFolder" Content="Live tester"
                     HorizontalContentAlignment="Center" Height="28"
-                    Click="BtnOpenPresetsFolder_Click"/>
+                    Click="BtnOpenTestOutput_Click"/>
             
         </Grid>
         <Grid Grid.Row="0" Grid.Column="2"
@@ -154,33 +154,22 @@
                     Click="BtnSelectOutputDirectory_Click"/>
             <TextBox Grid.Column="1" Name="OutputDirectoryTextBox" Height="28"
                      IsReadOnly="True" Focusable="False" IsHitTestVisible="False"
-                     Watermark="No output folder selected"
+                     PlaceholderText="No output folder selected"
                      VerticalContentAlignment="Center" CornerRadius="0,4,4,0"
                      BorderBrush="#565656"/>
         </Grid>
 
-        <StackPanel Grid.Row="8" Grid.Column="2" Orientation="Horizontal" Spacing="8">
-            <Button Name="BtnSave" Content="Save masked image"
+        <Grid Grid.Row="8" Grid.Column="2" ColumnDefinitions="*,8,Auto,8,Auto">
+            <Button Name="BtnSave" Content="Save output" Grid.Column="0" HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Center" Height="28"
                     Click="BtnAutoSave_Click"/>
-            <Button Name="BtnSaveAs" Content="Save as..."
+            <Button Name="BtnSaveAs" Content="Save as..." Grid.Column="2"
                     HorizontalContentAlignment="Center" Height="28"
                     Click="BtnSaveImageAs_Click"/>
-            <Button Name="BtnSaveAllSplits" Content="Save all splits"
+            <Button Name="BtnSaveAllSplits" Content="Save all" Grid.Column="4"
                     HorizontalContentAlignment="Center" Height="28"
                     Click="BtnSaveAllSplits_Click"/>
-        </StackPanel>
-
-        <!-- Row 9: Load custom mask / Test output (right side) -->
-        <Grid Grid.Row="10" Grid.Column="2" ColumnDefinitions="*,8,*">
-            <Button Grid.Column="0" Name="BtnLoadCustomAlphaImage" Content="Load custom mask"
-                    HorizontalContentAlignment="Center" Height="28"
-                    Click="BtnLoadAlphaImage_Click"/>
-            <Button Grid.Column="2" Name="BtnOpenTestOutput" Content="Test Output"
-                    HorizontalContentAlignment="Center" Height="28"
-                    Click="BtnOpenTestOutput_Click"/>
         </Grid>
-
     </Grid>
 
     </DockPanel>

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text.Json;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -38,6 +39,11 @@ public partial class TestOutputWindow : Window
     private int _activeSourceW = 320;
     private int _activeSourceH = 240;
 
+    private string _prefsPath = "";
+    private CapturePreferences? _loadedPrefs;
+    private bool _hasUserChanges;
+    private bool _isClosing;
+
     public TestOutputWindow()
     {
         InitializeComponent();
@@ -48,27 +54,62 @@ public partial class TestOutputWindow : Window
         _controller.ErrorReported += OnErrorReported;
 
         Opened += async (_, _) => await InitializeAsync();
-        Closing += async (_, _) => await ShutdownAsync();
+        Closing += async (_, e) =>
+        {
+            if (_isClosing)
+            {
+                return;
+            }
+
+            if (_hasUserChanges)
+            {
+                e.Cancel = true;
+                await PromptSaveAndClose();
+            }
+            else
+            {
+                _isClosing = true;
+                await ShutdownAsync();
+            }
+        };
     }
 
     public void InitializeFromMainWindow(
         SplitPreset? preset,
         int selectedSplitIndex,
         string? selectedInputImagePath,
-        Dictionary<string, SKBitmap>? maskCache)
+        Dictionary<string, SKBitmap>? maskCache,
+        string prefsPath)
     {
         _presetFromMain = preset;
         _splitIndexFromMain = selectedSplitIndex;
         _inputPathFromMain = selectedInputImagePath;
         _maskCacheFromMain = maskCache;
+        _prefsPath = prefsPath;
     }
 
     private async Task InitializeAsync()
     {
+        _loadedPrefs = LoadPrefs();
+
         ComboBoxReferenceSource.SelectedIndex = 0;
-        await RefreshFeedListAsync(selectAfter: null);
+        await RefreshFeedListAsync(selectAfter: _loadedPrefs?.FeedName);
+
+        // RefreshFeedListAsync sets the index while _loadingFeeds is true,
+        // so SelectionChanged won't fire. Activate the source manually.
+        if (ComboBoxFeedSource.SelectedIndex >= 0)
+        {
+            await ActivateSelectedFeedAsync();
+
+            if (_loadedPrefs is not null)
+            {
+                ApplyCropFromPrefs(_loadedPrefs);
+            }
+        }
+
         await RebuildReferenceFromPresetAsync();
         _controller.Start();
+        _hasUserChanges = false;
     }
 
     private async Task ShutdownAsync()
@@ -327,6 +368,12 @@ public partial class TestOutputWindow : Window
             return;
         }
 
+        await ActivateSelectedFeedAsync();
+        _hasUserChanges = true;
+    }
+
+    private async Task ActivateSelectedFeedAsync()
+    {
         if (ComboBoxFeedSource.SelectedItem is not FeedOption opt)
         {
             await _controller.SetSourceAsync(null, CancellationToken.None);
@@ -394,6 +441,7 @@ public partial class TestOutputWindow : Window
         int h = (int)(CropH.Value ?? 1);
 
         _controller.UpdateCrop(new CaptureController.CropRect(x, y, w, h));
+        _hasUserChanges = true;
     }
 
     private void BtnResetCrop_Click(object? sender, RoutedEventArgs e)
@@ -463,5 +511,81 @@ public partial class TestOutputWindow : Window
     private void OnErrorReported(string message)
     {
         ReferenceStatusLabel.Text = message;
+    }
+
+    private CapturePreferences BuildCurrentPrefs()
+    {
+        var feedOpt = ComboBoxFeedSource.SelectedItem as FeedOption;
+        return new CapturePreferences
+        {
+            FeedKind = feedOpt?.Kind.ToString(),
+            FeedName = feedOpt?.Label,
+            CropX = (int)(CropX.Value ?? 0),
+            CropY = (int)(CropY.Value ?? 0),
+            CropW = (int)(CropW.Value ?? 1),
+            CropH = (int)(CropH.Value ?? 1),
+        };
+    }
+
+    private void ApplyCropFromPrefs(CapturePreferences prefs)
+    {
+        _suppressCropEvents = true;
+        try
+        {
+            CropX.Value = prefs.CropX;
+            CropY.Value = prefs.CropY;
+            CropW.Value = prefs.CropW;
+            CropH.Value = prefs.CropH;
+            _controller.UpdateCrop(new CaptureController.CropRect(prefs.CropX, prefs.CropY, prefs.CropW, prefs.CropH));
+        }
+        finally
+        {
+            _suppressCropEvents = false;
+        }
+    }
+
+    private CapturePreferences? LoadPrefs()
+    {
+        if (string.IsNullOrEmpty(_prefsPath) || !File.Exists(_prefsPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            var json = File.ReadAllText(_prefsPath);
+            return JsonSerializer.Deserialize(json, AppJsonContext.Default.CapturePreferences);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void SavePrefs(CapturePreferences prefs)
+    {
+        if (string.IsNullOrEmpty(_prefsPath))
+        {
+            return;
+        }
+
+        var json = JsonSerializer.Serialize(prefs, AppJsonContext.Default.CapturePreferences);
+        File.WriteAllText(_prefsPath, json);
+    }
+
+    private async Task PromptSaveAndClose()
+    {
+        var result = await MessageBox.Show(this, "Save capture preferences",
+            "Save your capture source and crop settings for next time?", MessageBoxButton.YesNo);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            SavePrefs(BuildCurrentPrefs());
+        }
+
+        _isClosing = true;
+        _hasUserChanges = false;
+        await ShutdownAsync();
+        Close();
     }
 }

@@ -648,8 +648,9 @@ public partial class MainWindow : Window
             ? _splitPresets[selectedPresetIndex]
             : null;
 
+        var prefsPath = Path.Combine(_currentPresetsDirectory, "capture-prefs.json");
         var win = new TestOutputWindow();
-        win.InitializeFromMainWindow(preset, selectedSplitIndex, _selectedInputImagePath, _maskSkBitmapCache);
+        win.InitializeFromMainWindow(preset, selectedSplitIndex, _selectedInputImagePath, _maskSkBitmapCache, prefsPath);
         win.Show(this);
     }
 
