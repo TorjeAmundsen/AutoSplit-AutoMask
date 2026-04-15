@@ -4,124 +4,174 @@
         x:Class="AutoSplit_AutoMask.MainWindow"
         x:DataType="local:MainWindow"
         CanResize="False"
-        Title="AutoMask for AutoSplit" Height="506" Width="836" FontSize="12"
+        Title="AutoMask for AutoSplit" Height="426" Width="696" FontSize="12"
         Background="#2C2C2C">
     <Window.DataTemplates>
-        <!-- Group headers: used both in the dropdown and (if ever selected) in the collapsed display -->
         <DataTemplate DataType="{x:Type local:PresetGroupHeader}">
             <TextBlock Text="{Binding GameName}" FontWeight="SemiBold" FontSize="11"
                        Foreground="#999999" Margin="0,1,0,1"/>
         </DataTemplate>
     </Window.DataTemplates>
 
-    <Window.Resources>
-        <!-- ComboBox hover/focus brushes -->
-        <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#3C3C3C"/>
-        <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#565656"/>
-        <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#3C3C3C"/>
-        <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="#565656"/>
-        <!-- TextBox hover/focus brushes -->
-        <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#3C3C3C"/>
-        <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#565656"/>
-        <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#3C3C3C"/>
-        <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#565656"/>
-    </Window.Resources>
+    <DockPanel>
 
-    <Window.Styles>
-        <Style Selector="ComboBox">
-            <Setter Property="MinHeight" Value="0"/>
-            <Setter Property="Padding" Value="8,2"/>
-            <Setter Property="BorderBrush" Value="#444444"/>
-            <Setter Property="Background" Value="#363636"/>
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-        </Style>
-        <Style Selector="ComboBoxItem">
-            <Setter Property="Padding" Value="8,2"/>
-        </Style>
-        <Style Selector="TextBox">
-            <Setter Property="MinHeight" Value="0"/>
-            <Setter Property="Padding" Value="4,2"/>
-            <Setter Property="BorderBrush" Value="#444444"/>
-            <Setter Property="Background" Value="#363636"/>
-        </Style>
-    </Window.Styles>
+    <!-- Status bar -->
+    <Border DockPanel.Dock="Bottom" BorderBrush="#484848" BorderThickness="0,1,0,0"
+            Background="#252525" Padding="10,4">
+        <TextBlock Name="ImageSavedLabel" Foreground="#22CC22" Opacity="0"
+                   FontFamily="Consolas" FontSize="11"
+                   VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis"/>
+    </Border>
 
-    <Grid Margin="8,2,8,2">
+    <Grid Margin="12,8" RowDefinitions="Auto,8,Auto,4,Auto,8,Auto,8,Auto"
+          ColumnDefinitions="328,16,328">
 
-        <!-- Row 1: toolbar -->
-        <!-- Left side (x=10..402) aligns with left image; right side (x=418..810) aligns with right image -->
-        <Button HorizontalContentAlignment="Center" Name="BtnLoadInputImage" Content="Load input image(s)" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,12,0,0" Width="152" Height="28" Click="BtnLoadInputImages_Click" />
-        <Button HorizontalContentAlignment="Center" Content="Show output" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="170,12,0,0" Width="107" Height="28" Click="BtnShowOutput_Click" />
-        <Button HorizontalContentAlignment="Center" Name="BtnOpenOutputFolder" Content="Show presets" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="285,12,0,0" Width="117" Height="28" Click="BtnOpenPresetsFolder_Click" />
-        <ComboBox Name="ComboBoxSelectPreset" Width="333" Height="28" ItemsSource="{Binding presetComboBoxItems}" SelectionChanged="ComboBoxSelectPreset_SelectionChanged" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="418,12,0,0">
-            <ComboBox.ItemTemplate>
-                <DataTemplate DataType="{x:Type local:PresetComboItem}">
-                    <StackPanel Spacing="1">
-                        <TextBlock Text="{Binding PresetName}"/>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="{Binding SplitCount, StringFormat='{}Splits: {0}'}" FontSize="10" Foreground="#888888"/>
-                            <TextBlock Text="{Binding TotalImages, StringFormat='{}Total images: {0}'}" FontSize="10" Foreground="#888888"/>
+        <!-- Row 0: Toolbar (spans all columns) -->
+        <Grid Grid.Row="0" Grid.Column="0"
+              ColumnDefinitions="*,8,Auto,8,Auto">
+            <Button Grid.Column="0" Name="BtnLoadInputImage" Content="Load base image(s)"
+                    HorizontalContentAlignment="Center" Height="28" HorizontalAlignment="Stretch"
+                    Click="BtnLoadInputImages_Click"/>
+            <Button Grid.Column="2" Content="Show output"
+                    HorizontalContentAlignment="Center" Height="28"
+                    Click="BtnShowOutput_Click"/>
+            <Button Grid.Column="4" Name="BtnOpenOutputFolder" Content="Live tester"
+                    HorizontalContentAlignment="Center" Height="28"
+                    Click="BtnOpenTestOutput_Click"/>
+            
+        </Grid>
+        <Grid Grid.Row="0" Grid.Column="2"
+              ColumnDefinitions="*,Auto">
+            <ComboBox Grid.Column="0" Name="ComboBoxSelectPreset" Height="28"
+                      HorizontalAlignment="Stretch" CornerRadius="4,0,0,4" Margin="0,0,-1,0"
+                      ItemsSource="{Binding presetComboBoxItems}"
+                      SelectionChanged="ComboBoxSelectPreset_SelectionChanged">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type local:PresetComboItem}">
+                        <StackPanel Spacing="1">
+                            <TextBlock Text="{Binding PresetName}"/>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{Binding SplitCount, StringFormat='{}Splits: {0}'}" FontSize="10" Foreground="#888888"/>
+                                <TextBlock Text="{Binding TotalImages, StringFormat='{}Total images: {0}'}" FontSize="10" Foreground="#888888"/>
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
-                </DataTemplate>
-            </ComboBox.ItemTemplate>
-        </ComboBox>
-        <Button HorizontalContentAlignment="Center" Name="BtnOpenPresetEditor" Content="Edit" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="759,12,0,0" Width="51" Height="28" Click="BtnOpenPresetEditor_Click" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Grid.Column="1" Name="BtnOpenPresetEditor" Content="Edit"
+                    HorizontalContentAlignment="Center" Width="45" Height="28"
+                    CornerRadius="0,4,4,0"
+                    Click="BtnOpenPresetEditor_Click"/>
+        </Grid>
 
-        <!-- Row 2: preview labels -->
-        <TextBlock Text="Input image preview" Name="InputImageLabel" Width="392" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Margin="10,52,0,0" />
-        <TextBlock Text="Output image preview" Name="PreviewImageLabel" Width="392" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Margin="418,52,0,0" />
+            <!-- Row 2: Preview labels -->
+        <TextBlock Grid.Row="2" Grid.Column="0" Name="InputImageLabel"
+                   Text="Input image preview" TextAlignment="Center"/>
+        <TextBlock Grid.Row="2" Grid.Column="2" Name="PreviewImageLabel"
+                   Text="Output image preview" TextAlignment="Center"/>
 
-        <!-- Row 3: image previews -->
-        <!-- Containers are 392x296: internal 384x288 = 4:3, leaving 4px padding on each side -->
-        <Border BorderBrush="#484848" BorderThickness="1" Width="392" Height="296" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,72,0,0" Background="#151515" Padding="3">
-            <Image Name="InputImageView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stretch="Uniform" />
-        </Border>
-        <Border Name="OutputImageBorder" BorderBrush="#484848" BorderThickness="1" Width="392" Height="296" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="418,72,0,0" Padding="3" Background="#151515" PointerPressed="OutputImageBorder_PointerPressed">
-            <Grid Background="Transparent">
-                <Border Name="OutputDarkBg" Background="#151515"/>
-                <Image Name="OutputCheckerBg" Stretch="Fill" IsVisible="False"/>
-                <Image Name="OutputImageView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stretch="Uniform"/>
-            </Grid>
-        </Border>
-        <TextBlock Foreground="Green" Opacity="0" Name="ImageSavedLabel" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,466,0,0" Width="400" TextTrimming="CharacterEllipsis" />
-        <Border Name="InputLoadingOverlay" Width="392" Height="296" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,72,0,0" Background="#99000000" IsVisible="False">
-            <TextBlock Text="Loading..." HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White"/>
-        </Border>
-        <Border Name="OutputLoadingOverlay" Width="392" Height="296" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="418,72,0,0" Background="#99000000" IsVisible="False">
-            <TextBlock Text="Loading..." HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White"/>
-        </Border>
+        <!-- Row 3: Image previews (320x240 pixel-perfect) -->
+        <Panel Grid.Row="4" Grid.Column="0">
+            <Border BorderBrush="#484848" BorderThickness="1" Background="#151515" Padding="3"
+                    Width="328" Height="248">
+                <Image Name="InputImageView" Stretch="Uniform"
+                       RenderOptions.BitmapInterpolationMode="None"/>
+            </Border>
+            <Border Name="InputLoadingOverlay" Background="#99000000" IsVisible="False"
+                    Width="328" Height="248">
+                <TextBlock Text="Loading..." HorizontalAlignment="Center"
+                           VerticalAlignment="Center" Foreground="White"/>
+            </Border>
+        </Panel>
 
-        <!-- Row 4: image / split navigation -->
-        <Button HorizontalContentAlignment="Center" Name="BtnInputImagePrev" IsEnabled="False" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,380,0,0" Width="28" Height="28" Click="BtnNextInputImage_Click">&lt;</Button>
-        <ComboBox Name="ComboBoxSelectInputImage" SelectionChanged="ComboBoxSelectInputImage_OnSelectionChanged" ItemsSource="{Binding inputImagesComboBoxItems}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="42,380,0,0" Width="328" Height="28">
-            <ComboBox.ItemTemplate>
-                <DataTemplate x:DataType="local:InputImageItem">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="{Binding FileName}" VerticalAlignment="Center"/>
-                        <Image Grid.Column="1" Source="{Binding Thumbnail}" Width="32" Height="24" Stretch="Uniform" Margin="6,0,0,0"/>
-                    </Grid>
-                </DataTemplate>
-            </ComboBox.ItemTemplate>
-        </ComboBox>
-        <Button HorizontalContentAlignment="Center" Name="BtnInputImageNext" IsEnabled="False" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="374,380,0,0" Width="28" Height="28" Click="BtnPrevInputImage_Click">&gt;</Button>
+        <Panel Grid.Row="4" Grid.Column="2">
+            <Border Name="OutputImageBorder" BorderBrush="#484848" BorderThickness="1"
+                    Padding="3" Background="#151515" Width="328" Height="248"
+                    PointerPressed="OutputImageBorder_PointerPressed">
+                <Grid Background="Transparent">
+                    <Border Name="OutputDarkBg" Background="#151515"/>
+                    <Image Name="OutputCheckerBg" Stretch="Fill" IsVisible="False"/>
+                    <Image Name="OutputImageView" Stretch="Uniform"
+                           RenderOptions.BitmapInterpolationMode="None"/>
+                </Grid>
+            </Border>
+            <Border Name="OutputLoadingOverlay" Background="#99000000" IsVisible="False"
+                    Width="328" Height="248">
+                <TextBlock Name="OutputLoadingText" Text="Loading..." HorizontalAlignment="Center"
+                           VerticalAlignment="Center" Foreground="White"/>
+            </Border>
+        </Panel>
 
-        <Button HorizontalContentAlignment="Center" Name="BtnPrevAlphaImage" IsEnabled="False" Content="&lt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="418,380,0,0" Width="28" Height="28" Click="BtnNextAlphaImage_Click" />
-        <ComboBox Name="ComboBoxSelectSplit" SelectionChanged="ComboBoxSelectSplit_OnSelectionChanged" SelectedIndex="{Binding selectedSplitIndex}" ItemsSource="{Binding splitsComboBoxItems}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="450,380,0,0" Width="328" Height="28" />
-        <Button HorizontalContentAlignment="Center" Name="BtnNextAlphaImage" IsEnabled="False" Content="&gt;" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="782,380,0,0" Width="28" Height="28" Click="BtnPrevAlphaImage_Click" />
+        <!-- Row 5: Base image/split selection -->
+        <Grid Grid.Row="6" Grid.Column="0" ColumnDefinitions="Auto,*,Auto">
+            <Button Grid.Column="0" Name="BtnInputImagePrev" Content="&lt;"
+                    HorizontalContentAlignment="Center" Width="28" Height="28"
+                    CornerRadius="4,0,0,4" Margin="0,0,-1,0"
+                    IsEnabled="False" Click="BtnPrevInputImage_Click"/>
+            <ComboBox Grid.Column="1" Name="ComboBoxSelectInputImage" Height="28"
+                      HorizontalAlignment="Stretch" CornerRadius="0" Margin="0,0,-1,0"
+                      IsEnabled="False" ItemsSource="{Binding inputImagesComboBoxItems}"
+                      PlaceholderText="No base images loaded"
+                      SelectionChanged="ComboBoxSelectInputImage_OnSelectionChanged">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="local:InputImageItem">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{Binding FileName}" VerticalAlignment="Center"/>
+                            <Image Grid.Column="1" Source="{Binding Thumbnail}"
+                                   Width="32" Height="24" Stretch="Uniform" Margin="6,0,0,0"/>
+                        </Grid>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Grid.Column="2" Name="BtnInputImageNext" Content="&gt;"
+                    HorizontalContentAlignment="Center" Width="28" Height="28"
+                    CornerRadius="0,4,4,0"
+                    IsEnabled="False" Click="BtnNextInputImage_Click"/>
+        </Grid>
 
-        <!-- Row 5: output directory + save buttons -->
-        <Button HorizontalContentAlignment="Center" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,420,0,0" Width="92" Height="28" Click="BtnSelectOutputDirectory_Click" Content="Set output" />
-        <TextBox Name="OutputDirectoryTextBox" Width="296" Height="28" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True" Focusable="True" Margin="106,420,0,0" VerticalContentAlignment="Center" />
-        <Button HorizontalContentAlignment="Center" Name="BtnLoadCustomAlphaImage" Content="Load custom mask" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="418,420,0,0" Width="144" Height="28" Click="BtnLoadAlphaImage_Click" />
-        <Button HorizontalContentAlignment="Center" Name="BtnSave" Content="Save masked image" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="566,420,0,0" Width="152" Height="28" Click="BtnAutoSave_Click" />
-        <Button HorizontalContentAlignment="Center" Name="BtnSaveAs" Content="Save as..." VerticalAlignment="Top" HorizontalAlignment="Left" Margin="722,420,0,0" Width="88" Height="28" Click="BtnSaveImageAs_Click" />
+        <Grid Grid.Row="6" Grid.Column="2" ColumnDefinitions="Auto,*,Auto">
+            <Button Grid.Column="0" Name="BtnPrevAlphaImage" Content="&lt;"
+                    HorizontalContentAlignment="Center" Width="28" Height="28"
+                    CornerRadius="4,0,0,4" Margin="0,0,-1,0"
+                    IsEnabled="False" Click="BtnPrevAlphaImage_Click"/>
+            <ComboBox Grid.Column="1" Name="ComboBoxSelectSplit" Height="28"
+                      HorizontalAlignment="Stretch" CornerRadius="0" Margin="0,0,-1,0"
+                      SelectedIndex="{Binding selectedSplitIndex}"
+                      ItemsSource="{Binding splitsComboBoxItems}"
+                      SelectionChanged="ComboBoxSelectSplit_OnSelectionChanged"/>
+            <Button Grid.Column="2" Name="BtnNextAlphaImage" Content="&gt;"
+                    HorizontalContentAlignment="Center" Width="28" Height="28"
+                    CornerRadius="0,4,4,0"
+                    IsEnabled="False" Click="BtnNextAlphaImage_Click"/>
+        </Grid>
 
-        <Button HorizontalContentAlignment="Center" Name="BtnSaveAllSplits" Content="Save all split images" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="418, 460, 0, 0" Width="392" Click="BtnSaveAllSplits_Click"/>
+        <!-- Row 7: Output controls -->
+        <Grid Grid.Row="8" Grid.Column="0" ColumnDefinitions="Auto,*">
+            <Button Grid.Column="0" Content="🖿" Height="28" Width="28" Padding="0, 4, 0, 0"
+                    HorizontalContentAlignment="Center"
+                    CornerRadius="4,0,0,4" Margin="0,0,-1,0"
+                    ToolTip.Tip="Set output folder"
+                    Click="BtnSelectOutputDirectory_Click"/>
+            <TextBox Grid.Column="1" Name="OutputDirectoryTextBox" Height="28"
+                     IsReadOnly="True" Focusable="False" IsHitTestVisible="False"
+                     PlaceholderText="No output folder selected"
+                     VerticalContentAlignment="Center" CornerRadius="0,4,4,0"
+                     BorderBrush="#565656"/>
+        </Grid>
 
+        <Grid Grid.Row="8" Grid.Column="2" ColumnDefinitions="*,8,Auto,8,Auto">
+            <Button Name="BtnSave" Content="Save output" Grid.Column="0" HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center" Height="28"
+                    Click="BtnAutoSave_Click"/>
+            <Button Name="BtnSaveAs" Content="Save as..." Grid.Column="2"
+                    HorizontalContentAlignment="Center" Height="28"
+                    Click="BtnSaveImageAs_Click"/>
+            <Button Name="BtnSaveAllSplits" Content="Save all" Grid.Column="4"
+                    HorizontalContentAlignment="Center" Height="28"
+                    Click="BtnSaveAllSplits_Click"/>
+        </Grid>
     </Grid>
+
+    </DockPanel>
 </Window>

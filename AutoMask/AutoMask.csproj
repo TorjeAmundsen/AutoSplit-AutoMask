@@ -10,17 +10,20 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <SelfContained>true</SelfContained>
         <PublishAot>true</PublishAot>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <NoWarn>$(NoWarn);AVLN3001</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia" Version="12.0.0" />
-        <PackageReference Include="Avalonia.Desktop" Version="12.0.0" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.0" />
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.0" />
-        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.13" Condition="'$(Configuration)' == 'Debug'" />
+        <PackageReference Include="Avalonia" Version="12.0.1" />
+        <PackageReference Include="Avalonia.Desktop" Version="12.0.1" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.1" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.1" />
+        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.14" Condition="'$(Configuration)' == 'Debug'" />
         <PackageReference Include="SkiaSharp" Version="3.119.3-preview.1.1" />
         <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.3-preview.1.1" />
+        <PackageReference Include="OpenCvSharp4" Version="4.10.0.20240616" />
+        <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.10.0.20240616" />
     </ItemGroup>
 
     <ItemGroup>
@@ -43,6 +46,9 @@
       </Compile>
       <Compile Update="MainWindow.axaml.cs">
         <DependentUpon>MainWindow.axaml</DependentUpon>
+      </Compile>
+      <Compile Update="TestOutputWindow.axaml.cs">
+        <DependentUpon>TestOutputWindow.axaml</DependentUpon>
       </Compile>
     </ItemGroup>
 </Project>

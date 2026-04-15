@@ -1,0 +1,236 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:AutoSplit_AutoMask"
+        x:Class="AutoSplit_AutoMask.TestOutputWindow"
+        Title="Live output tester"
+        Width="680" Height="488" CanResize="False"
+        FontSize="12" Background="#2C2C2C">
+
+    <Window.DataTemplates>
+        <DataTemplate DataType="{x:Type local:FeedGroupHeader}">
+            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="11"
+                       Foreground="#999999" Margin="0,1,0,1"/>
+        </DataTemplate>
+    </Window.DataTemplates>
+
+    <Window.Styles>
+        <Style Selector="TextBox">
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="SelectionBrush" Value="#4D9ECA"/>
+            <Setter Property="SelectionForegroundBrush" Value="White"/>
+        </Style>
+        <Style Selector="NumericUpDown">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FormatString" Value="0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="NumericUpDown /template/ ButtonSpinner">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+        </Style>
+        <Style Selector="NumericUpDown /template/ TextBox">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="NumericUpDown /template/ TextBox /template/ Border">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="NumericUpDown /template/ TextBox:focus /template/ Border">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="NumericUpDown /template/ TextBox:pointerover /template/ Border">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="NumericUpDown:focus-within /template/ ButtonSpinner /template/ Border">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Border.nud-wrap">
+            <Setter Property="CornerRadius" Value="4,0,0,4"/>
+            <Setter Property="BorderBrush" Value="#565656"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="#363636"/>
+            <Setter Property="ClipToBounds" Value="True"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="6,0"/>
+        </Style>
+        <Style Selector="Border.nud-wrap:focus-within">
+            <Setter Property="BorderBrush" Value="#777777"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid Margin="12,8" RowDefinitions="Auto,6,Auto,4,Auto,8,Auto"
+          ColumnDefinitions="320,16,320">
+
+        <!-- Row 0: Reference status + custom load (full width) -->
+        <Grid Grid.Row="0" Grid.ColumnSpan="3"
+              ColumnDefinitions="Auto,8,*">
+            <Button Name="BtnLoadCustomReference" Content="Load custom image"
+                    Height="28" Click="BtnLoadCustomReference_Click"/>
+            <TextBlock Grid.Column="2" Name="ReferenceStatusLabel" Foreground="#888888"
+                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+        </Grid>
+
+        <!-- Row 2: Captions -->
+        <TextBlock Grid.Row="2" Grid.Column="0" Name="ReferenceCaption"
+                   Text="Reference" Foreground="#CCCCCC" TextAlignment="Center"/>
+        <TextBlock Grid.Row="2" Grid.Column="2" Name="LiveCaption"
+                   Text="Live feed" Foreground="#CCCCCC" TextAlignment="Center"/>
+
+        <!-- Row 4: Image previews -->
+        <Border Grid.Row="4" Grid.Column="0" BorderBrush="#484848" BorderThickness="1"
+                Background="#151515" Width="320" Height="240" HorizontalAlignment="Center">
+            <Image Name="ReferenceImageView" Stretch="None"/>
+        </Border>
+        <Border Grid.Row="4" Grid.Column="2" BorderBrush="#484848" BorderThickness="1"
+                Background="#151515" Width="320" Height="240" HorizontalAlignment="Center">
+            <Image Name="LiveImageView" Stretch="None"/>
+        </Border>
+
+        <!-- Row 6 Left: Similarity panel -->
+        <Border Grid.Row="6" Grid.Column="0" BorderBrush="#444444" BorderThickness="1"
+                Background="#232323" HorizontalAlignment="Center" Width="320" Padding="10,8">
+            <Grid RowDefinitions="Auto,6,Auto" ColumnDefinitions="*,*">
+                <!-- Required + Current side by side -->
+                <StackPanel Grid.Row="0" Grid.Column="0">
+                    <TextBlock Text="Required" Foreground="#888888" TextAlignment="Center"/>
+                    <TextBlock Name="RequiredLabel" Text="—" Foreground="#AAAAAA"
+                               FontSize="32" TextAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Grid.Row="0" Grid.Column="1">
+                    <TextBlock Text="Current" Foreground="#888888" TextAlignment="Center"/>
+                    <TextBlock Name="CurrentLabel" Text="—" Foreground="White"
+                               FontSize="32" TextAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Highest centered below -->
+                <StackPanel Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2">
+                    <TextBlock Text="Highest" Foreground="#888888" TextAlignment="Center"/>
+                    <TextBlock Name="HighestLabel" Text="—" Foreground="White"
+                               FontSize="32" TextAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Reset button in bottom-right corner -->
+                <Button Grid.Row="2" Grid.Column="1" Name="BtnResetHighest" Content="↺"
+                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                        Width="24" Height="24" Padding="0" FontSize="14"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        ToolTip.Tip="Reset highest"
+                        Click="BtnResetHighest_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- Row 6 Right: Feed + Crop controls -->
+        <StackPanel Grid.Row="6" Grid.Column="2" Spacing="8" VerticalAlignment="Top"
+                    HorizontalAlignment="Center" Width="320">
+            <!-- Feed source -->
+            <Grid ColumnDefinitions="*,8,Auto">
+                <ComboBox Grid.Column="0" Name="ComboBoxFeedSource" Height="28"
+                          HorizontalAlignment="Stretch"
+                          SelectionChanged="ComboBoxFeedSource_SelectionChanged"/>
+                <Button Grid.Column="2" Name="BtnRefreshFeed" Content="Refresh"
+                        Height="28" Click="BtnRefreshFeed_Click"/>
+            </Grid>
+
+            <!-- Crop fields -->
+            <Grid ColumnDefinitions="*,8,*" RowDefinitions="Auto,Auto,6,Auto,Auto,6,Auto">
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="X" Foreground="#888888"/>
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="Y" Foreground="#888888"/>
+
+                <!-- X -->
+                <Grid Grid.Row="1" Grid.Column="0" ColumnDefinitions="*,Auto">
+                    <Border Classes="nud-wrap" Margin="0,0,-1,0">
+                        <NumericUpDown Name="CropX" Minimum="-8192" Maximum="16384" Increment="1"
+                                       ShowButtonSpinner="False"
+                                       ValueChanged="CropValueChanged"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="0">
+                        <Button Content="▲" Tag="CropX" Width="20" Height="14" Padding="0"
+                                FontSize="8" CornerRadius="0,4,0,0"
+                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                Click="BtnCropIncrement_Click"/>
+                        <Button Content="▼" Tag="CropX" Width="20" Height="14" Padding="0"
+                                FontSize="8" CornerRadius="0,0,4,0"
+                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                Click="BtnCropDecrement_Click"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Y -->
+                <Grid Grid.Row="1" Grid.Column="2" ColumnDefinitions="*,Auto">
+                    <Border Classes="nud-wrap" Margin="0,0,-1,0">
+                        <NumericUpDown Name="CropY" Minimum="-8192" Maximum="16384" Increment="1"
+                                       ShowButtonSpinner="False"
+                                       ValueChanged="CropValueChanged"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="0">
+                        <Button Content="▲" Tag="CropY" Width="20" Height="14" Padding="0"
+                                FontSize="8" CornerRadius="0,4,0,0"
+                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                Click="BtnCropIncrement_Click"/>
+                        <Button Content="▼" Tag="CropY" Width="20" Height="14" Padding="0"
+                                FontSize="8" CornerRadius="0,0,4,0"
+                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                Click="BtnCropDecrement_Click"/>
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Width" Foreground="#888888"/>
+                <TextBlock Grid.Row="3" Grid.Column="2" Text="Height" Foreground="#888888"/>
+
+                <!-- W -->
+                <Grid Grid.Row="4" Grid.Column="0" ColumnDefinitions="*,Auto">
+                    <Border Classes="nud-wrap" Margin="0,0,-1,0">
+                        <NumericUpDown Name="CropW" Minimum="1" Maximum="16384" Increment="1"
+                                       ShowButtonSpinner="False"
+                                       ValueChanged="CropValueChanged"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="0">
+                        <Button Content="▲" Tag="CropW" Width="20" Height="14" Padding="0"
+                                FontSize="8" CornerRadius="0,4,0,0"
+                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                Click="BtnCropIncrement_Click"/>
+                        <Button Content="▼" Tag="CropW" Width="20" Height="14" Padding="0"
+                                FontSize="8" CornerRadius="0,0,4,0"
+                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                Click="BtnCropDecrement_Click"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- H -->
+                <Grid Grid.Row="4" Grid.Column="2" ColumnDefinitions="*,Auto">
+                    <Border Classes="nud-wrap" Margin="0,0,-1,0">
+                        <NumericUpDown Name="CropH" Minimum="1" Maximum="16384" Increment="1"
+                                       ShowButtonSpinner="False"
+                                       ValueChanged="CropValueChanged"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="0">
+                        <Button Content="▲" Tag="CropH" Width="20" Height="14" Padding="0"
+                                FontSize="8" CornerRadius="0,4,0,0"
+                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                Click="BtnCropIncrement_Click"/>
+                        <Button Content="▼" Tag="CropH" Width="20" Height="14" Padding="0"
+                                FontSize="8" CornerRadius="0,0,4,0"
+                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                Click="BtnCropDecrement_Click"/>
+                    </StackPanel>
+                </Grid>
+
+                <Button Grid.Row="6" Grid.ColumnSpan="3" Name="BtnResetCrop" Content="Reset crop"
+                        Height="28" HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center" Click="BtnResetCrop_Click"/>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</Window>

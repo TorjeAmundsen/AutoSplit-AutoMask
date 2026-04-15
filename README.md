@@ -29,6 +29,10 @@ The splits in a preset are ordered as defined in its `preset.json`. Input images
 
 If you have the same number of input images loaded as there are splits in the selected preset, the **Save all split images** button becomes available. This masks and saves all splits at once, assuming the input image order matches the split order.
 
+## Live Output Tester
+
+Click **Live tester** to open a real-time comparison window. It captures a live video feed from a window, webcam, or screen region and compares it against the current output image using the same L2 Norm algorithm as AutoSplit. See [TESTER.md](TESTER.md) for details.
+
 ## Presets
 
 Presets define the sequence of splits and their mask images, thresholds, timing, and other settings for a specific game and category. They are stored in the `presets/` folder next to the executable.
