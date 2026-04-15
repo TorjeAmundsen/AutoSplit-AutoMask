@@ -444,19 +444,19 @@ public partial class TestOutputWindow : Window
         _hasUserChanges = true;
     }
 
-    private void BtnCropDecrement_Click(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: string name } && this.FindControl<NumericUpDown>(name) is { } nud)
-        {
-            nud.Value = (nud.Value ?? 0) - nud.Increment;
-        }
-    }
-
     private void BtnCropIncrement_Click(object? sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: string name } && this.FindControl<NumericUpDown>(name) is { } nud)
         {
             nud.Value = (nud.Value ?? 0) + nud.Increment;
+        }
+    }
+
+    private void BtnCropDecrement_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string name } && this.FindControl<NumericUpDown>(name) is { } nud)
+        {
+            nud.Value = (nud.Value ?? 0) - nud.Increment;
         }
     }
 
