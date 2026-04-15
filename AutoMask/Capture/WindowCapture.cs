@@ -13,6 +13,12 @@ public sealed class WindowCapture : BitBltCaptureBase
     {
         _hwnd = hwnd;
         _title = title;
+
+        if (Win32.GetClientRect(hwnd, out var rect))
+        {
+            SourceWidth = rect.Width;
+            SourceHeight = rect.Height;
+        }
     }
 
     public override string DisplayName => $"Window: {_title}";

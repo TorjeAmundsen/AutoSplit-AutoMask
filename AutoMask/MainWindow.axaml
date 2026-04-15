@@ -112,6 +112,7 @@
             <ComboBox Grid.Column="1" Name="ComboBoxSelectInputImage" Height="28"
                       HorizontalAlignment="Stretch" CornerRadius="0" Margin="0,0,-1,0"
                       IsEnabled="False" ItemsSource="{Binding inputImagesComboBoxItems}"
+                      PlaceholderText="No base images loaded"
                       SelectionChanged="ComboBoxSelectInputImage_OnSelectionChanged">
                 <ComboBox.ItemTemplate>
                     <DataTemplate x:DataType="local:InputImageItem">

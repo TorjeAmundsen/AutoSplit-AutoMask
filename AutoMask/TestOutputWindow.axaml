@@ -6,6 +6,13 @@
         Width="680" Height="488" CanResize="False"
         FontSize="12" Background="#2C2C2C">
 
+    <Window.DataTemplates>
+        <DataTemplate DataType="{x:Type local:FeedGroupHeader}">
+            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="11"
+                       Foreground="#999999" Margin="0,1,0,1"/>
+        </DataTemplate>
+    </Window.DataTemplates>
+
     <Window.Styles>
         <Style Selector="TextBox">
             <Setter Property="MinWidth" Value="0"/>

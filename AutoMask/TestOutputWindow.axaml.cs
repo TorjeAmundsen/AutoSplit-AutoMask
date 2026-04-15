@@ -10,6 +10,8 @@ using SkiaSharp;
 
 namespace AutoSplit_AutoMask;
 
+public sealed record FeedGroupHeader(string Title);
+
 public partial class TestOutputWindow : Window
 {
     private enum FeedKind { Window, Region, Webcam }
@@ -24,7 +26,7 @@ public partial class TestOutputWindow : Window
     }
 
     private readonly CaptureController _controller = new();
-    private readonly ObservableCollection<FeedOption> _feedOptions = [];
+    private readonly ObservableCollection<object> _feedOptions = [];
 
     // Reference inputs captured from MainWindow.
     private SplitPreset? _presetFromMain;
@@ -48,6 +50,15 @@ public partial class TestOutputWindow : Window
         InitializeComponent();
 
         ComboBoxFeedSource.ItemsSource = _feedOptions;
+        ComboBoxFeedSource.ContainerPrepared += (_, e) =>
+        {
+            if (e.Container is ComboBoxItem item)
+            {
+                bool isHeader = e.Index < _feedOptions.Count && _feedOptions[e.Index] is FeedGroupHeader;
+                item.IsHitTestVisible = !isHeader;
+                item.Focusable = !isHeader;
+            }
+        };
 
         _controller.FrameReady += OnFrameReady;
         _controller.ErrorReported += OnErrorReported;
@@ -217,9 +228,17 @@ public partial class TestOutputWindow : Window
                 return;
             }
 
+            var fileName = Path.GetFileName(path);
+            double required = double.NaN;
+            var match = System.Text.RegularExpressions.Regex.Match(fileName, @"\(([0-9]*\.?[0-9]+)\)");
+            if (match.Success && double.TryParse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+            {
+                required = parsed;
+            }
+
             try
             {
-                ApplyReferenceBitmap(decoded, required: double.NaN, label: Path.GetFileName(path));
+                ApplyReferenceBitmap(decoded, required, label: fileName);
             }
             finally
             {
@@ -301,18 +320,22 @@ public partial class TestOutputWindow : Window
         try
         {
             _feedOptions.Clear();
-            
+
             try
             {
                 var cams = await WebcamCapture.EnumerateDevicesAsync();
-                foreach (var cam in cams)
+                if (cams.Count > 0)
                 {
-                    _feedOptions.Add(new FeedOption
+                    _feedOptions.Add(new FeedGroupHeader("Webcams"));
+                    foreach (var cam in cams)
                     {
-                        Label = $"Webcam: {cam.Name}",
-                        Kind = FeedKind.Webcam,
-                        Camera = cam,
-                    });
+                        _feedOptions.Add(new FeedOption
+                        {
+                            Label = cam.Name,
+                            Kind = FeedKind.Webcam,
+                            Camera = cam,
+                        });
+                    }
                 }
             }
             catch (Exception ex)
@@ -320,25 +343,30 @@ public partial class TestOutputWindow : Window
                 OnErrorReported($"Webcam enumeration failed: {ex.Message}");
             }
 
-            foreach (var w in WindowCapture.ListWindows())
+            var windows = WindowCapture.ListWindows();
+            if (windows.Count > 0)
             {
-                _feedOptions.Add(new FeedOption
+                _feedOptions.Add(new FeedGroupHeader("Windows"));
+                foreach (var w in windows)
                 {
-                    Label = $"Window: {w.Title}",
-                    Kind = FeedKind.Window,
-                    Window = w,
-                });
+                    _feedOptions.Add(new FeedOption
+                    {
+                        Label = w.Title,
+                        Kind = FeedKind.Window,
+                        Window = w,
+                    });
+                }
             }
 
+            _feedOptions.Add(new FeedGroupHeader("Screen"));
             _feedOptions.Add(new FeedOption { Label = "Screen region", Kind = FeedKind.Region });
-            
 
             int select = -1;
             if (selectAfter is not null)
             {
                 for (int i = 0; i < _feedOptions.Count; i++)
                 {
-                    if (_feedOptions[i].Label == selectAfter)
+                    if (_feedOptions[i] is FeedOption opt && opt.Label == selectAfter)
                     {
                         select = i;
                         break;
