@@ -66,6 +66,12 @@ public partial class MainWindow : Window
 
         OutputCheckerBg.Source = ImageProcessor.CreateCheckerBitmap(320, 240);
 
+        if (!OperatingSystem.IsWindows())
+        {
+            BtnOpenLiveTester.IsEnabled = false;
+            ToolTip.SetTip(BtnOpenLiveTester, "Live tester is only available on Windows");
+        }
+
         // Set DataContext last so binding-triggered event handlers fire with all fields initialised.
         DataContext = this;
 

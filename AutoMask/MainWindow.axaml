@@ -36,7 +36,7 @@
             <Button Grid.Column="2" Content="Show output"
                     HorizontalContentAlignment="Center" Height="28"
                     Click="BtnShowOutput_Click"/>
-            <Button Grid.Column="4" Name="BtnOpenOutputFolder" Content="Live tester"
+            <Button Grid.Column="4" Name="BtnOpenLiveTester" Content="Live tester"
                     HorizontalContentAlignment="Center" Height="28"
                     Click="BtnOpenTestOutput_Click"/>
             
