@@ -6,20 +6,9 @@
         CanResize="False" FontSize="12"
         Background="#2C2C2C">
 
-    <Window.Resources>
-        <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#3C3C3C"/>
-        <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#565656"/>
-        <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#3C3C3C"/>
-        <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#565656"/>
-    </Window.Resources>
-
-    <Window.Styles>
+<Window.Styles>
         <Style Selector="TextBox">
-            <Setter Property="MinHeight" Value="0"/>
             <Setter Property="MinWidth" Value="0"/>
-            <Setter Property="Padding" Value="4,2"/>
-            <Setter Property="BorderBrush" Value="#444444"/>
-            <Setter Property="Background" Value="#363636"/>
             <Setter Property="SelectionBrush" Value="#4D9ECA"/>
             <Setter Property="SelectionForegroundBrush" Value="White"/>
         </Style>

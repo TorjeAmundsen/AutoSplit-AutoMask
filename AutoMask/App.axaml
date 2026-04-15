@@ -4,5 +4,46 @@
              RequestedThemeVariant="Default">
     <Application.Styles>
         <FluentTheme />
+
+        <!-- Shared dark theme control styles -->
+        <Style Selector="ComboBox">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Background" Value="#363636"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        </Style>
+        <Style Selector="ComboBoxItem">
+            <Setter Property="Padding" Value="8,2"/>
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Background" Value="#363636"/>
+        </Style>
     </Application.Styles>
+
+    <Application.Resources>
+        <!-- Dark theme overrides for ComboBox hover/press -->
+        <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#3C3C3C"/>
+        <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#565656"/>
+        <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#3C3C3C"/>
+        <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="#565656"/>
+        <SolidColorBrush x:Key="ComboBoxBorderBrushDisabled" Color="#565656"/>
+        <SolidColorBrush x:Key="ComboBoxBackgroundDisabled" Color="#363636"/>
+        <!-- Dark theme overrides for Button -->
+        <SolidColorBrush x:Key="ButtonBorderBrush" Color="#565656"/>
+        <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#336EB0"/>
+        <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#2C6099"/>
+        <SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="#565656"/>
+        <!-- Tweak these two to change button hover/press background -->
+        <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#336EB0"/>
+        <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#2C6099"/>
+        <!-- Dark theme overrides for TextBox hover/focus -->
+        <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#3C3C3C"/>
+        <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#565656"/>
+        <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#3C3C3C"/>
+        <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#565656"/>
+    </Application.Resources>
 </Application>

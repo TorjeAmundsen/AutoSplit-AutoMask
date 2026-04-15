@@ -35,7 +35,7 @@ public partial class MainWindow : Window
     private readonly string _currentPresetsDirectory;
     private readonly string _currentSplitsDirectory;
 
-    private Dictionary<string, Bitmap> _inputBitmapCache = new();
+    private Dictionary<string, Bitmap> _inputPreviewCache = new();
     private Dictionary<string, Bitmap> _inputThumbnailCache = new();
     private Dictionary<string, SKBitmap> _maskSkBitmapCache = new();
     private CancellationTokenSource? _savedNotificationCts;
@@ -63,7 +63,7 @@ public partial class MainWindow : Window
 
         Directory.CreateDirectory(_currentPresetsDirectory);
 
-        OutputCheckerBg.Source = ImageProcessor.CreateCheckerBitmap(384, 288);
+        OutputCheckerBg.Source = ImageProcessor.CreateCheckerBitmap(320, 240);
 
         // Set DataContext last so binding-triggered event handlers fire with all fields initialised.
         DataContext = this;
@@ -220,7 +220,7 @@ public partial class MainWindow : Window
 
         var preset = _splitPresets[selectedPresetIndex];
 
-        if (preset.Splits != null && preset.PresetFolder != null)
+        if (preset is { Splits: not null, PresetFolder: not null })
         {
             foreach (var b in _maskSkBitmapCache.Values)
             {
@@ -297,7 +297,11 @@ public partial class MainWindow : Window
         _maskedImage = await Task.Run(() => ImageProcessor.ApplyScaledAlphaChannel(_selectedInputImagePath!, _alphaImagePath!, _maskSkBitmapCache));
 
         _previewBitmap?.Dispose();
-        _previewBitmap = await Task.Run(() => ImageProcessor.ToAvaloniaBitmap(_maskedImage));
+        _previewBitmap = await Task.Run(() =>
+        {
+            using var scaled = _maskedImage!.Resize(new SKImageInfo(320, 240), new SKSamplingOptions(SKFilterMode.Nearest));
+            return ImageProcessor.ToAvaloniaBitmap(scaled);
+        });
         OutputImageView.Source = _previewBitmap;
         OutputLoadingOverlay.IsVisible = false;
         UpdateNavigationButtons();
@@ -327,7 +331,7 @@ public partial class MainWindow : Window
 
         _inputImagePaths = [..files.Select(f => f.Path.LocalPath)];
 
-        foreach (var b in _inputBitmapCache.Values)
+        foreach (var b in _inputPreviewCache.Values)
         {
             b.Dispose();
         }
@@ -338,26 +342,27 @@ public partial class MainWindow : Window
         }
 
         InputLoadingOverlay.IsVisible = true;
-        var (fullCache, thumbCache) = await Task.Run(() =>
+        var (previewCache, thumbCache) = await Task.Run(() =>
         {
-            var full = new ConcurrentDictionary<string, Bitmap>();
+            var previews = new ConcurrentDictionary<string, Bitmap>();
             var thumbs = new ConcurrentDictionary<string, Bitmap>();
             Parallel.ForEach(_inputImagePaths!, path =>
             {
                 using var sk = SKBitmap.Decode(path);
-                full[path] = ImageProcessor.ToAvaloniaBitmap(sk);
+                using var skPreview = sk.Resize(new SKImageInfo(320, 240), new SKSamplingOptions(SKFilterMode.Nearest));
+                previews[path] = ImageProcessor.ToAvaloniaBitmap(skPreview);
                 using var skThumb = sk.Resize(new SKImageInfo(32, 24), new SKSamplingOptions(SKFilterMode.Linear));
                 thumbs[path] = ImageProcessor.ToAvaloniaBitmap(skThumb);
             });
-            return (new Dictionary<string, Bitmap>(full), new Dictionary<string, Bitmap>(thumbs));
+            return (new Dictionary<string, Bitmap>(previews), new Dictionary<string, Bitmap>(thumbs));
         });
-        _inputBitmapCache = fullCache;
+        _inputPreviewCache = previewCache;
         _inputThumbnailCache = thumbCache;
         InputLoadingOverlay.IsVisible = false;
 
         _selectedInputImagePath = _inputImagePaths[0];
         InputImageLabel.Text = Path.GetFileName(_selectedInputImagePath);
-        InputImageView.Source = _inputBitmapCache[_selectedInputImagePath];
+        InputImageView.Source = _inputPreviewCache[_selectedInputImagePath];
         UpdateNavigationButtons();
 
         inputImagesComboBoxItems.Clear();
@@ -420,22 +425,22 @@ public partial class MainWindow : Window
 
     private void BtnPrevAlphaImage_Click(object sender, RoutedEventArgs e)
     {
-        if (ComboBoxSelectSplit.SelectedIndex == splitsComboBoxItems.Count - 1)
-        {
-            return;
-        }
-
-        ComboBoxSelectSplit.SelectedIndex += 1;
-    }
-
-    private void BtnNextAlphaImage_Click(object sender, RoutedEventArgs e)
-    {
-        if (ComboBoxSelectSplit.SelectedIndex == 0)
+        if (ComboBoxSelectSplit.SelectedIndex <= 0)
         {
             return;
         }
 
         ComboBoxSelectSplit.SelectedIndex -= 1;
+    }
+
+    private void BtnNextAlphaImage_Click(object sender, RoutedEventArgs e)
+    {
+        if (ComboBoxSelectSplit.SelectedIndex >= splitsComboBoxItems.Count - 1)
+        {
+            return;
+        }
+
+        ComboBoxSelectSplit.SelectedIndex += 1;
     }
 
     private async void BtnAutoSave_Click(object sender, RoutedEventArgs e)
@@ -569,22 +574,22 @@ public partial class MainWindow : Window
 
     private void BtnPrevInputImage_Click(object sender, RoutedEventArgs e)
     {
-        if (ComboBoxSelectInputImage.SelectedIndex == splitsComboBoxItems.Count - 1)
-        {
-            return;
-        }
-
-        ComboBoxSelectInputImage.SelectedIndex += 1;
-    }
-
-    private void BtnNextInputImage_Click(object sender, RoutedEventArgs e)
-    {
-        if (ComboBoxSelectInputImage.SelectedIndex == 0)
+        if (ComboBoxSelectInputImage.SelectedIndex <= 0)
         {
             return;
         }
 
         ComboBoxSelectInputImage.SelectedIndex -= 1;
+    }
+
+    private void BtnNextInputImage_Click(object sender, RoutedEventArgs e)
+    {
+        if (ComboBoxSelectInputImage.SelectedIndex >= inputImagesComboBoxItems.Count - 1)
+        {
+            return;
+        }
+
+        ComboBoxSelectInputImage.SelectedIndex += 1;
     }
 
     private async void ComboBoxSelectInputImage_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -603,7 +608,7 @@ public partial class MainWindow : Window
 
         _selectedInputImagePath = _inputImagePaths[ComboBoxSelectInputImage.SelectedIndex];
         InputImageLabel.Text = Path.GetFileName(_selectedInputImagePath);
-        InputImageView.Source = _inputBitmapCache[_selectedInputImagePath];
+        InputImageView.Source = _inputPreviewCache[_selectedInputImagePath];
         UpdateNavigationButtons();
         await UpdateOutputPreview();
     }
@@ -644,6 +649,7 @@ public partial class MainWindow : Window
     {
         int inputIndex = ComboBoxSelectInputImage.SelectedIndex;
         int inputCount = inputImagesComboBoxItems.Count;
+        ComboBoxSelectInputImage.IsEnabled = inputCount > 0;
         BtnInputImagePrev.IsEnabled = inputIndex > 0;
         BtnInputImageNext.IsEnabled = inputIndex >= 0 && inputIndex < inputCount - 1;
 

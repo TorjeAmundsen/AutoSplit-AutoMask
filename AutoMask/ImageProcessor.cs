@@ -84,7 +84,7 @@ public static class ImageProcessor
 
     public static void SaveBitmapToPath(SKBitmap bitmap, string path)
     {
-        using var stream = File.OpenWrite(path);
+        using var stream = File.Create(path);
         SaveBitmapToStream(bitmap, stream);
     }
 }

@@ -6,34 +6,9 @@
         Width="780" Height="560" CanResize="False"
         FontSize="12" Background="#2C2C2C">
 
-    <Window.Resources>
-        <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#3C3C3C"/>
-        <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#565656"/>
-        <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#3C3C3C"/>
-        <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="#565656"/>
-        <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#3C3C3C"/>
-        <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#565656"/>
-        <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#3C3C3C"/>
-        <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#565656"/>
-    </Window.Resources>
-
     <Window.Styles>
-        <Style Selector="ComboBox">
-            <Setter Property="MinHeight" Value="0"/>
-            <Setter Property="Padding" Value="8,2"/>
-            <Setter Property="BorderBrush" Value="#444444"/>
-            <Setter Property="Background" Value="#363636"/>
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-        </Style>
-        <Style Selector="ComboBoxItem">
-            <Setter Property="Padding" Value="8,2"/>
-        </Style>
         <Style Selector="TextBox">
-            <Setter Property="MinHeight" Value="0"/>
             <Setter Property="MinWidth" Value="0"/>
-            <Setter Property="Padding" Value="4,2"/>
-            <Setter Property="BorderBrush" Value="#444444"/>
-            <Setter Property="Background" Value="#363636"/>
         </Style>
         <Style Selector="NumericUpDown">
             <Setter Property="MinHeight" Value="0"/>
