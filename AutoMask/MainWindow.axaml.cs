@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
@@ -106,6 +108,28 @@ public partial class MainWindow : Window
         };
 
         Opened += async (_, _) => await RefreshPresetsAsync();
+
+        Closed += (_, _) => CleanupSavestateTempDirs();
+    }
+
+    private static void CleanupSavestateTempDirs()
+    {
+        try
+        {
+            foreach (string dir in Directory.EnumerateDirectories(Path.GetTempPath(), "AutoMask_savestates_*"))
+            {
+                try
+                {
+                    Directory.Delete(dir, recursive: true);
+                }
+                catch
+                {
+                }
+            }
+        }
+        catch
+        {
+        }
     }
 
     private void CheckSavePossible()
@@ -201,6 +225,7 @@ public partial class MainWindow : Window
         }
 
         CheckSavePossible();
+        UpdateSavestateStatus();
     }
 
     private async void ComboBoxSelectPreset_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -254,6 +279,115 @@ public partial class MainWindow : Window
         ComboBoxSelectSplit.SelectedIndex = 0;
         UpdateNavigationButtons();
         CheckSavePossible();
+        UpdateSavestateStatus();
+    }
+
+    private void UpdateSavestateStatus()
+    {
+        bool hasSavestates = selectedPresetIndex >= 0
+            && selectedPresetIndex < _splitPresets.Count
+            && _splitPresets[selectedPresetIndex].Splits?.Any(s => !string.IsNullOrEmpty(s.Savestate)) == true;
+
+        bool hasInstructions = selectedPresetIndex >= 0
+            && selectedPresetIndex < _splitPresets.Count
+            && _splitPresets[selectedPresetIndex].Splits?.Any(s =>
+                !string.IsNullOrEmpty(s.Savestate) && !string.IsNullOrEmpty(s.SavestateInstructions)) == true;
+
+        SavestateStatusLabel.Text = hasSavestates ? "Savestates available" : "No savestates";
+        BtnCopySavestates.IsEnabled = hasSavestates;
+        BtnShowSavestateInstructions.IsEnabled = hasInstructions;
+    }
+
+    private void BtnShowSavestateInstructions_Click(object sender, RoutedEventArgs e)
+    {
+        if (selectedPresetIndex < 0 || selectedPresetIndex >= _splitPresets.Count)
+        {
+            return;
+        }
+
+        var preset = _splitPresets[selectedPresetIndex];
+        if (preset.Splits is null)
+        {
+            return;
+        }
+
+        var window = new SavestateInstructionsWindow(preset);
+        window.Show(this);
+    }
+
+    private async void BtnCopySavestates_Click(object sender, RoutedEventArgs e)
+    {
+        if (selectedPresetIndex < 0 || selectedPresetIndex >= _splitPresets.Count)
+        {
+            return;
+        }
+
+        var preset = _splitPresets[selectedPresetIndex];
+        if (preset.Splits is null || preset.PresetFolder is null)
+        {
+            return;
+        }
+
+        string tempDir = Path.Combine(Path.GetTempPath(), $"AutoMask_savestates_{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDir);
+
+        int padWidth = preset.Splits.Count.ToString().Length;
+        var copiedPaths = new List<string>();
+
+        for (int i = 0; i < preset.Splits.Count; i++)
+        {
+            var split = preset.Splits[i];
+            if (string.IsNullOrEmpty(split.Savestate))
+            {
+                continue;
+            }
+
+            string src = Path.Combine(preset.PresetFolder, split.Savestate);
+            if (!File.Exists(src))
+            {
+                continue;
+            }
+
+            string ext = Path.GetExtension(src);
+            string instructionsSuffix = string.IsNullOrEmpty(split.SavestateInstructions) ? "" : "_SEE_INSTRUCTIONS";
+            string destName = $"{i.ToString().PadLeft(padWidth, '0')}_{split.Name}{instructionsSuffix}{ext}";
+            string destPath = Path.Combine(tempDir, destName);
+            File.Copy(src, destPath, overwrite: true);
+            copiedPaths.Add(destPath);
+        }
+
+        if (copiedPaths.Count == 0)
+        {
+            return;
+        }
+
+        if (Clipboard is null)
+        {
+            return;
+        }
+
+        var data = new DataTransfer();
+        int addedCount = 0;
+        foreach (string path in copiedPaths)
+        {
+            var file = await StorageProvider.TryGetFileFromPathAsync(new Uri(path));
+            if (file is null)
+            {
+                continue;
+            }
+
+            data.Add(DataTransferItem.Create(DataFormat.File, file));
+            addedCount++;
+        }
+
+        if (addedCount == 0)
+        {
+            return;
+        }
+
+        await Clipboard.SetDataAsync(data);
+
+        ShowStatus($"Copied {addedCount} savestate(s) to clipboard");
     }
 
     private async void BtnSelectOutputDirectory_Click(object sender, RoutedEventArgs e)
@@ -499,7 +633,7 @@ public partial class MainWindow : Window
         }
 
         ImageProcessor.SaveBitmapToPath(_maskedImage!, outputPath);
-        ShowSavedNotification(_createdFilename);
+        ShowStatus($"Saved {_createdFilename}");
     }
 
     private async void BtnSaveAllSplits_Click(object sender, RoutedEventArgs e)
@@ -520,16 +654,16 @@ public partial class MainWindow : Window
             });
         });
 
-        ShowSavedNotification($"{inputPaths.Count} images");
+        ShowStatus($"Saved {inputPaths.Count} images");
     }
 
-    private async void ShowSavedNotification(string text)
+    private async void ShowStatus(string text)
     {
         _savedNotificationCts?.Cancel();
         _savedNotificationCts = new CancellationTokenSource();
         var token = _savedNotificationCts.Token;
 
-        ImageSavedLabel.Text = $"Saved {text}";
+        ImageSavedLabel.Text = text;
         ImageSavedLabel.Opacity = 1;
 
         try

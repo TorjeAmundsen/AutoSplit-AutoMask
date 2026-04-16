@@ -2,7 +2,8 @@
 
 The preset editor lets you create and modify presets for AutoMask. Open it from the main window by clicking **Edit** next to the preset dropdown.
 
-<img width="960" height="720" alt="AutoMask_p7z5dp7kOB" src="https://github.com/user-attachments/assets/3ea5e8fb-972a-44ec-b139-9a26b446031e" />
+<img width="960" height="720" alt="AutoMask_ck0cqZTT6u" src="https://github.com/user-attachments/assets/d0795071-fd3a-4abb-bdec-93da10235924" />
+
 
 ---
 
@@ -99,6 +100,25 @@ Marks this split image as a dummy split that will not trigger a split, but rathe
 ### Inverted
 
 When checked, the trigger for the splits _inverts_. This means that instead of triggering the split when the image reaches its similarity threshold, it waits for similarity to drop _below_ its similarity threshold before it triggers.
+
+### Savestate
+
+An optional savestate file associated with this split to aid users in taking screenshots. This is generally designed for Ocarina of Time gz savestates, but it technically supports any arbitrary files. Click **Browse...** to pick a file of any type, or **Clear** to remove the association.
+
+- Any file extension is allowed - the format is not validated.
+- The field shows the path relative to the preset folder if the file lives inside it, or the full absolute path otherwise.
+- On save, files outside the preset folder are copied into a `savestates/` subfolder next to `preset.json`.
+- When a preset is saved, any file in `savestates/` that is no longer referenced by a split is deleted. Deleting a split (or clearing its savestate) and saving prunes the associated file, unless another split still references it.
+
+Savestates are exposed in the main window through the **Copy savestates** button, which copies all referenced files to the clipboard with the naming pattern `{index}_{split name}.{ext}`.
+
+### Savestate Instructions
+
+A free-form text field that appears only when the split has a savestate assigned. Use it for notes about how the savestate is meant to be used - pre-screenshot setup requirements, menu setup, timing caveats, etc.
+
+- Saved to `preset.json` as `savestateInstructions` (only when a savestate is also set and the text is non-empty).
+- Clearing the savestate also clears the associated instructions.
+- Accessible from the main window via the **Instructions** button next to **Copy savestates**, which opens a window listing every split's instructions in order. The button is enabled only when at least one split in the current preset has non-empty instructions.
 
 ---
 
@@ -203,8 +223,13 @@ presets/
     preset.json
     some_mask.png
     another_mask.png
+    savestates/
+      split1.gzs
+      split2.gzs
     ...
 ```
+
+The `savestates/` subfolder is only created if at least one split in the preset has a savestate.
 
 The folder name is the preset name with spaces replaced by underscores and any filesystem-invalid characters removed.
 
@@ -242,3 +267,5 @@ Fields are only written when they differ from the AutoSplit default:
 | `delay`     | Delay is 0 or checkbox is unchecked |
 | `dummy`     | `false`                             |
 | `inverted`  | `false`                             |
+| `savestate` | No savestate is assigned            |
+| `savestateInstructions` | Empty, or no savestate is assigned |

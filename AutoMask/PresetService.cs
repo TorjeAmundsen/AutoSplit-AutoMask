@@ -133,30 +133,56 @@ public static class PresetService
         // that shares a name prefix (e.g. "Foo/" won't match "FooBar/mask.png")
         string targetFolderPrefix = targetFolderFull.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
                                     + Path.DirectorySeparatorChar;
+        string savestatesFolder = Path.Combine(targetFolderFull, "savestates");
+        string savestatesPrefix = savestatesFolder + Path.DirectorySeparatorChar;
         var splitRelPaths = new List<string>();
+        var splitSavestateRelPaths = new List<string>();
 
         foreach (var split in preset.Splits)
         {
             if (string.IsNullOrEmpty(split.MaskAbsolutePath))
             {
                 splitRelPaths.Add("");
-                continue;
-            }
-
-            string maskFull = Path.GetFullPath(split.MaskAbsolutePath);
-
-            if (maskFull.StartsWith(targetFolderPrefix, StringComparison.OrdinalIgnoreCase))
-            {
-                splitRelPaths.Add(Path.GetRelativePath(targetFolderFull, maskFull));
             }
             else
             {
-                string destFilename = Path.GetFileName(maskFull);
-                string destPath = Path.Combine(targetFolderFull, destFilename);
-                File.Copy(maskFull, destPath, overwrite: true);
-                // Update the model so subsequent saves treat this file as already in place
-                split.MaskAbsolutePath = destPath;
-                splitRelPaths.Add(destFilename);
+                string maskFull = Path.GetFullPath(split.MaskAbsolutePath);
+
+                if (maskFull.StartsWith(targetFolderPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    splitRelPaths.Add(Path.GetRelativePath(targetFolderFull, maskFull));
+                }
+                else
+                {
+                    string destFilename = Path.GetFileName(maskFull);
+                    string destPath = Path.Combine(targetFolderFull, destFilename);
+                    File.Copy(maskFull, destPath, overwrite: true);
+                    // Update the model so subsequent saves treat this file as already in place
+                    split.MaskAbsolutePath = destPath;
+                    splitRelPaths.Add(destFilename);
+                }
+            }
+
+            if (string.IsNullOrEmpty(split.SavestateAbsolutePath))
+            {
+                splitSavestateRelPaths.Add("");
+                continue;
+            }
+
+            string savestateFull = Path.GetFullPath(split.SavestateAbsolutePath);
+
+            if (savestateFull.StartsWith(savestatesPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                splitSavestateRelPaths.Add(Path.GetRelativePath(targetFolderFull, savestateFull));
+            }
+            else
+            {
+                Directory.CreateDirectory(savestatesFolder);
+                string destFilename = Path.GetFileName(savestateFull);
+                string destPath = Path.Combine(savestatesFolder, destFilename);
+                File.Copy(savestateFull, destPath, overwrite: true);
+                split.SavestateAbsolutePath = destPath;
+                splitSavestateRelPaths.Add(Path.Combine("savestates", destFilename));
             }
         }
 
@@ -195,6 +221,16 @@ public static class PresetService
                 splitObj["inverted"] = true;
             }
 
+            if (!string.IsNullOrEmpty(splitSavestateRelPaths[i]))
+            {
+                splitObj["savestate"] = splitSavestateRelPaths[i];
+
+                if (!string.IsNullOrEmpty(split.SavestateInstructions))
+                {
+                    splitObj["savestateInstructions"] = split.SavestateInstructions;
+                }
+            }
+
             splitsArray.Add((JsonNode)splitObj);
         }
 
@@ -213,6 +249,23 @@ public static class PresetService
 
         string json = jsonObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
         await File.WriteAllTextAsync(Path.Combine(targetFolderFull, "preset.json"), json);
+
+        if (Directory.Exists(savestatesFolder))
+        {
+            var referencedNames = new HashSet<string>(
+                splitSavestateRelPaths
+                    .Where(p => !string.IsNullOrEmpty(p))
+                    .Select(Path.GetFileName)!,
+                StringComparer.OrdinalIgnoreCase);
+
+            foreach (string file in Directory.EnumerateFiles(savestatesFolder))
+            {
+                if (!referencedNames.Contains(Path.GetFileName(file)))
+                {
+                    File.Delete(file);
+                }
+            }
+        }
 
         preset.OriginalFolder = targetFolderFull;
     }

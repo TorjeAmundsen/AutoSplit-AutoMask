@@ -35,5 +35,7 @@ public record Split
     float PauseTime = 3.0f,
     uint Delay = 0,
     bool Dummy = false,
-    bool Inverted = false
+    bool Inverted = false,
+    string Savestate = "",
+    string SavestateInstructions = ""
 );
