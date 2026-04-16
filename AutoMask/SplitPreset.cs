@@ -36,5 +36,6 @@ public record Split
     uint Delay = 0,
     bool Dummy = false,
     bool Inverted = false,
-    string Savestate = ""
+    string Savestate = "",
+    string SavestateInstructions = ""
 );

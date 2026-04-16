@@ -63,6 +63,10 @@
                 "savestate": {
                     "type": "string",
                     "description": "File path to savestate file relative to preset.json (conventionally inside the 'savestates' folder)"
+                },
+                "savestateInstructions": {
+                    "type": "string",
+                    "description": "Free-form notes explaining how to use the savestate for this split (e.g. controls, setup steps). Only meaningful when 'savestate' is set."
                 }
             },
             "additionalProperties": false

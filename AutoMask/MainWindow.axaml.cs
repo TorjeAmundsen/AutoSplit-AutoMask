@@ -288,8 +288,31 @@ public partial class MainWindow : Window
             && selectedPresetIndex < _splitPresets.Count
             && _splitPresets[selectedPresetIndex].Splits?.Any(s => !string.IsNullOrEmpty(s.Savestate)) == true;
 
-        SavestateStatusLabel.Text = hasSavestates ? "Savestates available" : "Savestates unavailable";
+        bool hasInstructions = selectedPresetIndex >= 0
+            && selectedPresetIndex < _splitPresets.Count
+            && _splitPresets[selectedPresetIndex].Splits?.Any(s =>
+                !string.IsNullOrEmpty(s.Savestate) && !string.IsNullOrEmpty(s.SavestateInstructions)) == true;
+
+        SavestateStatusLabel.Text = hasSavestates ? "Savestates available" : "No savestates";
         BtnCopySavestates.IsEnabled = hasSavestates;
+        BtnShowSavestateInstructions.IsEnabled = hasInstructions;
+    }
+
+    private void BtnShowSavestateInstructions_Click(object sender, RoutedEventArgs e)
+    {
+        if (selectedPresetIndex < 0 || selectedPresetIndex >= _splitPresets.Count)
+        {
+            return;
+        }
+
+        var preset = _splitPresets[selectedPresetIndex];
+        if (preset.Splits is null)
+        {
+            return;
+        }
+
+        var window = new SavestateInstructionsWindow(preset);
+        window.Show(this);
     }
 
     private async void BtnCopySavestates_Click(object sender, RoutedEventArgs e)

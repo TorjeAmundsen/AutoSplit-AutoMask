@@ -24,8 +24,8 @@
                        FontFamily="Consolas" FontSize="11"
                        VerticalAlignment="Center"
                        TextTrimming="CharacterEllipsis"/>
-            <Grid Grid.Column="2" ColumnDefinitions="*,8,Auto">
-                <TextBlock Grid.Column="0" Name="SavestateStatusLabel" Text="Savestates unavailable"
+            <Grid Grid.Column="2" ColumnDefinitions="*,8,Auto,6,Auto">
+                <TextBlock Grid.Column="0" Name="SavestateStatusLabel" Text="No savestates"
                            Foreground="#888888" FontSize="11"
                            VerticalAlignment="Center"
                            HorizontalAlignment="Right"
@@ -33,6 +33,9 @@
                 <Button Grid.Column="2" Name="BtnCopySavestates" Content="Copy savestates"
                         Height="24" Padding="8,2" IsEnabled="False"
                         Click="BtnCopySavestates_Click"/>
+                <Button Grid.Column="4" Name="BtnShowSavestateInstructions" Content="Instructions"
+                        Height="24" Padding="8,2" IsEnabled="False"
+                        Click="BtnShowSavestateInstructions_Click"/>
             </Grid>
         </Grid>
     </Border>

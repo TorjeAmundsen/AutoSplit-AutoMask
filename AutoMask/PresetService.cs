@@ -224,6 +224,11 @@ public static class PresetService
             if (!string.IsNullOrEmpty(splitSavestateRelPaths[i]))
             {
                 splitObj["savestate"] = splitSavestateRelPaths[i];
+
+                if (!string.IsNullOrEmpty(split.SavestateInstructions))
+                {
+                    splitObj["savestateInstructions"] = split.SavestateInstructions;
+                }
             }
 
             splitsArray.Add((JsonNode)splitObj);

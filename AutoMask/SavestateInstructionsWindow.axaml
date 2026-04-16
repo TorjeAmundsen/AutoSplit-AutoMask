@@ -1,0 +1,29 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:AutoSplit_AutoMask"
+        x:Class="AutoSplit_AutoMask.SavestateInstructionsWindow"
+        Title="Savestate Instructions" Height="500" Width="520"
+        MinHeight="200" MinWidth="320"
+        FontSize="12" Background="#2C2C2C"
+        Icon="/Assets/icon.ico">
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+        <ItemsControl Name="InstructionsList" Margin="12,12,12,12">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="local:SavestateInstructionItem">
+                    <Border BorderBrush="#444444" BorderThickness="1" CornerRadius="3"
+                            Padding="10,8" Margin="0,0,0,8" Background="#252525"
+                            HorizontalAlignment="Stretch">
+                        <Grid RowDefinitions="Auto,4,Auto" ColumnDefinitions="*" HorizontalAlignment="Stretch">
+                            <TextBlock Grid.Column="0" Grid.Row="0" Text="{Binding Heading}" FontWeight="SemiBold"
+                                       Foreground="#DDDDDD"/>
+                            <TextBlock Grid.Column="0" Grid.Row="2" Text="{Binding Instructions}" TextWrapping="Wrap"
+                                       Padding="10,4"
+                                       Foreground="#BBBBBB"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </ScrollViewer>
+</Window>

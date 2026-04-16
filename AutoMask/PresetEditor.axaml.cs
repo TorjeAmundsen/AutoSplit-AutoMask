@@ -314,6 +314,7 @@ public partial class PresetEditor : Window
                     SavestateAbsolutePath = string.IsNullOrEmpty(split.Savestate)
                         ? ""
                         : Path.GetFullPath(Path.Combine(source.PresetFolder, split.Savestate)),
+                    SavestateInstructions = split.SavestateInstructions,
                     ThresholdEnabled = true,
                     // Round to 2 decimal places to match the TextBox display precision and avoid
                     // float → double conversion noise causing false dirty comparisons.
@@ -461,6 +462,8 @@ public partial class PresetEditor : Window
         SplitNameBox.Text = split.Name;
         SplitMaskBox.Text = MaskDisplayPath(split);
         SplitSavestateBox.Text = SavestateDisplayPath(split);
+        SplitSavestateInstructionsBox.Text = split.SavestateInstructions;
+        SavestateInstructionsPanel.IsVisible = !string.IsNullOrEmpty(split.SavestateAbsolutePath);
         SplitThresholdEnabledCheck.IsChecked = split.ThresholdEnabled;
         SplitThresholdBox.Text = split.Threshold.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
         SplitThresholdSlider.Value = split.Threshold;
@@ -492,6 +495,8 @@ public partial class PresetEditor : Window
         SplitNameBox.Text = "";
         SplitMaskBox.Text = "";
         SplitSavestateBox.Text = "";
+        SplitSavestateInstructionsBox.Text = "";
+        SavestateInstructionsPanel.IsVisible = false;
         SplitThresholdEnabledCheck.IsChecked = true;
         SplitThresholdBox.Text = "0.95";
         SplitThresholdSlider.Value = 0.95;
@@ -888,6 +893,7 @@ public partial class PresetEditor : Window
             Name = _selectedSplit.Name,
             MaskAbsolutePath = _selectedSplit.MaskAbsolutePath,
             SavestateAbsolutePath = _selectedSplit.SavestateAbsolutePath,
+            SavestateInstructions = _selectedSplit.SavestateInstructions,
             ThresholdEnabled = _selectedSplit.ThresholdEnabled,
             Threshold = _selectedSplit.Threshold,
             PauseTimeEnabled = _selectedSplit.PauseTimeEnabled,
@@ -1093,6 +1099,7 @@ public partial class PresetEditor : Window
 
         _suppressFormEvents = true;
         SplitSavestateBox.Text = SavestateDisplayPath(_selectedSplit);
+        SavestateInstructionsPanel.IsVisible = true;
         _suppressFormEvents = false;
 
         MarkCurrentPresetDirty();
@@ -1106,11 +1113,31 @@ public partial class PresetEditor : Window
         }
 
         _selectedSplit.SavestateAbsolutePath = "";
+        _selectedSplit.SavestateInstructions = "";
 
         _suppressFormEvents = true;
         SplitSavestateBox.Text = "";
+        SplitSavestateInstructionsBox.Text = "";
+        SavestateInstructionsPanel.IsVisible = false;
         _suppressFormEvents = false;
 
+        MarkCurrentPresetDirty();
+    }
+
+    private void SplitSavestateInstructionsBox_TextChanged(object? sender, Avalonia.Controls.TextChangedEventArgs e)
+    {
+        if (_suppressFormEvents || _selectedSplit == null)
+        {
+            return;
+        }
+
+        string newText = SplitSavestateInstructionsBox.Text ?? "";
+        if (newText == _selectedSplit.SavestateInstructions)
+        {
+            return;
+        }
+
+        _selectedSplit.SavestateInstructions = newText;
         MarkCurrentPresetDirty();
     }
 
