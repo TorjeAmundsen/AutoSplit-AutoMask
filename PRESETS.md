@@ -2,7 +2,8 @@
 
 The preset editor lets you create and modify presets for AutoMask. Open it from the main window by clicking **Edit** next to the preset dropdown.
 
-<img width="960" height="720" alt="AutoMask_p7z5dp7kOB" src="https://github.com/user-attachments/assets/3ea5e8fb-972a-44ec-b139-9a26b446031e" />
+<img width="960" height="720" alt="AutoMask_ck0cqZTT6u" src="https://github.com/user-attachments/assets/d0795071-fd3a-4abb-bdec-93da10235924" />
+
 
 ---
 
