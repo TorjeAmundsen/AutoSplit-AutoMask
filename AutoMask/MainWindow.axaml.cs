@@ -349,7 +349,8 @@ public partial class MainWindow : Window
             }
 
             string ext = Path.GetExtension(src);
-            string destName = $"{i.ToString().PadLeft(padWidth, '0')}_{split.Name}{ext}";
+            string instructionsSuffix = string.IsNullOrEmpty(split.SavestateInstructions) ? "" : "_SEE_INSTRUCTIONS";
+            string destName = $"{i.ToString().PadLeft(padWidth, '0')}_{split.Name}{instructionsSuffix}{ext}";
             string destPath = Path.Combine(tempDir, destName);
             File.Copy(src, destPath, overwrite: true);
             copiedPaths.Add(destPath);
