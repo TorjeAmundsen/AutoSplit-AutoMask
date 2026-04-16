@@ -8,8 +8,7 @@ This program uses preset split sequences and masks to automatically generate wor
 
 A quick and easy way to instantly set up AutoSplit, given your desired category has an AutoMask preset.
 
-<img width="836" height="506" alt="AutoMask_O6bpcmfpMB" src="https://github.com/user-attachments/assets/b51b964d-52cc-47b0-8ff2-23716a66e83b" />
-
+<img width="696" height="444" alt="AutoMask_NGWaCml5r6" src="https://github.com/user-attachments/assets/e29334ca-0777-4ef5-8dd6-1b420462d738" />
 
 
 ## How to Use
