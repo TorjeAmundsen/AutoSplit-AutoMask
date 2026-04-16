@@ -38,6 +38,7 @@
                     Click="BtnShowOutput_Click"/>
             <Button Grid.Column="4" Name="BtnOpenLiveTester" Content="Live tester"
                     HorizontalContentAlignment="Center" Height="28"
+                    ToolTip.ShowOnDisabled="True"
                     Click="BtnOpenTestOutput_Click"/>
             
         </Grid>

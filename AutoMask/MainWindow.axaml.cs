@@ -72,7 +72,7 @@ public partial class MainWindow : Window
             ToolTip.SetTip(BtnOpenLiveTester, "Live tester is only available on Windows");
         }
 
-        // Set DataContext last so binding-triggered event handlers fire with all fields initialised.
+        // Set DataContext last so binding-triggered event handlers fire with all fields initialized
         DataContext = this;
 
         Title = "AutoMask v" + AutoMaskSemVer + (string.IsNullOrEmpty(VersionSuffix) ? string.Empty : "-" + VersionSuffix);
