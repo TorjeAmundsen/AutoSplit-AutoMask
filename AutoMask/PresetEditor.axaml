@@ -237,6 +237,13 @@
                                 <Button Grid.Column="2" Content="Browse..." Height="24" Click="BtnBrowseMask_Click"/>
                             </Grid>
 
+                            <TextBlock Text="Savestate file:"/>
+                            <Grid ColumnDefinitions="*,6,Auto,6,Auto">
+                                <TextBox Grid.Column="0" Name="SplitSavestateBox" Height="24" IsReadOnly="True"/>
+                                <Button Grid.Column="2" Content="Browse..." Height="24" Click="BtnBrowseSavestate_Click"/>
+                                <Button Grid.Column="4" Content="Clear" Height="24" Click="BtnClearSavestate_Click"/>
+                            </Grid>
+
                             <Border BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="10,0">
                                 <Grid ColumnDefinitions="Auto,8,60,8,*">
                                     <CheckBox Grid.Column="0" Name="SplitThresholdEnabledCheck" Content="Threshold"

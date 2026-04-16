@@ -59,6 +59,10 @@
                 "inverted": {
                     "type": "boolean",
                     "description": "Whether or not this split is inverted, meaning this split will trigger once the image drops below the given threshold after reaching it once"
+                },
+                "savestate": {
+                    "type": "string",
+                    "description": "File path to savestate file relative to preset.json (conventionally inside the 'savestates' folder)"
                 }
             },
             "additionalProperties": false

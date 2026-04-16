@@ -1,11 +1,12 @@
-<Window xmlns="https://github.com/avaloniaui"
+    <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:AutoSplit_AutoMask"
         x:Class="AutoSplit_AutoMask.MainWindow"
         x:DataType="local:MainWindow"
         CanResize="False"
-        Title="AutoMask for AutoSplit" Height="426" Width="696" FontSize="12"
-        Background="#2C2C2C">
+        Title="AutoMask for AutoSplit" Height="444" Width="696" FontSize="12"
+        Background="#2C2C2C"
+        Icon="/Assets/icon.ico">
     <Window.DataTemplates>
         <DataTemplate DataType="{x:Type local:PresetGroupHeader}">
             <TextBlock Text="{Binding GameName}" FontWeight="SemiBold" FontSize="11"
@@ -18,10 +19,22 @@
     <!-- Status bar -->
     <Border DockPanel.Dock="Bottom" BorderBrush="#484848" BorderThickness="0,1,0,0"
             Background="#252525" Padding="10,4">
-        <TextBlock Name="ImageSavedLabel" Foreground="#22CC22" Opacity="0"
-                   FontFamily="Consolas" FontSize="11"
-                   VerticalAlignment="Center"
-                   TextTrimming="CharacterEllipsis"/>
+        <Grid ColumnDefinitions="328,16,328">
+            <TextBlock Grid.Column="0" Name="ImageSavedLabel" Foreground="#22CC22" Opacity="0"
+                       FontFamily="Consolas" FontSize="11"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"/>
+            <Grid Grid.Column="2" ColumnDefinitions="*,8,Auto">
+                <TextBlock Grid.Column="0" Name="SavestateStatusLabel" Text="Savestates unavailable"
+                           Foreground="#888888" FontSize="11"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           TextTrimming="CharacterEllipsis"/>
+                <Button Grid.Column="2" Name="BtnCopySavestates" Content="Copy savestates"
+                        Height="24" Padding="8,2" IsEnabled="False"
+                        Click="BtnCopySavestates_Click"/>
+            </Grid>
+        </Grid>
     </Border>
 
     <Grid Margin="12,8" RowDefinitions="Auto,8,Auto,4,Auto,8,Auto,8,Auto"

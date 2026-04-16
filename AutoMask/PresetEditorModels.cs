@@ -22,6 +22,7 @@ public class EditableSplit
 {
     public string Name { get; set; } = "";
     public string MaskAbsolutePath { get; set; } = "";
+    public string SavestateAbsolutePath { get; set; } = "";
     public bool ThresholdEnabled { get; set; } = true;
     public double Threshold { get; set; } = 0.95;
     public bool PauseTimeEnabled { get; set; } = false;
