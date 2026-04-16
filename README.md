@@ -39,6 +39,14 @@ Presets define the sequence of splits and their mask images, thresholds, timing,
 
 Click **Edit** next to the preset dropdown to open the preset editor, where you can create new presets, modify existing ones, and manage splits. See [PRESETS.md](PRESETS.md) for full documentation on the preset editor.
 
+## Savestates
+
+A preset can bundle savestate files alongside its splits, letting you jump straight to the frame where each split image triggers in order to take base image screenshots easily. Each split can reference a single savestate file of any type (`.gzs`, `.savestate`, `.sav`, etc.) - the format isn't validated, so whatever your game/platform supports will work.
+
+When a preset with savestates is selected, the status bar shows **Savestates available** and enables the **Copy savestates** button. Clicking it copies all savestate files in the current preset to the clipboard, renamed with the pattern `{index}_{split name}.{ext}` so you can paste them into your desired folder - such as your SD card - in split order. Savestate files are linked per-split in the preset editor - see [PRESETS.md](PRESETS.md#savestate) for details.
+
+Each split with a savestate can also have free-form **savestate instructions** attached. If any split in the current preset has instructions, the **Instructions** button next to **Copy savestates** becomes enabled and opens a window listing every split's instructions in order.
+
 ## Building from Source
 
 Requires .NET 10 SDK. Release builds use Native AOT compilation.
