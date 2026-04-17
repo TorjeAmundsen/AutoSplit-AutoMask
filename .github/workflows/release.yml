@@ -34,7 +34,7 @@ jobs:
             -c Release \
             -r ${{ matrix.rid }} \
             --self-contained true \
-            /p:PublishAot=true \
+            -p:PublishAot=true \
             -o build/${{ matrix.rid }}
 
       - name: Remove debug symbols
