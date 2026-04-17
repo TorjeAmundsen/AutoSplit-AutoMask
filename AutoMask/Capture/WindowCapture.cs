@@ -1,7 +1,9 @@
+using System.Runtime.Versioning;
 using AutoSplit_AutoMask.Interop;
 
 namespace AutoSplit_AutoMask.Capture;
 
+[SupportedOSPlatform("windows")]
 public sealed class WindowCapture : BitBltCaptureBase
 {
     public readonly record struct WindowHandle(IntPtr Hwnd, string Title);

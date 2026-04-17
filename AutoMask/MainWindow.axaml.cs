@@ -458,7 +458,7 @@ public partial class MainWindow : Window
         _createdFilename = CreateCurrentFilename();
         PreviewImageLabel.Text = _createdFilename;
 
-        if (_testOutputWindow is not null)
+        if (_testOutputWindow is not null && OperatingSystem.IsWindows())
         {
             SplitPreset? preset = selectedPresetIndex >= 0 && selectedPresetIndex < _splitPresets.Count
                 ? _splitPresets[selectedPresetIndex]
@@ -793,6 +793,11 @@ public partial class MainWindow : Window
 
     private void BtnOpenTestOutput_Click(object? sender, RoutedEventArgs e)
     {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
         if (_testOutputWindow is not null)
         {
             _testOutputWindow.Activate();

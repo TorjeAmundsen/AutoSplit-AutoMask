@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.Versioning;
 using System.Text.Json;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -12,6 +13,7 @@ namespace AutoSplit_AutoMask;
 
 public sealed record FeedGroupHeader(string Title);
 
+[SupportedOSPlatform("windows")]
 public partial class TestOutputWindow : Window
 {
     private enum FeedKind { Window, Region, Webcam }

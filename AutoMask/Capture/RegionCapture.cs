@@ -1,7 +1,9 @@
+using System.Runtime.Versioning;
 using AutoSplit_AutoMask.Interop;
 
 namespace AutoSplit_AutoMask.Capture;
 
+[SupportedOSPlatform("windows")]
 public sealed class RegionCapture : BitBltCaptureBase
 {
     // Absolute virtual-screen coordinates.  Dimensions can be updated live via UpdateRect

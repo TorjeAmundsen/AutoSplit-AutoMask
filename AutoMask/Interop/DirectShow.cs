@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace AutoSplit_AutoMask.Interop;
 
@@ -6,6 +7,7 @@ namespace AutoSplit_AutoMask.Interop;
 // OpenCV's DSHOW backend opens devices by integer index in the same order this
 // enumerator walks, so pairing name[i] ↔ VideoCapture(i, DSHOW) is reliable.
 // Manual vtable dispatch keeps us AOT-safe (no [ComImport]).
+[SupportedOSPlatform("windows")]
 internal static unsafe partial class DirectShow
 {
     public static readonly Guid CLSID_SystemDeviceEnum =

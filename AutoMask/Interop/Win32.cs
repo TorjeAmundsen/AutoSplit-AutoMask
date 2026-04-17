@@ -1,7 +1,9 @@
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace AutoSplit_AutoMask.Interop;
 
+[SupportedOSPlatform("windows")]
 internal static partial class Win32
 {
     public const int SRCCOPY = 0x00CC0020;

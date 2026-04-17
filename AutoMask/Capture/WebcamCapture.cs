@@ -1,3 +1,4 @@
+using System.Runtime.Versioning;
 using AutoSplit_AutoMask.Interop;
 using OpenCvSharp;
 using SkiaSharp;
@@ -10,6 +11,7 @@ public sealed class CamDeviceInfo
     public int Index { get; init; }
 }
 
+[SupportedOSPlatform("windows")]
 public sealed class WebcamCapture : ICaptureSource
 {
     private readonly CamDeviceInfo _device;
