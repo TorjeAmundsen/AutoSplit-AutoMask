@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install Linux AOT dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev
+
+      - name: Publish
+        shell: bash
+        run: |
+          dotnet publish AutoMask/AutoMask.csproj \
+            -c Release \
+            -r ${{ matrix.rid }} \
+            --self-contained true \
+            -p:PublishAot=true \
+            -o build/${{ matrix.rid }}
+
+      - name: Remove debug symbols
+        shell: bash
+        run: rm -f build/${{ matrix.rid }}/*.pdb
+
+      - name: Zip build
+        shell: bash
+        run: |
+          cd build/${{ matrix.rid }}
+          7z a -tzip "../AutoMask-${{ github.ref_name }}-${{ matrix.rid }}.zip" "*"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: build-${{ matrix.rid }}
+          path: build/AutoMask-${{ github.ref_name }}-${{ matrix.rid }}.zip
+          if-no-files-found: error
+
+  presets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Zip presets and splits
+        run: |
+          mkdir -p staging/presets staging/splits
+          cp -r AutoMask/presets/. staging/presets/
+          cp -r AutoMask/splits/. staging/splits/
+          cd staging
+          zip -r "../presets-and-splits-${{ github.ref_name }}.zip" presets splits
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: presets
+          path: presets-and-splits-${{ github.ref_name }}.zip
+          if-no-files-found: error
+
+  release:
+    needs: [build, presets]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: artifacts/*.zip
+          draft: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          body: ''
