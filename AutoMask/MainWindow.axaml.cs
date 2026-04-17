@@ -77,7 +77,7 @@ public partial class MainWindow : Window
         // Set DataContext last so binding-triggered event handlers fire with all fields initialized
         DataContext = this;
 
-        Title = "AutoMask v" + AutoMaskSemVer + (string.IsNullOrEmpty(VersionSuffix) ? string.Empty : "-" + VersionSuffix);
+        Title = "AutoMask v" + AutoMaskVersion;
 
         ComboBoxSelectPreset.ContainerPrepared += (_, e) =>
         {

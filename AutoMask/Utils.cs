@@ -1,11 +1,14 @@
 using System.Diagnostics;
+using System.Reflection;
 
 namespace AutoSplit_AutoMask;
 
 public static class Utils
 {
-    public const string AutoMaskSemVer = "0.7.0";
-    public const string VersionSuffix = "alpha";
+    public static readonly string AutoMaskVersion =
+        typeof(Utils).Assembly
+                     .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+                     ?.InformationalVersion ?? "unknown";
 
     public static void OpenInFileManager(string path)
     {

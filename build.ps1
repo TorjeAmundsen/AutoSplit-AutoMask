@@ -5,6 +5,9 @@ $dockerImage = "automask-build"
 
 $rids = @("win-x64", "linux-x64")
 
+$csprojVersion = ([xml](Get-Content "$PSScriptRoot/$project")).Project.PropertyGroup.Version
+$appVersion = "v$csprojVersion"
+
 function Build($rid) {
     $output = "$PSScriptRoot/build/$rid"
 
@@ -69,7 +72,7 @@ function Build($rid) {
 }
 
 function ZipBuild($outputPath, $rid) {
-    $zipName = "$PSScriptRoot/build/AutoMask-$rid.zip"
+    $zipName = "$PSScriptRoot/build/AutoMask-$appVersion-$rid.zip"
 
     if (Test-Path $zipName) { Remove-Item $zipName }
 
@@ -77,11 +80,41 @@ function ZipBuild($outputPath, $rid) {
     Write-Host "  Zipped: $zipName"
 }
 
+function ZipPresets() {
+    $zipName = "$PSScriptRoot/build/presets-and-splits-$appVersion.zip"
+
+    if (Test-Path $zipName) { Remove-Item $zipName }
+
+    $presetsPath = "$PSScriptRoot/AutoMask/presets"
+    $splitsPath = "$PSScriptRoot/AutoMask/splits"
+
+    $tempDir = "$PSScriptRoot/build/_presets-temp"
+    if (Test-Path $tempDir) { Remove-Item $tempDir -Recurse -Force }
+    New-Item -ItemType Directory -Path "$tempDir/presets" | Out-Null
+    New-Item -ItemType Directory -Path "$tempDir/splits" | Out-Null
+
+    Copy-Item -Path "$presetsPath/*" -Destination "$tempDir/presets" -Recurse
+    Copy-Item -Path "$splitsPath/*" -Destination "$tempDir/splits" -Recurse
+
+    Compress-Archive -Path "$tempDir/*" -DestinationPath $zipName
+    Remove-Item $tempDir -Recurse -Force
+
+    Write-Host "  Zipped: $zipName"
+}
+
+if ($args -contains "--presets") {
+    if (-not (Test-Path "$PSScriptRoot/build")) { New-Item -ItemType Directory -Path "$PSScriptRoot/build" | Out-Null }
+    ZipPresets
+    Write-Host "Build complete."
+    exit 0
+}
+
 if ($args -contains "--all") {
     foreach ($rid in $rids) {
         $out = Build $rid
         ZipBuild $out $rid
     }
+    ZipPresets
     Write-Host "Build complete."
     exit 0
 }
