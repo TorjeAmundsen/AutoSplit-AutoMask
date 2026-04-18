@@ -219,7 +219,7 @@ public partial class TestOutputWindow : Window
         _useCustomReference = true;
 
         var path = files[0].Path.LocalPath;
-        ReferenceStatusLabel.Text = "Loading PNG…";
+        ReferenceStatusLabel.Text = "Loading PNG...";
 
         try
         {
