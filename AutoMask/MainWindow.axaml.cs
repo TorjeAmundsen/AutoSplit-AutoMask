@@ -35,6 +35,7 @@ public partial class MainWindow : Window
     private List<SplitPreset> _splitPresets;
     private string _createdFilename;
     private readonly string _currentPresetsDirectory;
+    private readonly string _currentConfigDirectory;
     private readonly string _currentSplitsDirectory;
 
     private Dictionary<string, Bitmap> _inputPreviewCache = new();
@@ -63,8 +64,10 @@ public partial class MainWindow : Window
 
         _currentPresetsDirectory = Path.Combine(rootDir, "presets") + Path.DirectorySeparatorChar;
         _currentSplitsDirectory = Path.Combine(rootDir, "splits") + Path.DirectorySeparatorChar;
+        _currentConfigDirectory = Path.Combine(rootDir, "config") + Path.DirectorySeparatorChar;
 
         Directory.CreateDirectory(_currentPresetsDirectory);
+        Directory.CreateDirectory(_currentConfigDirectory);
 
         OutputCheckerBg.Source = ImageProcessor.CreateCheckerBitmap(320, 240);
 
@@ -472,7 +475,7 @@ public partial class MainWindow : Window
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             AllowMultiple = true,
-            Title = "Select Input Image",
+            Title = "Select base image",
             FileTypeFilter =
             [
                 new FilePickerFileType("PNG Files") { Patterns = ["*.png"] },
@@ -531,21 +534,6 @@ public partial class MainWindow : Window
 
         ComboBoxSelectInputImage.SelectedIndex = 0;
         CheckSavePossible();
-    }
-
-    private async void BtnLoadAlphaImage_Click(object sender, RoutedEventArgs e)
-    {
-        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-        {
-            Title = "Select Mask (Alpha Channel)",
-            FileTypeFilter = [new FilePickerFileType("PNG Files") { Patterns = ["*.png"] }]
-        });
-
-        if (files.Count > 0)
-        {
-            _alphaImagePath = files[0].Path.LocalPath;
-            await UpdateOutputPreview();
-        }
     }
 
     private async void BtnSaveImageAs_Click(object sender, RoutedEventArgs e)
@@ -808,7 +796,7 @@ public partial class MainWindow : Window
             ? _splitPresets[selectedPresetIndex]
             : null;
 
-        var prefsPath = Path.Combine(_currentPresetsDirectory, "capture-prefs.json");
+        var prefsPath = Path.Combine(_currentConfigDirectory, "capture-prefs.json");
         var win = new TestOutputWindow();
         win.InitializeFromMainWindow(preset, selectedSplitIndex, _selectedInputImagePath, _maskSkBitmapCache, prefsPath);
         win.Closed += (_, _) => _testOutputWindow = null;

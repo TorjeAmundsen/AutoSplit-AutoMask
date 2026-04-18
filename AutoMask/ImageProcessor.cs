@@ -1,4 +1,6 @@
+using Avalonia;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using SkiaSharp;
 
 namespace AutoSplit_AutoMask;
@@ -67,12 +69,42 @@ public static class ImageProcessor
 
     public static Bitmap ToAvaloniaBitmap(SKBitmap skBitmap)
     {
-        using var skImage = SKImage.FromBitmap(skBitmap);
-        using var encoded = skImage.Encode(SKEncodedImageFormat.Png, 100);
-        var stream = new MemoryStream();
-        encoded.SaveTo(stream);
-        stream.Position = 0;
-        return new Bitmap(stream);
+        // Copy raw BGRA pixels directly. The previous implementation re-encoded every frame
+        // to PNG and re-decoded into a Bitmap, which at 30 fps piled up undisposed native
+        // SkiaSharp resources on the finalizer queue and caused GC/COM contention that
+        // could stall Win32 file dialogs.
+        var info = skBitmap.Info;
+        var format = info.ColorType switch
+        {
+            SKColorType.Bgra8888 => PixelFormat.Bgra8888,
+            SKColorType.Rgba8888 => PixelFormat.Rgba8888,
+            _ => PixelFormat.Bgra8888,
+        };
+        var alpha = info.AlphaType == SKAlphaType.Opaque
+            ? AlphaFormat.Opaque
+            : AlphaFormat.Unpremul;
+
+        if (info.ColorType != SKColorType.Bgra8888 && info.ColorType != SKColorType.Rgba8888)
+        {
+            using var converted = new SKBitmap(new SKImageInfo(info.Width, info.Height,
+                SKColorType.Bgra8888, info.AlphaType));
+            skBitmap.CopyTo(converted, SKColorType.Bgra8888);
+            return new Bitmap(
+                PixelFormat.Bgra8888,
+                alpha,
+                converted.GetPixels(),
+                new PixelSize(converted.Width, converted.Height),
+                new Vector(96, 96),
+                converted.RowBytes);
+        }
+
+        return new Bitmap(
+            format,
+            alpha,
+            skBitmap.GetPixels(),
+            new PixelSize(info.Width, info.Height),
+            new Vector(96, 96),
+            skBitmap.RowBytes);
     }
 
     public static void SaveBitmapToStream(SKBitmap bitmap, Stream stream)

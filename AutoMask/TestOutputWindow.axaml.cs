@@ -1,10 +1,13 @@
 using System.Collections.ObjectModel;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text.Json;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Avalonia.Platform.Storage;
 using AutoSplit_AutoMask.Capture;
 using SkiaSharp;
@@ -128,6 +131,11 @@ public partial class TestOutputWindow : Window
         _controller.FrameReady -= OnFrameReady;
         _controller.ErrorReported -= OnErrorReported;
         await _controller.DisposeAsync();
+        LiveImageView.Source = null;
+        ReferenceImageView.Source = null;
+        _liveBitmap?.Dispose();
+        _liveBitmap = null;
+        _referenceBitmap = null;
     }
 
     public async void UpdateFromMainWindow(
@@ -204,12 +212,24 @@ public partial class TestOutputWindow : Window
 
     private async Task LoadCustomReferenceAsync()
     {
-        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        // Pause capture around the picker: the native IFileDialog's init uses
+        // SendMessage to this window's HWND, and the capture loop's frame posts
+        // can starve that so the dialog stays hidden forever.
+        _controller.Stop();
+        IReadOnlyList<IStorageFile> files;
+        try
         {
-            Title = "Select a masked PNG reference",
-            AllowMultiple = false,
-            FileTypeFilter = [new FilePickerFileType("PNG Files") { Patterns = ["*.png"] }],
-        });
+            files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Select a masked PNG reference",
+                AllowMultiple = false,
+                FileTypeFilter = [new FilePickerFileType("PNG Files") { Patterns = ["*.png"] }],
+            });
+        }
+        finally
+        {
+            _controller.Start();
+        }
 
         if (files.Count == 0)
         {
@@ -278,7 +298,14 @@ public partial class TestOutputWindow : Window
             refMask[i] = refPixels[p] >= 1 ? (byte)255 : (byte)0;
         }
 
-        ReferenceImageView.Source = ImageProcessor.ToAvaloniaBitmap(scaled);
+        // Do not dispose the previous reference bitmap synchronously — Avalonia's compositor
+        // may still hold a reference to it for one more frame, and disposing the backing
+        // SKBitmap while it is being rendered can stall the render pipeline and cause the
+        // UI thread to stop pumping messages (which deadlocks Win32 file dialogs that
+        // SendMessage to their parent HWND). Reference updates are rare; let the GC
+        // reclaim orphans naturally.
+        _referenceBitmap = ImageProcessor.ToAvaloniaBitmap(scaled);
+        ReferenceImageView.Source = _referenceBitmap;
 
         _controller.UpdateReference(refPixels, refMask, double.IsNaN(required) ? 0.0 : required);
 
@@ -291,8 +318,8 @@ public partial class TestOutputWindow : Window
             }
         }
 
-        ReferenceStatusLabel.Text = $"{label} — {source.Width}×{source.Height} native, "
-            + $"{nonZero * 100 / pixelCount}% opaque";
+        ReferenceStatusLabel.Text = $"{label} - {source.Width}×{source.Height} native, "
+            + $"{nonZero * 100.0 / pixelCount:0.0}% opaque";
 
         RequiredLabel.Text = double.IsNaN(required) ? "—" : required.ToString("F4");
         HighestLabel.Text = "—";
@@ -304,6 +331,7 @@ public partial class TestOutputWindow : Window
     {
         _controller.UpdateReference(null, null, 0.0);
         ReferenceImageView.Source = null;
+        _referenceBitmap = null;
         ReferenceStatusLabel.Text = reason;
         CurrentLabel.Text = "—";
         HighestLabel.Text = "—";
@@ -529,9 +557,39 @@ public partial class TestOutputWindow : Window
     private static readonly IBrush _metGreen = new SolidColorBrush(Color.FromRgb(0x6C, 0xD6, 0x88));
     private static readonly IBrush _metWhite = Brushes.White;
 
-    private void OnFrameReady(Bitmap live, double current, double highest, double required)
+    private WriteableBitmap? _liveBitmap;
+    private Bitmap? _referenceBitmap;
+
+    private void OnFrameReady(byte[] bgraPixels, double current, double highest, double required)
     {
-        LiveImageView.Source = live;
+        if (_liveBitmap is null)
+        {
+            _liveBitmap = new WriteableBitmap(
+                new PixelSize(CaptureController.CompareWidth, CaptureController.CompareHeight),
+                new Vector(96, 96),
+                PixelFormat.Bgra8888,
+                AlphaFormat.Opaque);
+            LiveImageView.Source = _liveBitmap;
+        }
+
+        using (var locked = _liveBitmap.Lock())
+        {
+            int srcStride = CaptureController.CompareWidth * 4;
+            if (locked.RowBytes == srcStride)
+            {
+                Marshal.Copy(bgraPixels, 0, locked.Address, bgraPixels.Length);
+            }
+            else
+            {
+                for (int y = 0; y < CaptureController.CompareHeight; y++)
+                {
+                    Marshal.Copy(bgraPixels, y * srcStride,
+                        locked.Address + y * locked.RowBytes, srcStride);
+                }
+            }
+        }
+
+        LiveImageView.InvalidateVisual();
 
         bool hasReference = ReferenceImageView.Source is not null;
         CurrentLabel.Text = hasReference ? current.ToString("F4") : "—";

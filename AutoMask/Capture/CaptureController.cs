@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using SkiaSharp;
 
@@ -9,11 +8,12 @@ public sealed class CaptureController : IAsyncDisposable
 {
     public const int CompareWidth = 320;
     public const int CompareHeight = 240;
-    public const int TargetFps = 30;
+    public const int TargetFps = 60;
 
     public readonly record struct CropRect(int X, int Y, int W, int H);
 
-    public event Action<Bitmap, double, double, double>? FrameReady;
+    // Pixel buffer is BGRA, tightly packed, CompareWidth * CompareHeight * 4 bytes.
+    public event Action<byte[], double, double, double>? FrameReady;
     public event Action<string>? ErrorReported;
 
     private readonly SemaphoreSlim _swapLock = new(1, 1);
@@ -131,9 +131,10 @@ public sealed class CaptureController : IAsyncDisposable
                 double cur = 0;
                 double high = _highest;
 
+                byte[] livePixels = ReadBgraBytes(scaled);
+
                 if (refPixels is not null && refMask is not null)
                 {
-                    byte[] livePixels = ReadBgraBytes(scaled);
                     double similarity = Comparison.L2NormComparer.Compare(refPixels, refMask, livePixels);
 
                     if (similarity > _highest)
@@ -147,14 +148,14 @@ public sealed class CaptureController : IAsyncDisposable
 
                 if (Interlocked.CompareExchange(ref _uiPostPending, 1, 0) == 0)
                 {
-                    Bitmap uiBitmap = ImageProcessor.ToAvaloniaBitmap(scaled);
+                    byte[] frameBuffer = livePixels;
 
                     Dispatcher.UIThread.Post(
                         () =>
                         {
                             try
                             {
-                                FrameReady?.Invoke(uiBitmap, cur, high, required);
+                                FrameReady?.Invoke(frameBuffer, cur, high, required);
                             }
                             finally
                             {
