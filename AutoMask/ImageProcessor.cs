@@ -69,10 +69,6 @@ public static class ImageProcessor
 
     public static Bitmap ToAvaloniaBitmap(SKBitmap skBitmap)
     {
-        // Copy raw BGRA pixels directly. The previous implementation re-encoded every frame
-        // to PNG and re-decoded into a Bitmap, which at 30 fps piled up undisposed native
-        // SkiaSharp resources on the finalizer queue and caused GC/COM contention that
-        // could stall Win32 file dialogs.
         var info = skBitmap.Info;
         var format = info.ColorType switch
         {
