@@ -10,4 +10,4 @@ _ReSharper*/
 *.DotSettings.user
 test_images/
 build/
-*/capture-prefs.json
+**/capture-prefs.json
