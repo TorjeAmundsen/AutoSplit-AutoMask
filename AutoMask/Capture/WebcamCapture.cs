@@ -52,35 +52,44 @@ public sealed class WebcamCapture : ICaptureSource
         });
     }
 
-    public Task StartAsync(CancellationToken ct)
+    public async Task StartAsync(CancellationToken ct)
     {
-        _cap = new VideoCapture(_device.Index, VideoCaptureAPIs.DSHOW);
-        if (!_cap.IsOpened())
+        // Construct the VideoCapture on a thread-pool (MTA) thread. OpenCV's DSHOW
+        // backend binds the DirectShow filter graph to the apartment of the creating
+        // thread. If created on the Avalonia UI STA, later cross-apartment COM calls
+        // from the read thread can block the UI thread during nested modal message
+        // loops (e.g. Win32 file-open dialogs), so the dialog window never appears.
+        // Keeping the graph out of the UI STA prevents that deadlock.
+        await Task.Run(() =>
         {
-            _cap.Dispose();
-            _cap = null;
-            throw new InvalidOperationException($"Could not open webcam: {_device.Name}");
-        }
+            var cap = new VideoCapture(_device.Index, VideoCaptureAPIs.DSHOW);
+            if (!cap.IsOpened())
+            {
+                cap.Dispose();
+                throw new InvalidOperationException($"Could not open webcam: {_device.Name}");
+            }
 
-        _cap.Set(VideoCaptureProperties.FrameWidth, 1920);
-        _cap.Set(VideoCaptureProperties.FrameHeight, 1080);
-        _cap.Set(VideoCaptureProperties.Fps, 30);
+            cap.Set(VideoCaptureProperties.FrameWidth, 1920);
+            cap.Set(VideoCaptureProperties.FrameHeight, 1080);
+            cap.Set(VideoCaptureProperties.Fps, 60);
 
-        _widthPx = (int)_cap.Get(VideoCaptureProperties.FrameWidth);
-        _heightPx = (int)_cap.Get(VideoCaptureProperties.FrameHeight);
-        if (_widthPx <= 0 || _heightPx <= 0)
-        {
-            _widthPx = 640;
-            _heightPx = 480;
-        }
+            _widthPx = (int)cap.Get(VideoCaptureProperties.FrameWidth);
+            _heightPx = (int)cap.Get(VideoCaptureProperties.FrameHeight);
+            if (_widthPx <= 0 || _heightPx <= 0)
+            {
+                _widthPx = 640;
+                _heightPx = 480;
+            }
+
+            _cap = cap;
+        }, ct);
+
         SourceWidth = _widthPx;
         SourceHeight = _heightPx;
 
         _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _thread = new Thread(CaptureLoop) { IsBackground = true, Name = "Webcam Capture" };
         _thread.Start();
-
-        return Task.CompletedTask;
     }
 
     private void CaptureLoop()
@@ -171,7 +180,7 @@ public sealed class WebcamCapture : ICaptureSource
         return true;
     }
 
-    public Task StopAsync()
+    public async Task StopAsync()
     {
         try
         {
@@ -185,11 +194,18 @@ public sealed class WebcamCapture : ICaptureSource
         _thread?.Join(1000);
         _thread = null;
 
-        _cap?.Release();
-        _cap?.Dispose();
+        // Release/Dispose on a thread-pool thread to match the apartment the graph
+        // was created in and to avoid blocking the UI STA on DirectShow teardown.
+        var cap = _cap;
         _cap = null;
-
-        return Task.CompletedTask;
+        if (cap is not null)
+        {
+            await Task.Run(() =>
+            {
+                cap.Release();
+                cap.Dispose();
+            });
+        }
     }
 
     public async ValueTask DisposeAsync()
