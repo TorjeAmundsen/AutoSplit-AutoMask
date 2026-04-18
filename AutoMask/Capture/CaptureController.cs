@@ -29,6 +29,7 @@ public sealed class CaptureController : IAsyncDisposable
 
     private CropRect _crop;
     private double _highest;
+    private int _uiPostPending;
 
     public void UpdateReference(byte[]? refPixels, byte[]? refMask, double required)
     {
@@ -144,11 +145,24 @@ public sealed class CaptureController : IAsyncDisposable
                     high = _highest;
                 }
 
-                Bitmap uiBitmap = ImageProcessor.ToAvaloniaBitmap(scaled);
+                if (Interlocked.CompareExchange(ref _uiPostPending, 1, 0) == 0)
+                {
+                    Bitmap uiBitmap = ImageProcessor.ToAvaloniaBitmap(scaled);
 
-                Dispatcher.UIThread.Post(
-                    () => FrameReady?.Invoke(uiBitmap, cur, high, required),
-                    DispatcherPriority.Render);
+                    Dispatcher.UIThread.Post(
+                        () =>
+                        {
+                            try
+                            {
+                                FrameReady?.Invoke(uiBitmap, cur, high, required);
+                            }
+                            finally
+                            {
+                                Interlocked.Exchange(ref _uiPostPending, 0);
+                            }
+                        },
+                        DispatcherPriority.Background);
+                }
             }
             catch (Exception ex)
             {

@@ -390,7 +390,16 @@ public partial class PresetEditor : Window
 
         var newItem = PresetDisplayItem.ForPreset(preset);
         _presetDisplayItems[idx] = newItem;
+
+        // items[idx] replace clears selection when selected, restore it
+        bool wasSelected = PresetListBox.SelectedIndex == idx;
+        _suppressPresetSelection = true;
         PresetListBox.Items[idx] = newItem;
+        if (wasSelected)
+        {
+            PresetListBox.SelectedIndex = idx;
+        }
+        _suppressPresetSelection = false;
 
         if (PresetListBox.ContainerFromIndex(idx) is ListBoxItem container)
         {
@@ -1341,18 +1350,22 @@ public partial class PresetEditor : Window
 
     private void RefreshSelectedSplitLabel()
     {
-        if (_selectedPreset == null)
+        if (_selectedPreset == null || _selectedSplit == null)
         {
             return;
         }
 
-        int index = SplitsListBox.SelectedIndex;
+        // selectedindex goes -1 after items[i] replace, use model index instead
+        int index = _selectedPreset.Splits.IndexOf(_selectedSplit);
         if (index < 0 || index >= _selectedPreset.Splits.Count)
         {
             return;
         }
 
+        _suppressFormEvents = true;
         SplitsListBox.Items[index] = $"{index + 1}. {_selectedPreset.Splits[index].Name}";
+        SplitsListBox.SelectedIndex = index;
+        _suppressFormEvents = false;
     }
     
     private async void BtnSave_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
