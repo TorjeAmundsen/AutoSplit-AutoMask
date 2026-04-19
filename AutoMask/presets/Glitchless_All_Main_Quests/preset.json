@@ -1,0 +1,149 @@
+{
+  "$schema": "../preset-schema.json",
+  "presetName": "Glitchless All Main Quests",
+  "gameName": "The Legend of Zelda: Ocarina of Time",
+  "splits": [
+    {
+      "mask": "reset.png",
+      "name": "reset",
+      "threshold": 0.96,
+      "pauseTime": 0.1,
+      "savestate": "savestates\\000 start and reset.gzs",
+      "savestateInstructions": "If loading this state from outside of Link\u0027s house, you have to advance 1 frame to make the background render correctly."
+    },
+    {
+      "mask": "start.png",
+      "name": "start_auto_splitter",
+      "threshold": 0.96,
+      "pauseTime": 10,
+      "inverted": true,
+      "savestate": "savestates\\000 start and reset.gzs"
+    },
+    {
+      "mask": "005_deku_text.png",
+      "name": "DekuCSDummy",
+      "threshold": 0.94,
+      "pauseTime": 6.5,
+      "dummy": true,
+      "savestate": "savestates\\000-kokiri forest.gzs"
+    },
+    {
+      "mask": "006_a_button_flip.png",
+      "name": "EnterDeku",
+      "threshold": 0.92,
+      "pauseTime": 60,
+      "delay": 1000,
+      "savestate": "savestates\\001-kokiri forest.gzs",
+      "savestateInstructions": "After loading, advance 1 frame before taking your screenshot. The A button doesn\u0027t render correctly if the savestate is on the frame itself, so it had to be 1 frame before."
+    },
+    {
+      "mask": "heart_container_icon.png",
+      "name": "HeartContainerDummy",
+      "threshold": 0.93,
+      "pauseTime": 0.2,
+      "dummy": true,
+      "savestate": "savestates\\002-gohma.gzs"
+    },
+    {
+      "mask": "cutscene_black_bars.png",
+      "name": "KokiriEmerald",
+      "threshold": 0.95,
+      "pauseTime": 500,
+      "delay": 7400,
+      "savestate": "savestates\\003-gohma.gzs"
+    },
+    {
+      "mask": "tegami.png",
+      "name": "ZeldasLetter",
+      "threshold": 0.95,
+      "pauseTime": 400,
+      "delay": 1150,
+      "inverted": true,
+      "savestate": "savestates\\004-zelda.gzs"
+    },
+    {
+      "mask": "bracelet.png",
+      "name": "BraceletDummy",
+      "threshold": 0.95,
+      "delay": 1250,
+      "dummy": true,
+      "savestate": "savestates\\008-goron city.gzs",
+      "savestateInstructions": "This split is a dummy split by default. If you want to split on Goron Bracelet, it is already set up in a way that splits on Goron Bracelet model over head if you simply open the preset editor, uncheck \u0022Dummy\u0022 and check \u0022Inverted\u0022 on this split."
+    },
+    {
+      "mask": "tozandou.png",
+      "name": "TrailDummy",
+      "threshold": 0.95,
+      "pauseTime": 8,
+      "dummy": true,
+      "savestate": "savestates\\006-death mountain trail.gzs"
+    },
+    {
+      "mask": "fade_center.png",
+      "name": "EnterDodongos",
+      "threshold": 0.97,
+      "savestate": "savestates\\007-dodongo\u0027s cavern.gzs"
+    },
+    {
+      "mask": "dc_stairs.png",
+      "name": "StairsDummy",
+      "threshold": 0.95,
+      "savestate": "savestates\\009-dodongo\u0027s cavern.gzs"
+    },
+    {
+      "mask": "nageru.png",
+      "name": "ThrowDummy",
+      "threshold": 0.95,
+      "savestate": "savestates\\010-dodongo\u0027s cavern.gzs"
+    },
+    {
+      "mask": "cutscene_black_bars.png",
+      "name": "TransitionDummy",
+      "threshold": 0.95,
+      "savestate": "savestates\\011-dodongo\u0027s cavern.gzs"
+    },
+    {
+      "mask": "cutscene_black_bars.png",
+      "name": "TransitionDummy2",
+      "threshold": 0.95,
+      "savestate": "savestates\\012-dodongo\u0027s cavern.gzs"
+    },
+    {
+      "mask": "cutscene_black_bars.png",
+      "name": "Bombs",
+      "threshold": 0.95,
+      "delay": 1000,
+      "inverted": true,
+      "savestate": "savestates\\013-dodongo\u0027s cavern.gzs"
+    },
+    {
+      "mask": "heart_container_icon.png",
+      "name": "HeartContainerDummy",
+      "threshold": 0.95,
+      "pauseTime": 0.2,
+      "dummy": true,
+      "savestate": "savestates\\014-king dodongo.gzs"
+    },
+    {
+      "mask": "cutscene_black_bars.png",
+      "name": "GoronRuby",
+      "threshold": 0.95,
+      "delay": 7400,
+      "savestate": "savestates\\015-king dodongo.gzs"
+    },
+    {
+      "mask": "kohan.png",
+      "name": "LakeDummy",
+      "threshold": 0.95,
+      "pauseTime": 4.5,
+      "savestate": "savestates\\016-lake hylia.gzs"
+    },
+    {
+      "mask": "blank_a_flip.png",
+      "name": "RutosLetter",
+      "threshold": 0.95,
+      "delay": 2400,
+      "savestate": "savestates\\018-lake hylia.gzs"
+    }
+  ]
+}
