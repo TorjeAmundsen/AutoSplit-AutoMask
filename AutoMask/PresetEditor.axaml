@@ -166,7 +166,15 @@
                             <Button Name="BtnImportSplits" Content="📥" Width="40" Height="24" IsEnabled="False" Click="BtnImportSplits_Click" ToolTip.Tip="Import pre-made splits"/>
                         </StackPanel>
                         <Border BorderBrush="#444444" BorderThickness="1">
-                            <ListBox Name="SplitsListBox" Classes="SplitsList" SelectionChanged="SplitsListBox_SelectionChanged"/>
+                            <ListBox Name="SplitsListBox" Classes="SplitsList" SelectionChanged="SplitsListBox_SelectionChanged">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="local:SplitDisplayItem">
+                                        <TextBlock Text="{Binding DisplayText}"
+                                                   Opacity="{Binding Opacity}"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
                         </Border>
                     </DockPanel>
 

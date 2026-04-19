@@ -18,6 +18,17 @@ public class EditablePreset
     public int TotalImages => Splits.Count;
 }
 
+public sealed class SplitDisplayItem
+{
+    public string Name { get; init; } = "";
+    public bool IsDummy { get; init; }
+    public string DisplayText => IsDummy ? $"[D] {Name}" : Name;
+    public double Opacity => IsDummy ? 0.55 : 1.0;
+
+    public static SplitDisplayItem From(EditableSplit split)
+        => new() { Name = split.Name, IsDummy = split.Dummy };
+}
+
 public class EditableSplit
 {
     public string Name { get; set; } = "";

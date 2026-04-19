@@ -213,6 +213,11 @@ public partial class PresetEditor : Window
             return;
         }
 
+        if (IsPointerOverScrollBar(e.Source as Avalonia.Visual))
+        {
+            return;
+        }
+
         int index = GetSplitsListIndexFromPointer(e);
         if (index < 0)
         {
@@ -222,6 +227,18 @@ public partial class PresetEditor : Window
         _dragStartIndex = index;
         _dragStartPoint = e.GetPosition(SplitsListBox);
         _isDraggingSplit = false;
+    }
+
+    private static bool IsPointerOverScrollBar(Avalonia.Visual? source)
+    {
+        for (var v = source; v != null; v = v.GetVisualParent())
+        {
+            if (v is Avalonia.Controls.Primitives.ScrollBar)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void SplitsListBox_PointerMoved(object? sender, Avalonia.Input.PointerEventArgs e)
@@ -255,7 +272,7 @@ public partial class PresetEditor : Window
         int rangeEnd = Math.Max(_dragStartIndex, targetIndex);
         for (int i = rangeStart; i <= rangeEnd; i++)
         {
-            SplitsListBox.Items[i] = $"{i + 1}. {_selectedPreset.Splits[i].Name}";
+            SplitsListBox.Items[i] = SplitDisplayItem.From(_selectedPreset.Splits[i]);
         }
 
         _suppressFormEvents = true;
@@ -459,7 +476,7 @@ public partial class PresetEditor : Window
 
         for (int i = 0; i < _selectedPreset.Splits.Count; i++)
         {
-            SplitsListBox.Items.Add($"{i + 1}. {_selectedPreset.Splits[i].Name}");
+            SplitsListBox.Items.Add(SplitDisplayItem.From(_selectedPreset.Splits[i]));
         }
     }
 
@@ -1333,6 +1350,7 @@ public partial class PresetEditor : Window
 
         _selectedSplit.Dummy = SplitDummyCheck.IsChecked == true;
         UpdateFilenamePreview();
+        RefreshSelectedSplitLabel();
         MarkCurrentPresetDirty();
     }
 
@@ -1363,7 +1381,7 @@ public partial class PresetEditor : Window
         }
 
         _suppressFormEvents = true;
-        SplitsListBox.Items[index] = $"{index + 1}. {_selectedPreset.Splits[index].Name}";
+        SplitsListBox.Items[index] = SplitDisplayItem.From(_selectedPreset.Splits[index]);
         SplitsListBox.SelectedIndex = index;
         _suppressFormEvents = false;
     }
