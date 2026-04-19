@@ -25,8 +25,8 @@
         <PackageReference Include="Avalonia.Diagnostics" Version="11.3.14" Condition="'$(Configuration)' == 'Debug'" />
         <PackageReference Include="SkiaSharp" Version="3.119.3-preview.1.1" />
         <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.3-preview.1.1" />
-        <PackageReference Include="OpenCvSharp4" Version="4.10.0.20240616" />
-        <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.10.0.20240616" />
+        <PackageReference Include="OpenCvSharp4" Version="4.10.0.20240616" Condition="'$(Configuration)' == 'Debug'" />
+        <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.10.0.20240616" Condition="'$(Configuration)' == 'Debug'" />
     </ItemGroup>
 
     <ItemGroup>
@@ -57,5 +57,17 @@
       <Compile Update="SavestateInstructionsWindow.axaml.cs">
         <DependentUpon>SavestateInstructionsWindow.axaml</DependentUpon>
       </Compile>
+    </ItemGroup>
+
+    <!-- Live tester (TestOutputWindow + Capture/*) depends on OpenCV and is
+         only shipped in Debug builds. Keeping the tester code compiled in
+         Release would force OpenCV native libs into the output. -->
+    <ItemGroup Condition="'$(Configuration)' == 'Release'">
+      <Compile Remove="Capture\**\*.cs" />
+      <Compile Remove="TestOutputWindow.axaml.cs" />
+      <AvaloniaResource Remove="TestOutputWindow.axaml" />
+      <AvaloniaXaml Remove="TestOutputWindow.axaml" />
+      <Page Remove="TestOutputWindow.axaml" />
+      <None Include="TestOutputWindow.axaml" />
     </ItemGroup>
 </Project>

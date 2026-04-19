@@ -16,6 +16,15 @@ namespace AutoSplit_AutoMask;
 
 public sealed record FeedGroupHeader(string Title);
 
+// First picker in TestOutputWindow hangs forever IF another window already
+// showed a picker this session (root cause unknown). Workaround: TestOutputWindow
+// fires a throwaway primer picker first, which absorbs the hang. Other windows
+// flip this flag after their pickers return.
+public static class PickerState
+{
+    public static bool OtherWindowPickerShown;
+}
+
 [SupportedOSPlatform("windows")]
 public partial class TestOutputWindow : Window
 {
@@ -49,6 +58,17 @@ public partial class TestOutputWindow : Window
     private CapturePreferences? _loadedPrefs;
     private bool _hasUserChanges;
     private bool _isClosing;
+    private bool _hasPickedInThisWindow;
+
+    private const string PrimerTitle = "AutoMask picker primer";
+    private const uint WM_CLOSE = 0x0010;
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern IntPtr FindWindow(string? lpClassName, string lpWindowName);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
 
     public TestOutputWindow()
     {
@@ -210,26 +230,52 @@ public partial class TestOutputWindow : Window
         }
     }
 
+    // Absorbs the first-picker hang that occurs when another window showed a
+    // picker earlier this session. Primer is fire-and-forget so the real picker
+    // below can queue behind it in Avalonia's dialog serialization; a watcher
+    // task finds the primer's HWND by title and WM_CLOSE's it after a dwell
+    // (immediate dismiss doesn't absorb the hang — the dialog must initialize
+    // first). If FindWindow never matches within the 5s budget, the primer
+    // stays orphaned for this instance but execution continues either way.
+    private void FirePickerPrimer()
+    {
+        _ = OpenPngPickerAsync(PrimerTitle);
+
+        _ = Task.Run(async () =>
+        {
+            for (int i = 0; i < 200; i++)
+            {
+                await Task.Delay(25);
+                var hwnd = FindWindow(null, PrimerTitle);
+                if (hwnd != IntPtr.Zero)
+                {
+                    await Task.Delay(500);
+                    PostMessage(hwnd, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+                    return;
+                }
+            }
+        });
+    }
+
+    private Task<IReadOnlyList<IStorageFile>> OpenPngPickerAsync(string title)
+    {
+        return StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = title,
+            AllowMultiple = false,
+            FileTypeFilter = [new FilePickerFileType("PNG Files") { Patterns = ["*.png"] }],
+        });
+    }
+
     private async Task LoadCustomReferenceAsync()
     {
-        // Pause capture around the picker: the native IFileDialog's init uses
-        // SendMessage to this window's HWND, and the capture loop's frame posts
-        // can starve that so the dialog stays hidden forever.
-        _controller.Stop();
-        IReadOnlyList<IStorageFile> files;
-        try
+        if (!_hasPickedInThisWindow && PickerState.OtherWindowPickerShown)
         {
-            files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-            {
-                Title = "Select a masked PNG reference",
-                AllowMultiple = false,
-                FileTypeFilter = [new FilePickerFileType("PNG Files") { Patterns = ["*.png"] }],
-            });
+            _hasPickedInThisWindow = true;
+            FirePickerPrimer();
         }
-        finally
-        {
-            _controller.Start();
-        }
+
+        var files = await OpenPngPickerAsync("Select a masked PNG reference");
 
         if (files.Count == 0)
         {
@@ -288,7 +334,7 @@ public partial class TestOutputWindow : Window
 
         int byteCount = scaled.ByteCount;
         byte[] refPixels = new byte[byteCount];
-        System.Runtime.InteropServices.Marshal.Copy(scaled.GetPixels(), refPixels, 0, byteCount);
+        Marshal.Copy(scaled.GetPixels(), refPixels, 0, byteCount);
 
         int pixelCount = CaptureController.CompareWidth * CaptureController.CompareHeight;
         byte[] refMask = new byte[pixelCount];
@@ -298,12 +344,6 @@ public partial class TestOutputWindow : Window
             refMask[i] = refPixels[p] >= 1 ? (byte)255 : (byte)0;
         }
 
-        // Do not dispose the previous reference bitmap synchronously — Avalonia's compositor
-        // may still hold a reference to it for one more frame, and disposing the backing
-        // SKBitmap while it is being rendered can stall the render pipeline and cause the
-        // UI thread to stop pumping messages (which deadlocks Win32 file dialogs that
-        // SendMessage to their parent HWND). Reference updates are rare; let the GC
-        // reclaim orphans naturally.
         _referenceBitmap = ImageProcessor.ToAvaloniaBitmap(scaled);
         ReferenceImageView.Source = _referenceBitmap;
 
