@@ -39,7 +39,7 @@
     {
       "mask": "heart_container_icon.png",
       "name": "HeartContainerDummy",
-      "threshold": 0.93,
+      "threshold": 0.96,
       "pauseTime": 0.2,
       "dummy": true,
       "savestate": "savestates\\002-gohma.gzs"
@@ -47,10 +47,17 @@
     {
       "mask": "cutscene_black_bars.png",
       "name": "KokiriEmerald",
-      "threshold": 0.95,
+      "threshold": 0.96,
       "pauseTime": 500,
       "delay": 7400,
       "savestate": "savestates\\003-gohma.gzs"
+    },
+    {
+      "mask": "uta.png",
+      "name": "SariasSong",
+      "threshold": 0.95,
+      "delay": 400,
+      "savestate": "savestates\\005-sacred forest meadow.gzs"
     },
     {
       "mask": "tegami.png",
@@ -82,30 +89,39 @@
       "mask": "fade_center.png",
       "name": "EnterDodongos",
       "threshold": 0.97,
+      "delay": 50,
       "savestate": "savestates\\007-dodongo\u0027s cavern.gzs"
     },
     {
       "mask": "dc_stairs.png",
       "name": "StairsDummy",
       "threshold": 0.95,
+      "pauseTime": 50,
+      "dummy": true,
       "savestate": "savestates\\009-dodongo\u0027s cavern.gzs"
     },
     {
       "mask": "nageru.png",
       "name": "ThrowDummy",
-      "threshold": 0.95,
+      "threshold": 0.96,
+      "pauseTime": 15,
+      "dummy": true,
       "savestate": "savestates\\010-dodongo\u0027s cavern.gzs"
     },
     {
       "mask": "cutscene_black_bars.png",
       "name": "TransitionDummy",
-      "threshold": 0.95,
+      "threshold": 0.97,
+      "pauseTime": 15,
+      "dummy": true,
       "savestate": "savestates\\011-dodongo\u0027s cavern.gzs"
     },
     {
       "mask": "cutscene_black_bars.png",
       "name": "TransitionDummy2",
-      "threshold": 0.95,
+      "threshold": 0.97,
+      "pauseTime": 20,
+      "dummy": true,
       "savestate": "savestates\\012-dodongo\u0027s cavern.gzs"
     },
     {
@@ -119,7 +135,7 @@
     {
       "mask": "heart_container_icon.png",
       "name": "HeartContainerDummy",
-      "threshold": 0.95,
+      "threshold": 0.96,
       "pauseTime": 0.2,
       "dummy": true,
       "savestate": "savestates\\014-king dodongo.gzs"
@@ -127,7 +143,7 @@
     {
       "mask": "cutscene_black_bars.png",
       "name": "GoronRuby",
-      "threshold": 0.95,
+      "threshold": 0.96,
       "delay": 7400,
       "savestate": "savestates\\015-king dodongo.gzs"
     },
@@ -136,6 +152,7 @@
       "name": "LakeDummy",
       "threshold": 0.95,
       "pauseTime": 4.5,
+      "dummy": true,
       "savestate": "savestates\\016-lake hylia.gzs"
     },
     {
@@ -143,7 +160,136 @@
       "name": "RutosLetter",
       "threshold": 0.95,
       "delay": 2400,
-      "savestate": "savestates\\018-lake hylia.gzs"
+      "savestate": "savestates\\018-lake hylia.gzs",
+      "savestateInstructions": "Similar to the Enter Deku split, gz doesn\u0027t load the A button text correctly during a transition from one A button action to another. Load this savestate and advance 2 frames before taking your screenshot. This should be the first frame where the A button is visible with no text on it."
+    },
+    {
+      "mask": "jabu_eye.png",
+      "name": "EnterJabu",
+      "threshold": 0.95,
+      "delay": 14050,
+      "savestate": "savestates\\019-zora\u0027s fountain.gzs"
+    },
+    {
+      "mask": "009_nut_throw.png",
+      "name": "DekuNutDummy",
+      "threshold": 0.95,
+      "dummy": true,
+      "savestate": "savestates\\021-jabu jabu.gzs"
+    },
+    {
+      "mask": "cutscene_black_bars.png",
+      "name": "ChestSpawnDummy",
+      "threshold": 0.97,
+      "pauseTime": 7,
+      "dummy": true,
+      "savestate": "savestates\\023-jabu jabu.gzs"
+    },
+    {
+      "mask": "cutscene_black_bars.png",
+      "name": "Boomerang",
+      "threshold": 0.97,
+      "delay": 1000,
+      "inverted": true,
+      "savestate": "savestates\\024-jabu jabu.gzs"
+    },
+    {
+      "mask": "zora.png",
+      "name": "ZoraSapphire",
+      "threshold": 0.96,
+      "delay": 7750,
+      "inverted": true,
+      "savestate": "savestates\\025-barinade.gzs"
+    },
+    {
+      "mask": "oot_icon.png",
+      "name": "OcarinaOfTime",
+      "threshold": 0.96,
+      "savestate": "savestates\\027-hyrule field.gzs"
+    },
+    {
+      "mask": "master_sword_pedestal.png",
+      "name": "MasterSword",
+      "threshold": 0.95,
+      "savestate": "savestates\\028-temple of time.gzs"
+    },
+    {
+      "mask": "hehehe.png",
+      "name": "DampeDummy",
+      "threshold": 0.95,
+      "pauseTime": 12,
+      "dummy": true,
+      "savestate": "savestates\\029-windmill.gzs"
+    },
+    {
+      "mask": "cutscene_black_bars.png",
+      "name": "Hookshot",
+      "threshold": 0.96,
+      "delay": 1000,
+      "inverted": true,
+      "savestate": "savestates\\030-windmill.gzs"
+    },
+    {
+      "mask": "honoo.png",
+      "name": "Bolero",
+      "threshold": 0.96,
+      "delay": 600,
+      "savestate": "savestates\\031-death mountain crater.gzs"
+    },
+    {
+      "mask": "totte.png",
+      "name": "FaroresWind",
+      "threshold": 0.96,
+      "delay": 14300,
+      "inverted": true,
+      "savestate": "savestates\\032-fairy spells.gzs"
+    },
+    {
+      "mask": "bottle_icon.png",
+      "name": "BlueFireDummy1",
+      "threshold": 0.95,
+      "pauseTime": 60,
+      "dummy": true,
+      "savestate": "savestates\\033-ice cavern.gzs"
+    },
+    {
+      "mask": "bottle_icon.png",
+      "name": "BlueFireDummy2",
+      "threshold": 0.95,
+      "dummy": true,
+      "savestate": "savestates\\034-ice cavern.gzs"
+    },
+    {
+      "mask": "cutscene_black_bars.png",
+      "name": "BarsOpeningDummy",
+      "threshold": 0.96,
+      "pauseTime": 5,
+      "dummy": true,
+      "savestate": "savestates\\035-ice cavern.gzs"
+    },
+    {
+      "mask": "cutscene_black_bars.png",
+      "name": "DoorDummy",
+      "threshold": 0.96,
+      "pauseTime": 3,
+      "dummy": true,
+      "savestate": "savestates\\036-ice cavern.gzs"
+    },
+    {
+      "mask": "cutscene_black_bars.png",
+      "name": "ChestSpawnDummy",
+      "threshold": 0.96,
+      "pauseTime": 10,
+      "dummy": true,
+      "savestate": "savestates\\037-ice cavern.gzs"
+    },
+    {
+      "mask": "cutscene_black_bars.png",
+      "name": "IronBoots",
+      "threshold": 0.97,
+      "delay": 1000,
+      "inverted": true,
+      "savestate": "savestates\\038-ice cavern.gzs"
     }
   ]
 }
