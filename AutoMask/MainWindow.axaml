@@ -122,10 +122,6 @@
 
         <!-- Row 5: Base image/split selection -->
         <Grid Grid.Row="6" Grid.Column="0" ColumnDefinitions="Auto,*,Auto">
-            <Button Grid.Column="0" Name="BtnInputImagePrev" Content="&lt;"
-                    HorizontalContentAlignment="Center" Width="28" Height="28"
-                    CornerRadius="4,0,0,4" Margin="0,0,-1,0"
-                    IsEnabled="False" Click="BtnPrevInputImage_Click"/>
             <ComboBox Grid.Column="1" Name="ComboBoxSelectInputImage" Height="28"
                       HorizontalAlignment="Stretch" CornerRadius="0" Margin="0,0,-1,0"
                       IsEnabled="False" ItemsSource="{Binding inputImagesComboBoxItems}"
@@ -141,6 +137,10 @@
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
+            <Button Grid.Column="0" Name="BtnInputImagePrev" Content="&lt;"
+                    HorizontalContentAlignment="Center" Width="28" Height="28"
+                    CornerRadius="4,0,0,4" Margin="0,0,-1,0"
+                    IsEnabled="False" Click="BtnPrevInputImage_Click"/>
             <Button Grid.Column="2" Name="BtnInputImageNext" Content="&gt;"
                     HorizontalContentAlignment="Center" Width="28" Height="28"
                     CornerRadius="0,4,4,0"
@@ -148,15 +148,15 @@
         </Grid>
 
         <Grid Grid.Row="6" Grid.Column="2" ColumnDefinitions="Auto,*,Auto">
-            <Button Grid.Column="0" Name="BtnPrevAlphaImage" Content="&lt;"
-                    HorizontalContentAlignment="Center" Width="28" Height="28"
-                    CornerRadius="4,0,0,4" Margin="0,0,-1,0"
-                    IsEnabled="False" Click="BtnPrevAlphaImage_Click"/>
             <ComboBox Grid.Column="1" Name="ComboBoxSelectSplit" Height="28"
                       HorizontalAlignment="Stretch" CornerRadius="0" Margin="0,0,-1,0"
                       SelectedIndex="{Binding selectedSplitIndex}"
                       ItemsSource="{Binding splitsComboBoxItems}"
                       SelectionChanged="ComboBoxSelectSplit_OnSelectionChanged"/>
+            <Button Grid.Column="0" Name="BtnPrevAlphaImage" Content="&lt;"
+                    HorizontalContentAlignment="Center" Width="28" Height="28"
+                    CornerRadius="4,0,0,4" Margin="0,0,-1,0"
+                    IsEnabled="False" Click="BtnPrevAlphaImage_Click"/>
             <Button Grid.Column="2" Name="BtnNextAlphaImage" Content="&gt;"
                     HorizontalContentAlignment="Center" Width="28" Height="28"
                     CornerRadius="0,4,4,0"
