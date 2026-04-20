@@ -271,7 +271,6 @@
       "mask": "cutscene_black_bars.png",
       "name": "DoorDummy",
       "threshold": 0.96,
-      "pauseTime": 3,
       "dummy": true,
       "savestate": "savestates\\036-ice cavern.gzs"
     },
@@ -290,6 +289,21 @@
       "delay": 1000,
       "inverted": true,
       "savestate": "savestates\\038-ice cavern.gzs"
+    },
+    {
+      "mask": "hammer_room_pillar.png",
+      "name": "HammerDummy",
+      "threshold": 0.96,
+      "dummy": true,
+      "savestate": "savestates\\039-fire temple.gzs"
+    },
+    {
+      "mask": "cutscene_black_bars.png",
+      "name": "Hammer",
+      "threshold": 0.97,
+      "delay": 1000,
+      "inverted": true,
+      "savestate": "savestates\\040-fire temple.gzs"
     }
   ]
 }
