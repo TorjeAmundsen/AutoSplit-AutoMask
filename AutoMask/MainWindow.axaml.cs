@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Input;
@@ -42,9 +41,7 @@ public partial class MainWindow : Window
     private Dictionary<string, Bitmap> _inputThumbnailCache = new();
     private Dictionary<string, SKBitmap> _maskSkBitmapCache = new();
     private CancellationTokenSource? _savedNotificationCts;
-#if DEBUG
     private TestOutputWindow? _testOutputWindow;
-#endif
 
     public MainWindow()
     {
@@ -78,11 +75,7 @@ public partial class MainWindow : Window
             BtnOpenLiveTester.IsEnabled = false;
             ToolTip.SetTip(BtnOpenLiveTester, "Live tester is only available on Windows");
         }
-#if !DEBUG
-        BtnOpenLiveTester.IsEnabled = false;
-        ToolTip.SetTip(BtnOpenLiveTester, "Live tester is disabled in release builds (work in progress)");
-#endif
-
+        
         // Set DataContext last so binding-triggered event handlers fire with all fields initialized
         DataContext = this;
 
@@ -248,7 +241,7 @@ public partial class MainWindow : Window
         int? dataIdx = _presetDisplayMap[displayIdx];
         if (dataIdx == null)
         {
-            // Group header — not selectable, nothing to do
+            // Group header - not selectable, nothing to do
             return;
         }
 
@@ -405,9 +398,6 @@ public partial class MainWindow : Window
         {
             Title = "Select output directory"
         });
-#if DEBUG
-        PickerState.OtherWindowPickerShown = true;
-#endif
 
         if (folders.Count > 0)
         {
@@ -415,11 +405,6 @@ public partial class MainWindow : Window
             OutputDirectoryTextBox.Text = _outputDirectoryPath;
             CheckSavePossible();
         }
-    }
-
-    private void BtnOpenPresetsFolder_Click(object sender, RoutedEventArgs e)
-    {
-        OpenInFileManager(_currentPresetsDirectory);
     }
 
     private async Task UpdateOutputPreview()
@@ -470,7 +455,6 @@ public partial class MainWindow : Window
         _createdFilename = CreateCurrentFilename();
         PreviewImageLabel.Text = _createdFilename;
 
-#if DEBUG
         if (_testOutputWindow is not null && OperatingSystem.IsWindows())
         {
             SplitPreset? preset = selectedPresetIndex >= 0 && selectedPresetIndex < _splitPresets.Count
@@ -478,7 +462,6 @@ public partial class MainWindow : Window
                 : null;
             _testOutputWindow.UpdateFromMainWindow(preset, selectedSplitIndex, _selectedInputImagePath, _maskSkBitmapCache);
         }
-#endif
     }
 
     private async void BtnLoadInputImages_Click(object sender, RoutedEventArgs e)
@@ -492,9 +475,6 @@ public partial class MainWindow : Window
                 new FilePickerFileType("PNG Files") { Patterns = ["*.png"] },
             ]
         });
-#if DEBUG
-        PickerState.OtherWindowPickerShown = true;
-#endif
 
         if (files.Count == 0)
         {
@@ -568,9 +548,6 @@ public partial class MainWindow : Window
             DefaultExtension = "png",
             FileTypeChoices = [new FilePickerFileType("PNG Files") { Patterns = ["*.png"] }]
         });
-#if DEBUG
-        PickerState.OtherWindowPickerShown = true;
-#endif
 
         if (file != null)
         {
@@ -798,7 +775,6 @@ public partial class MainWindow : Window
 
     private void BtnOpenTestOutput_Click(object? sender, RoutedEventArgs e)
     {
-#if DEBUG
         if (!OperatingSystem.IsWindows())
         {
             return;
@@ -820,7 +796,6 @@ public partial class MainWindow : Window
         win.Closed += (_, _) => _testOutputWindow = null;
         _testOutputWindow = win;
         win.Show(this);
-#endif
     }
 
     private void UpdateNavigationButtons()

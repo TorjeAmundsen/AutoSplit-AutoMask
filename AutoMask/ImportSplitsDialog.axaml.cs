@@ -127,7 +127,7 @@ public partial class ImportSplitsDialog : Window
                 }
                 catch
                 {
-                    // Image failed to load — skip thumbnail
+                    // Image failed to load - skip thumbnail
                 }
             }
         }
