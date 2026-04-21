@@ -242,7 +242,7 @@ public partial class TestOutputWindow : Window
 
             var fileName = Path.GetFileName(path);
             double required = double.NaN;
-            var match = System.Text.RegularExpressions.Regex.Match(fileName, @"\(([0-9]*\.?[0-9]+)\)");
+            var match = ThresholdRegex().Match(fileName);
             if (match.Success && double.TryParse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
             {
                 required = parsed;
@@ -678,4 +678,7 @@ public partial class TestOutputWindow : Window
         await ShutdownAsync();
         Close();
     }
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"\(([0-9]*\.?[0-9]+)\)")]
+    private static partial System.Text.RegularExpressions.Regex ThresholdRegex();
 }

@@ -9,9 +9,6 @@ namespace AutoSplit_AutoMask;
 
 public partial class PresetEditor : Window
 {
-    // Characters forbidden in split names by the AutoSplit file naming spec
-    private static readonly Regex InvalidNameChars = new(@"[#@{}\(\)\[\]\^]");
-
     private readonly string _presetsDirectory;
     private readonly string _splitsDirectory;
     private readonly HashSet<string> _collapsedGroups = new(StringComparer.OrdinalIgnoreCase);
@@ -81,7 +78,7 @@ public partial class PresetEditor : Window
             var source = e.Source as Avalonia.Visual;
             while (source != null && source is not ListBoxItem)
             {
-                source = source.GetVisualParent() as Avalonia.Visual;
+                source = source.GetVisualParent();
             }
 
             if (source is not ListBoxItem container)
@@ -709,7 +706,7 @@ public partial class PresetEditor : Window
 
     private void ValidateSplitName(string name)
     {
-        bool isInvalid = InvalidNameChars.IsMatch(name);
+        bool isInvalid = InvalidNameCharsRegex().IsMatch(name);
 
         if (isInvalid)
         {
@@ -737,7 +734,7 @@ public partial class PresetEditor : Window
             return;
         }
 
-        bool anyInvalidName = _selectedPreset.Splits.Any(s => InvalidNameChars.IsMatch(s.Name));
+        bool anyInvalidName = _selectedPreset.Splits.Any(s => InvalidNameCharsRegex().IsMatch(s.Name));
         bool nameValid = !string.IsNullOrWhiteSpace(_selectedPreset.PresetName);
 
         BtnSave.IsEnabled = nameValid && !anyInvalidName;
@@ -1619,4 +1616,8 @@ public partial class PresetEditor : Window
     {
         Close();
     }
+
+    // characters forbidden in split names by the AutoSplit file naming spec
+    [GeneratedRegex(@"[#@{}\(\)\[\]\^]")]
+    private static partial Regex InvalidNameCharsRegex();
 }

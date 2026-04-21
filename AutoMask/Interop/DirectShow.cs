@@ -82,8 +82,7 @@ internal static unsafe partial class DirectShow
         IntPtr devEnum = IntPtr.Zero;
         IntPtr enumMoniker = IntPtr.Zero;
 
-        int hr = CoCreateInstance(CLSID_SystemDeviceEnum, IntPtr.Zero,
-            CLSCTX_INPROC_SERVER, IID_ICreateDevEnum, out devEnum);
+        int hr = CoCreateInstance(CLSID_SystemDeviceEnum, IntPtr.Zero, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum, out devEnum);
         if (hr < 0 || devEnum == IntPtr.Zero)
         {
             return names;

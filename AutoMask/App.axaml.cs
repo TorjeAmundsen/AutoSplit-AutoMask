@@ -12,14 +12,6 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
     }
 
-    public static new App Current => (App)Application.Current!;
-
-    public IStorageProvider StorageProvider => ApplicationLifetime switch
-    {
-        IClassicDesktopStyleApplicationLifetime { MainWindow: { } window } => window.StorageProvider,
-        _ => throw new NotSupportedException()
-    };
-
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
