@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Input;
@@ -405,9 +404,6 @@ public partial class MainWindow : Window
         {
             Title = "Select output directory"
         });
-#if DEBUG
-        PickerState.OtherWindowPickerShown = true;
-#endif
 
         if (folders.Count > 0)
         {
@@ -492,9 +488,6 @@ public partial class MainWindow : Window
                 new FilePickerFileType("PNG Files") { Patterns = ["*.png"] },
             ]
         });
-#if DEBUG
-        PickerState.OtherWindowPickerShown = true;
-#endif
 
         if (files.Count == 0)
         {
@@ -568,9 +561,6 @@ public partial class MainWindow : Window
             DefaultExtension = "png",
             FileTypeChoices = [new FilePickerFileType("PNG Files") { Patterns = ["*.png"] }]
         });
-#if DEBUG
-        PickerState.OtherWindowPickerShown = true;
-#endif
 
         if (file != null)
         {

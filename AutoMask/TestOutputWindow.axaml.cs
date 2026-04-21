@@ -16,15 +16,6 @@ namespace AutoSplit_AutoMask;
 
 public sealed record FeedGroupHeader(string Title);
 
-// First picker in TestOutputWindow hangs forever IF another window already
-// showed a picker this session (root cause unknown). Workaround: TestOutputWindow
-// fires a throwaway primer picker first, which absorbs the hang. Other windows
-// flip this flag after their pickers return.
-public static class PickerState
-{
-    public static bool OtherWindowPickerShown;
-}
-
 [SupportedOSPlatform("windows")]
 public partial class TestOutputWindow : Window
 {
@@ -58,17 +49,6 @@ public partial class TestOutputWindow : Window
     private CapturePreferences? _loadedPrefs;
     private bool _hasUserChanges;
     private bool _isClosing;
-    private bool _hasPickedInThisWindow;
-
-    private const string PrimerTitle = "AutoMask picker primer";
-    private const uint WM_CLOSE = 0x0010;
-
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-    private static extern IntPtr FindWindow(string? lpClassName, string lpWindowName);
-
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-    private static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
-
 
     public TestOutputWindow()
     {
@@ -175,11 +155,6 @@ public partial class TestOutputWindow : Window
         }
     }
 
-    private async void BtnLoadCustomReference_Click(object? sender, RoutedEventArgs e)
-    {
-        await LoadCustomReferenceAsync();
-    }
-
     private async Task RebuildReferenceFromPresetAsync()
     {
         if (_presetFromMain is null || _presetFromMain.Splits is null
@@ -230,52 +205,14 @@ public partial class TestOutputWindow : Window
         }
     }
 
-    // Absorbs the first-picker hang that occurs when another window showed a
-    // picker earlier this session. Primer is fire-and-forget so the real picker
-    // below can queue behind it in Avalonia's dialog serialization; a watcher
-    // task finds the primer's HWND by title and WM_CLOSE's it after a dwell
-    // (immediate dismiss doesn't absorb the hang — the dialog must initialize
-    // first). If FindWindow never matches within the 5s budget, the primer
-    // stays orphaned for this instance but execution continues either way.
-    private void FirePickerPrimer()
+    private async void BtnLoadCustomReference_Click(object? sender, RoutedEventArgs e)
     {
-        _ = OpenPngPickerAsync(PrimerTitle);
-
-        _ = Task.Run(async () =>
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            for (int i = 0; i < 200; i++)
-            {
-                await Task.Delay(25);
-                var hwnd = FindWindow(null, PrimerTitle);
-                if (hwnd != IntPtr.Zero)
-                {
-                    await Task.Delay(500);
-                    PostMessage(hwnd, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
-                    return;
-                }
-            }
-        });
-    }
-
-    private Task<IReadOnlyList<IStorageFile>> OpenPngPickerAsync(string title)
-    {
-        return StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-        {
-            Title = title,
+            Title = "Select a masked PNG reference",
             AllowMultiple = false,
             FileTypeFilter = [new FilePickerFileType("PNG Files") { Patterns = ["*.png"] }],
         });
-    }
-
-    private async Task LoadCustomReferenceAsync()
-    {
-        if (!_hasPickedInThisWindow && PickerState.OtherWindowPickerShown)
-        {
-            _hasPickedInThisWindow = true;
-            FirePickerPrimer();
-        }
-
-        var files = await OpenPngPickerAsync("Select a masked PNG reference");
 
         if (files.Count == 0)
         {
