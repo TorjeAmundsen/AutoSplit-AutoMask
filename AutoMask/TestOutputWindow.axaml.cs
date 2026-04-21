@@ -76,15 +76,21 @@ public partial class TestOutputWindow : Window
                 return;
             }
 
+            // Always cancel and run shutdown on a fresh turn - the async lambda is not
+            // awaited by Avalonia's close pipeline, so without Cancel the window tears
+            // down while ShutdownAsync is still stopping the capture thread / webcam /
+            // GDI handles.
+            e.Cancel = true;
+
             if (_hasUserChanges)
             {
-                e.Cancel = true;
                 await PromptSaveAndClose();
             }
             else
             {
                 _isClosing = true;
                 await ShutdownAsync();
+                Close();
             }
         };
     }
@@ -135,6 +141,7 @@ public partial class TestOutputWindow : Window
         ReferenceImageView.Source = null;
         _liveBitmap?.Dispose();
         _liveBitmap = null;
+        _referenceBitmap?.Dispose();
         _referenceBitmap = null;
     }
 
@@ -298,9 +305,9 @@ public partial class TestOutputWindow : Window
         ReferenceStatusLabel.Text = $"{label} - {source.Width}×{source.Height} native, "
             + $"{nonZero * 100.0 / pixelCount:0.0}% opaque";
 
-        RequiredLabel.Text = double.IsNaN(required) ? "—" : required.ToString("F4");
-        HighestLabel.Text = "—";
-        CurrentLabel.Text = "—";
+        RequiredLabel.Text = double.IsNaN(required) ? "-" : required.ToString("F4");
+        HighestLabel.Text = "-";
+        CurrentLabel.Text = "-";
         _controller.ResetHighest();
     }
 
@@ -310,9 +317,9 @@ public partial class TestOutputWindow : Window
         ReferenceImageView.Source = null;
         _referenceBitmap = null;
         ReferenceStatusLabel.Text = reason;
-        CurrentLabel.Text = "—";
-        HighestLabel.Text = "—";
-        RequiredLabel.Text = "—";
+        CurrentLabel.Text = "-";
+        HighestLabel.Text = "-";
+        RequiredLabel.Text = "-";
     }
 
     private async void BtnRefreshFeed_Click(object? sender, RoutedEventArgs e)
@@ -391,7 +398,7 @@ public partial class TestOutputWindow : Window
 
     private async void ComboBoxFeedSource_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        if (_loadingFeeds)
+        if (_loadingFeeds || _isClosing)
         {
             return;
         }
@@ -528,7 +535,7 @@ public partial class TestOutputWindow : Window
     private void BtnResetHighest_Click(object? sender, RoutedEventArgs e)
     {
         _controller.ResetHighest();
-        HighestLabel.Text = "—";
+        HighestLabel.Text = "-";
     }
 
     private static readonly IBrush _metGreen = new SolidColorBrush(Color.FromRgb(0x6C, 0xD6, 0x88));
@@ -539,6 +546,13 @@ public partial class TestOutputWindow : Window
 
     private void OnFrameReady(byte[] bgraPixels, double current, double highest, double required)
     {
+        // Frames may arrive on the dispatcher after shutdown began; ignore them so we
+        // don't recreate _liveBitmap or touch controls after disposal.
+        if (_isClosing)
+        {
+            return;
+        }
+
         if (_liveBitmap is null)
         {
             _liveBitmap = new WriteableBitmap(
@@ -569,9 +583,9 @@ public partial class TestOutputWindow : Window
         LiveImageView.InvalidateVisual();
 
         bool hasReference = ReferenceImageView.Source is not null;
-        CurrentLabel.Text = hasReference ? current.ToString("F4") : "—";
-        HighestLabel.Text = hasReference ? highest.ToString("F4") : "—";
-        RequiredLabel.Text = required > 0 ? required.ToString("F4") : "—";
+        CurrentLabel.Text = hasReference ? current.ToString("F4") : "-";
+        HighestLabel.Text = hasReference ? highest.ToString("F4") : "-";
+        RequiredLabel.Text = required > 0 ? required.ToString("F4") : "-";
         CurrentLabel.Foreground = required > 0 && current >= required ? _metGreen : _metWhite;
 
         // If the source just reported a different size on first frame, update our crop bounds

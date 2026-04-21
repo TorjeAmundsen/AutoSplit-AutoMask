@@ -455,7 +455,7 @@ public partial class PresetEditor : Window
         PopulateSplitsList();
         ShowSplitForm(false);
 
-        // Clear only the split-related visuals — form controls stay as-is since the form
+        // Clear only the split-related visuals - form controls stay as-is since the form
         // is hidden and will be fully repopulated by SelectSplit when a split is picked.
         MaskPreviewImage.Source = null;
         _maskPreviewBitmap?.Dispose();
@@ -1553,7 +1553,7 @@ public partial class PresetEditor : Window
             preset.IsDirty = false;
             PresetsModified = true;
 
-            // Rebuild the grouped list — the game name may have changed, moving this
+            // Rebuild the grouped list - the game name may have changed, moving this
             // preset to a different group or creating/removing a group header.
             _suppressPresetSelection = true;
             PopulatePresetList();

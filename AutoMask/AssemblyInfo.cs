@@ -1,1 +1,1 @@
-// Intentionally empty — WPF ThemeInfo attribute removed during Avalonia migration.
+// Intentionally empty - WPF ThemeInfo attribute removed during Avalonia migration.

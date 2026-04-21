@@ -105,19 +105,19 @@
                 <!-- Required + Current side by side -->
                 <StackPanel Grid.Row="0" Grid.Column="0">
                     <TextBlock Text="Required" Foreground="#888888" TextAlignment="Center"/>
-                    <TextBlock Name="RequiredLabel" Text="—" Foreground="#AAAAAA"
+                    <TextBlock Name="RequiredLabel" Text="-" Foreground="#AAAAAA"
                                FontSize="32" TextAlignment="Center"/>
                 </StackPanel>
                 <StackPanel Grid.Row="0" Grid.Column="1">
                     <TextBlock Text="Current" Foreground="#888888" TextAlignment="Center"/>
-                    <TextBlock Name="CurrentLabel" Text="—" Foreground="White"
+                    <TextBlock Name="CurrentLabel" Text="-" Foreground="White"
                                FontSize="32" TextAlignment="Center"/>
                 </StackPanel>
 
                 <!-- Highest centered below -->
                 <StackPanel Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2">
                     <TextBlock Text="Highest" Foreground="#888888" TextAlignment="Center"/>
-                    <TextBlock Name="HighestLabel" Text="—" Foreground="White"
+                    <TextBlock Name="HighestLabel" Text="-" Foreground="White"
                                FontSize="32" TextAlignment="Center"/>
                 </StackPanel>
 

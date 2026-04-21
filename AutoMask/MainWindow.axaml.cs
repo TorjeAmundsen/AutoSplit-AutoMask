@@ -247,7 +247,7 @@ public partial class MainWindow : Window
         int? dataIdx = _presetDisplayMap[displayIdx];
         if (dataIdx == null)
         {
-            // Group header — not selectable, nothing to do
+            // Group header - not selectable, nothing to do
             return;
         }
 

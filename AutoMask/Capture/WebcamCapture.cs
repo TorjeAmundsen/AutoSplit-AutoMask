@@ -40,16 +40,37 @@ public sealed class WebcamCapture : ICaptureSource
 
     public static Task<IReadOnlyList<CamDeviceInfo>> EnumerateDevicesAsync()
     {
-        return Task.Run<IReadOnlyList<CamDeviceInfo>>(() =>
+        // Run on a dedicated short-lived STA thread instead of a thread pool worker.
+        // DirectShow's CoInitializeEx call would otherwise leave the pool thread
+        // MTA-tainted with no matching CoUninitialize - when the runtime later reuses
+        // that thread (e.g. for an await continuation), shell COM marshaling between
+        // STA UI and the dirty MTA pool thread deadlocks IFileDialog.Show, freezing
+        // any subsequent file picker app-wide.
+        var tcs = new TaskCompletionSource<IReadOnlyList<CamDeviceInfo>>();
+        var thread = new Thread(() =>
         {
-            var names = DirectShow.EnumerateVideoCaptureNames();
-            var list = new List<CamDeviceInfo>(names.Count);
-            for (int i = 0; i < names.Count; i++)
+            try
             {
-                list.Add(new CamDeviceInfo { Name = names[i], Index = i });
+                var names = DirectShow.EnumerateVideoCaptureNames();
+                var list = new List<CamDeviceInfo>(names.Count);
+                for (int i = 0; i < names.Count; i++)
+                {
+                    list.Add(new CamDeviceInfo { Name = names[i], Index = i });
+                }
+                tcs.SetResult(list);
             }
-            return list;
-        });
+            catch (Exception ex)
+            {
+                tcs.SetException(ex);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "Webcam Enum (STA)",
+        };
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        return tcs.Task;
     }
 
     public Task StartAsync(CancellationToken ct)

@@ -106,7 +106,7 @@ internal static unsafe partial class DirectShow
                 return names;
             }
 
-            // IEnumMoniker::Next (slot 3) — walk one at a time.
+            // IEnumMoniker::Next (slot 3) - walk one at a time.
             var emVtable = *(IntPtr**)enumMoniker;
             var next =
                 (delegate* unmanaged[Stdcall]<IntPtr, uint, IntPtr*, uint*, int>)emVtable[3];

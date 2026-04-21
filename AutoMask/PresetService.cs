@@ -122,7 +122,7 @@ public static class PresetService
     /// Writes a preset to <paramref name="targetFolder"/>: creates the directory, resolves mask
     /// paths (copying any mask that lives outside the target folder), builds the JSON, and writes
     /// preset.json.  Updates <see cref="EditablePreset.OriginalFolder"/> on success.
-    /// Throws on any I/O failure — the caller is responsible for showing error UI.
+    /// Throws on any I/O failure - the caller is responsible for showing error UI.
     /// </summary>
     internal static async Task SavePresetToFolderAsync(EditablePreset preset, string targetFolder)
     {
