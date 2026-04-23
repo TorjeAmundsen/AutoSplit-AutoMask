@@ -16,8 +16,8 @@ A quick and easy way to instantly set up AutoSplit, given your desired category 
 > Your game feed must have **no black borders**. AutoMask can adjust for aspect ratio differences, but it cannot detect or correct for black bars or over-cropping. For correct behavior, please set this up with OBS Virtual Cam (the recommended capture method for AutoSplit) and use the Crop/Pad filter in combination with the Scaling/Aspect ratio filter to crop and scale your feed. Do **not** use OBS's transform features (ctrl-dragging etc). If you have your feed set up with transform features, right click your source and press **Reset transform** in the **Transform** menu and use the filters method instead.
 
 1. Select a preset from the dropdown in the top-right.
-2. If your preset has savestates, copy them by pressing **Copy savestates** in the bottom right. If not, obtain your screenshots manually and skip to step 5.
-3. Open AutoSplit and set an output folder to save your screenshots. You have to take your screenshots of the savestates using AutoSplit.
+2. If your preset has savestates, copy them by pressing **Copy savestates** in the bottom right. This copies savestates to your clipboard. In the case of .gzs OoT savestates, paste them on your SD card to go through the screenshots in gz. If not, obtain your screenshots manually and skip to step 5.
+3. Open AutoSplit and set an output folder to save your screenshots. You have to take your screenshots of the savestates **using AutoSplit**.
 4. Load your savestates and screenshot them in order. Follow instructions for select splits by clicking **Instructions** if they have instructions.
 5. Click **Load input image(s)** and select all the screenshots you want to mask.
 6. Use the dropdowns beneath the image previews to pair each input image with its corresponding mask.
