@@ -13,14 +13,16 @@ A quick and easy way to instantly set up AutoSplit, given your desired category 
 
 ## How to Use
 
-> Your game feed must have **no black borders**. AutoMask can adjust for aspect ratio differences, but it cannot detect or correct for black bars or over-cropping.
-
-1. Click **Load input image(s)** and select the screenshots you want to mask.
-2. Select a preset from the dropdown in the top-right.
-3. Use the dropdowns beneath the image previews to pair each input image with its corresponding mask.
-4. Click **Set output** to choose an output folder.
-5. Click **Save masked image** to save the current output with the automatically generated filename.
-6. Use the arrow buttons next to the dropdowns to step through inputs and masks.
+> Your game feed must have **no black borders**. AutoMask can adjust for aspect ratio differences, but it cannot detect or correct for black bars or over-cropping. For correct behavior, please set this up with OBS Virtual Cam (the recommended capture method for AutoSplit) and use the Crop/Pad filter in combination with the Scaling/Aspect ratio filter.
+1. Select a preset from the dropdown in the top-right.
+2. If your preset has savestates, copy them by pressing **Copy savestates** in the bottom right. If not, obtain your screenshots manually and skip to step 5.
+3. Open AutoSplit and set an output folder to save your screenshots. You have to take your screenshots of the savestates using AutoSplit.
+4. Load your savestates and screenshot them in order. Follow instructions for select splits by clicking **Instructions** if they have instructions.
+5. Click **Load input image(s)** and select all the screenshots you want to mask.
+6. Use the dropdowns beneath the image previews to pair each input image with its corresponding mask.
+7. Click **Set output** to choose an output folder.
+8. Click **Save masked image** to save the current output with the automatically generated filename.
+9. Use the arrow buttons next to the dropdowns to step through inputs and masks.
 
 The splits in a preset are ordered as defined in its `preset.json`. Input images are ordered alphabetically, so if your screenshots were taken in order by AutoSplit, they will match the preset order when loaded.
 
