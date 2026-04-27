@@ -177,8 +177,8 @@
                      BorderBrush="#565656"/>
         </Grid>
 
-        <Grid Grid.Row="8" Grid.Column="2" ColumnDefinitions="*,8,Auto,8,Auto">
-            <Button Name="BtnSave" Content="Save output" Grid.Column="0" HorizontalAlignment="Stretch"
+        <Grid Grid.Row="8" Grid.Column="2" ColumnDefinitions="*,8,Auto,8,Auto,8,Auto">
+            <Button Name="BtnSave" Content="Save" Grid.Column="0" HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Center" Height="28"
                     Click="BtnAutoSave_Click"/>
             <Button Name="BtnSaveAs" Content="Save as..." Grid.Column="2"
@@ -187,6 +187,10 @@
             <Button Name="BtnSaveAllSplits" Content="Save all" Grid.Column="4"
                     HorizontalContentAlignment="Center" Height="28"
                     Click="BtnSaveAllSplits_Click"/>
+            <Button Name="BtnExportRunLeash" Content="Export RunLeash" Grid.Column="6"
+                    HorizontalContentAlignment="Center" Height="28"
+                    ToolTip.Tip="Export current preset + loaded base images as a RunLeash profile"
+                    Click="BtnExportRunLeash_Click"/>
         </Grid>
     </Grid>
 

@@ -147,6 +147,7 @@ public partial class MainWindow : Window
             BtnSave.IsEnabled = hasOutputDir;
             BtnSaveAs.IsEnabled = hasPreview;
             BtnSaveAllSplits.IsEnabled = saveAllAllowed;
+            BtnExportRunLeash.IsEnabled = saveAllAllowed;
         });
     }
 
@@ -482,6 +483,7 @@ public partial class MainWindow : Window
         }
 
         BtnSaveAllSplits.IsEnabled = false;
+        BtnExportRunLeash.IsEnabled = false;
 
         _inputImagePaths = [..files.Select(f => f.Path.LocalPath)];
 
@@ -637,6 +639,34 @@ public partial class MainWindow : Window
         });
 
         ShowStatus($"Saved {inputPaths.Count} images");
+    }
+
+    private async void BtnExportRunLeash_Click(object sender, RoutedEventArgs e)
+    {
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Select RunLeash profile output folder"
+        });
+
+        if (folders.Count == 0)
+        {
+            return;
+        }
+
+        string outputFolder = folders[0].Path.LocalPath;
+        var preset = _splitPresets[selectedPresetIndex];
+        var inputPaths = _inputImagePaths!;
+
+        try
+        {
+            await Task.Run(() => Export.RunLeashExporter.ExportAsync(preset, inputPaths, outputFolder));
+            ShowStatus($"Exported RunLeash profile to {outputFolder}");
+        }
+        catch (Exception ex)
+        {
+            LogError($"RunLeash export failed: {ex}");
+            await ShowMessage("Export failed", ex.Message);
+        }
     }
 
     private async void ShowStatus(string text)
