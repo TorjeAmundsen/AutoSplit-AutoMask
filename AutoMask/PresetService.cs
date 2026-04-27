@@ -108,6 +108,30 @@ public static class PresetService
     }
 
     /// <summary>
+    /// Returns a filename that is not yet present in <paramref name="used"/>, using
+    /// "name (1).ext", "name (2).ext", ... if the preferred name is already taken.
+    /// The chosen name is added to the set so subsequent calls won't pick it.
+    /// </summary>
+    private static string ReserveUniqueName(string preferred, HashSet<string> used)
+    {
+        if (used.Add(preferred))
+        {
+            return preferred;
+        }
+
+        string ext = Path.GetExtension(preferred);
+        string baseName = Path.GetFileNameWithoutExtension(preferred);
+        for (int i = 1; ; i++)
+        {
+            string candidate = $"{baseName} ({i}){ext}";
+            if (used.Add(candidate))
+            {
+                return candidate;
+            }
+        }
+    }
+
+    /// <summary>
     /// Replaces spaces with underscores and strips characters that are invalid in directory names.
     /// </summary>
     public static string SanitizeFolderName(string presetName)
@@ -138,6 +162,40 @@ public static class PresetService
         var splitRelPaths = new List<string>();
         var splitSavestateRelPaths = new List<string>();
 
+        // Pre-pass: reserve filenames already locked in by splits whose mask/savestate is
+        // already inside the target folder. Two splits referencing different external files
+        // that share a filename would otherwise overwrite each other, and an external copy
+        // could overwrite an internal mask of the same name when processed first.
+        var usedMaskNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var usedSavestateNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var split in preset.Splits)
+        {
+            if (!string.IsNullOrEmpty(split.MaskAbsolutePath))
+            {
+                string maskFull = Path.GetFullPath(split.MaskAbsolutePath);
+                if (maskFull.StartsWith(targetFolderPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    string rel = Path.GetRelativePath(targetFolderFull, maskFull);
+                    // Only top-level mask filenames can collide with copy destinations
+                    // (which always land at the target folder root).
+                    if (!rel.Contains(Path.DirectorySeparatorChar) && !rel.Contains(Path.AltDirectorySeparatorChar))
+                    {
+                        usedMaskNames.Add(rel);
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(split.SavestateAbsolutePath))
+            {
+                string savestateFull = Path.GetFullPath(split.SavestateAbsolutePath);
+                if (savestateFull.StartsWith(savestatesPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    usedSavestateNames.Add(Path.GetFileName(savestateFull));
+                }
+            }
+        }
+
         foreach (var split in preset.Splits)
         {
             if (string.IsNullOrEmpty(split.MaskAbsolutePath))
@@ -154,7 +212,7 @@ public static class PresetService
                 }
                 else
                 {
-                    string destFilename = Path.GetFileName(maskFull);
+                    string destFilename = ReserveUniqueName(Path.GetFileName(maskFull), usedMaskNames);
                     string destPath = Path.Combine(targetFolderFull, destFilename);
                     File.Copy(maskFull, destPath, overwrite: true);
                     // Update the model so subsequent saves treat this file as already in place
@@ -169,18 +227,18 @@ public static class PresetService
                 continue;
             }
 
-            string savestateFull = Path.GetFullPath(split.SavestateAbsolutePath);
+            string savestateFullPath = Path.GetFullPath(split.SavestateAbsolutePath);
 
-            if (savestateFull.StartsWith(savestatesPrefix, StringComparison.OrdinalIgnoreCase))
+            if (savestateFullPath.StartsWith(savestatesPrefix, StringComparison.OrdinalIgnoreCase))
             {
-                splitSavestateRelPaths.Add(Path.GetRelativePath(targetFolderFull, savestateFull));
+                splitSavestateRelPaths.Add(Path.GetRelativePath(targetFolderFull, savestateFullPath));
             }
             else
             {
                 Directory.CreateDirectory(savestatesFolder);
-                string destFilename = Path.GetFileName(savestateFull);
+                string destFilename = ReserveUniqueName(Path.GetFileName(savestateFullPath), usedSavestateNames);
                 string destPath = Path.Combine(savestatesFolder, destFilename);
-                File.Copy(savestateFull, destPath, overwrite: true);
+                File.Copy(savestateFullPath, destPath, overwrite: true);
                 split.SavestateAbsolutePath = destPath;
                 splitSavestateRelPaths.Add(Path.Combine("savestates", destFilename));
             }
