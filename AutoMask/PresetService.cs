@@ -306,7 +306,21 @@ public static class PresetService
         jsonObj["splits"] = splitsArray;
 
         string json = jsonObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
-        await File.WriteAllTextAsync(Path.Combine(targetFolderFull, "preset.json"), json);
+        string finalPath = Path.Combine(targetFolderFull, "preset.json");
+        // Write to a sibling temp file, then atomically replace. File.WriteAllTextAsync
+        // truncates the destination before writing, so a crash mid-write would leave
+        // preset.json empty or partial; a rename on the same volume is atomic on NTFS.
+        string tmpPath = finalPath + ".tmp";
+        try
+        {
+            await File.WriteAllTextAsync(tmpPath, json);
+            File.Move(tmpPath, finalPath, overwrite: true);
+        }
+        catch
+        {
+            try { if (File.Exists(tmpPath)) { File.Delete(tmpPath); } } catch { /* best-effort */ }
+            throw;
+        }
 
         if (Directory.Exists(savestatesFolder))
         {
@@ -320,7 +334,9 @@ public static class PresetService
             {
                 if (!referencedNames.Contains(Path.GetFileName(file)))
                 {
-                    File.Delete(file);
+                    // Best-effort cleanup; preset.json is already committed and a stale
+                    // savestate file is harmless on disk, so don't fail the whole save.
+                    try { File.Delete(file); } catch { /* ignore */ }
                 }
             }
         }
