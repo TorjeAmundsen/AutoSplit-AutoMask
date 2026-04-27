@@ -3,37 +3,56 @@ using System.Text.Json.Nodes;
 
 namespace AutoSplit_AutoMask;
 
+/// <summary>
+/// One JSON file that failed to load. <see cref="Reason"/> is either an exception message or
+/// "deserialized to null" when the JSON parsed but produced no model.
+/// </summary>
+public sealed record LoadFailure(string Path, string Reason);
+
 public static class PresetService
 {
-    public static async Task<List<SplitPreset>> LoadPresetsAsync(string presetsDirectory)
+    public static async Task<(List<SplitPreset> Presets, List<LoadFailure> Failures)> LoadPresetsAsync(string presetsDirectory)
     {
         var presetPaths = Directory.EnumerateDirectories(presetsDirectory)
             .Where(dir => Directory.EnumerateFiles(dir, "preset.json", SearchOption.TopDirectoryOnly).Any())
             .ToArray();
 
         List<SplitPreset> foundPresets = [];
+        List<LoadFailure> failures = [];
 
         foreach (string presetPath in presetPaths)
         {
-            SplitPreset? preset = JsonSerializer.Deserialize(
-                await File.ReadAllTextAsync(Path.Combine(presetPath, "preset.json")),
-                AppJsonContext.Default.SplitPreset);
-
-            if (preset is not null)
+            string filePath = Path.Combine(presetPath, "preset.json");
+            try
             {
-                preset.PresetFolder = presetPath;
-                foundPresets.Add(preset);
+                SplitPreset? preset = JsonSerializer.Deserialize(
+                    await File.ReadAllTextAsync(filePath),
+                    AppJsonContext.Default.SplitPreset);
+
+                if (preset is not null)
+                {
+                    preset.PresetFolder = presetPath;
+                    foundPresets.Add(preset);
+                }
+                else
+                {
+                    failures.Add(new LoadFailure(filePath, "deserialized to null"));
+                }
+            }
+            catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+            {
+                failures.Add(new LoadFailure(filePath, ex.Message));
             }
         }
 
-        return foundPresets;
+        return (foundPresets, failures);
     }
 
-    public static async Task<List<PremadeSplitsFile>> LoadPremadeSplitsAsync(string splitsDirectory)
+    public static async Task<(List<PremadeSplitsFile> Files, List<LoadFailure> Failures)> LoadPremadeSplitsAsync(string splitsDirectory)
     {
         if (!Directory.Exists(splitsDirectory))
         {
-            return [];
+            return ([], []);
         }
 
         var splitPaths = Directory.EnumerateDirectories(splitsDirectory)
@@ -41,21 +60,34 @@ public static class PresetService
             .ToArray();
 
         List<PremadeSplitsFile> foundSplitFiles = [];
+        List<LoadFailure> failures = [];
 
         foreach (string splitPath in splitPaths)
         {
-            PremadeSplitsFile? splitsFile = JsonSerializer.Deserialize(
-                await File.ReadAllTextAsync(Path.Combine(splitPath, "splits.json")),
-                AppJsonContext.Default.PremadeSplitsFile);
-
-            if (splitsFile is not null)
+            string filePath = Path.Combine(splitPath, "splits.json");
+            try
             {
-                splitsFile.FolderPath = splitPath;
-                foundSplitFiles.Add(splitsFile);
+                PremadeSplitsFile? splitsFile = JsonSerializer.Deserialize(
+                    await File.ReadAllTextAsync(filePath),
+                    AppJsonContext.Default.PremadeSplitsFile);
+
+                if (splitsFile is not null)
+                {
+                    splitsFile.FolderPath = splitPath;
+                    foundSplitFiles.Add(splitsFile);
+                }
+                else
+                {
+                    failures.Add(new LoadFailure(filePath, "deserialized to null"));
+                }
+            }
+            catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+            {
+                failures.Add(new LoadFailure(filePath, ex.Message));
             }
         }
 
-        return foundSplitFiles.OrderBy(f => f.GameName).ToList();
+        return (foundSplitFiles.OrderBy(f => f.GameName).ToList(), failures);
     }
 
     public static string CreateFilenameForSplit(SplitPreset preset, int splitIndex)

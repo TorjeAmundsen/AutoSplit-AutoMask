@@ -152,7 +152,14 @@ public partial class MainWindow : Window
 
     private async Task RefreshPresetsAsync()
     {
-        var foundPresets = await PresetService.LoadPresetsAsync(_currentPresetsDirectory);
+        var (foundPresets, loadFailures) = await PresetService.LoadPresetsAsync(_currentPresetsDirectory);
+
+        if (loadFailures.Count > 0)
+        {
+            string detail = string.Join("\n", loadFailures.Select(f => $"{f.Path} - {f.Reason}"));
+            await ShowMessage("Preset load errors",
+                $"{loadFailures.Count} preset(s) could not be loaded:\n\n{detail}");
+        }
 
         DebugLog($"Found {foundPresets.Count} presets:");
         foreach (var preset in foundPresets)

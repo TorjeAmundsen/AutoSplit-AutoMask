@@ -980,14 +980,22 @@ public partial class PresetEditor : Window
         }
 
         List<PremadeSplitsFile> premadeSplits;
+        List<LoadFailure> loadFailures;
         try
         {
-            premadeSplits = await PresetService.LoadPremadeSplitsAsync(_splitsDirectory);
+            (premadeSplits, loadFailures) = await PresetService.LoadPremadeSplitsAsync(_splitsDirectory);
         }
         catch (Exception ex)
         {
             await MessageBox.Show(this, "Error", $"Failed to load pre-made splits: {ex.Message}");
             return;
+        }
+
+        if (loadFailures.Count > 0)
+        {
+            string detail = string.Join("\n", loadFailures.Select(f => $"• {f.Path} - {f.Reason}"));
+            await MessageBox.Show(this, "Pre-made splits load errors",
+                $"{loadFailures.Count} file(s) could not be loaded:\n\n{detail}");
         }
 
         if (premadeSplits.Count == 0)
