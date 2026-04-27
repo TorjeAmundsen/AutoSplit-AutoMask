@@ -12,6 +12,15 @@ public sealed class CaptureController : IAsyncDisposable
 
     public readonly record struct CropRect(int X, int Y, int W, int H);
 
+    // Immutable snapshot of all fields that the UI thread writes and the capture loop reads.
+    // Swapped as a single reference so the loop can never observe a torn (refPixels, refMask)
+    // pair from different reference images.
+    private sealed record CaptureState(
+        byte[]? RefPixels,
+        byte[]? RefMask,
+        double Required,
+        CropRect Crop);
+
     // Pixel buffer is BGRA, tightly packed, CompareWidth * CompareHeight * 4 bytes.
     public event Action<byte[], double, double, double>? FrameReady;
     public event Action<string>? ErrorReported;
@@ -23,42 +32,53 @@ public sealed class CaptureController : IAsyncDisposable
 
     private ICaptureSource? _active;
 
-    private byte[]? _refPixels;
-    private byte[]? _refMask;
-    private double _required;
-
-    private CropRect _crop;
+    private CaptureState _state = new(null, null, 0.0, new CropRect(0, 0, 0, 0));
     private double _highest;
     private int _uiPostPending;
 
     public void UpdateReference(byte[]? refPixels, byte[]? refMask, double required)
     {
-        _refPixels = refPixels;
-        _refMask = refMask;
-        _required = required;
-        _highest = 0.0;
+        UpdateState(s => s with { RefPixels = refPixels, RefMask = refMask, Required = required });
+        Interlocked.Exchange(ref _highest, 0.0);
     }
 
-    public void UpdateCrop(CropRect rect) => _crop = rect;
+    public void UpdateCrop(CropRect rect)
+    {
+        UpdateState(s => s with { Crop = rect });
+    }
 
-    public void ResetHighest() => _highest = 0.0;
+    public void ResetHighest() => Interlocked.Exchange(ref _highest, 0.0);
+
+    private void UpdateState(Func<CaptureState, CaptureState> mutate)
+    {
+        while (true)
+        {
+            var current = Volatile.Read(ref _state);
+            var next = mutate(current);
+            if (Interlocked.CompareExchange(ref _state, next, current) == current)
+            {
+                return;
+            }
+        }
+    }
 
     public async Task SetSourceAsync(ICaptureSource? newSource, CancellationToken ct)
     {
         await _swapLock.WaitAsync(ct);
         try
         {
-            if (_active is not null)
+            var current = Volatile.Read(ref _active);
+            if (current is not null)
             {
-                try { await _active.StopAsync(); } catch { /* ignore */ }
-                try { await _active.DisposeAsync(); } catch { /* ignore */ }
-                _active = null;
+                Volatile.Write(ref _active, null);
+                try { await current.StopAsync(); } catch { /* ignore */ }
+                try { await current.DisposeAsync(); } catch { /* ignore */ }
             }
 
             if (newSource is not null)
             {
                 await newSource.StartAsync(ct);
-                _active = newSource;
+                Volatile.Write(ref _active, newSource);
             }
         }
         finally
@@ -101,11 +121,12 @@ public sealed class CaptureController : IAsyncDisposable
 
         while (!ct.IsCancellationRequested)
         {
-            ICaptureSource? src = _active;
-            byte[]? refPixels = _refPixels;
-            byte[]? refMask = _refMask;
-            double required = _required;
-            CropRect crop = _crop;
+            ICaptureSource? src = Volatile.Read(ref _active);
+            CaptureState state = Volatile.Read(ref _state);
+            byte[]? refPixels = state.RefPixels;
+            byte[]? refMask = state.RefMask;
+            double required = state.Required;
+            CropRect crop = state.Crop;
 
             if (src is null)
             {
@@ -129,21 +150,18 @@ public sealed class CaptureController : IAsyncDisposable
                 }
 
                 double cur = 0;
-                double high = _highest;
+                double high = Volatile.Read(ref _highest);
 
                 byte[] livePixels = ReadBgraBytes(scaled);
 
-                if (refPixels is not null && refMask is not null)
+                if (refPixels is not null && refMask is not null
+                    && refPixels.Length == livePixels.Length
+                    && refMask.Length * 4 == livePixels.Length)
                 {
                     double similarity = Comparison.L2NormComparer.Compare(refPixels, refMask, livePixels);
 
-                    if (similarity > _highest)
-                    {
-                        _highest = similarity;
-                    }
-
+                    high = UpdateHighest(similarity);
                     cur = similarity;
-                    high = _highest;
                 }
 
                 if (Interlocked.CompareExchange(ref _uiPostPending, 1, 0) == 0)
@@ -219,6 +237,22 @@ public sealed class CaptureController : IAsyncDisposable
         return canvasBitmap.Resize(
             new SKImageInfo(outW, outH, SKColorType.Bgra8888, SKAlphaType.Opaque),
             new SKSamplingOptions(SKFilterMode.Nearest, SKMipmapMode.None));
+    }
+
+    private double UpdateHighest(double similarity)
+    {
+        while (true)
+        {
+            double current = Volatile.Read(ref _highest);
+            if (similarity <= current)
+            {
+                return current;
+            }
+            if (Interlocked.CompareExchange(ref _highest, similarity, current) == current)
+            {
+                return similarity;
+            }
+        }
     }
 
     private static byte[] ReadBgraBytes(SKBitmap bitmap)
