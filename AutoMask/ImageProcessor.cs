@@ -11,10 +11,21 @@ public static class ImageProcessor
     {
         using var inputBitmap = SKBitmap.Decode(inputPath);
 
-        bool ownAlpha = !maskCache.TryGetValue(alphaPath, out var alphaBitmap);
-        alphaBitmap ??= SKBitmap.Decode(alphaPath);
+        SKBitmap alphaBitmap;
+        // Decode under lock so concurrent callers (multiple Task.Run consumers) can't both
+        // decode the same mask and leak one. Dictionary<,> is not thread-safe to read during
+        // a writer either, so the lookup must also be inside the lock.
+        lock (maskCache)
+        {
+            if (!maskCache.TryGetValue(alphaPath, out var cached))
+            {
+                cached = SKBitmap.Decode(alphaPath);
+                maskCache[alphaPath] = cached;
+            }
+            alphaBitmap = cached;
+        }
 
-        using var scaledAlpha = alphaBitmap!.Resize(
+        using var scaledAlpha = alphaBitmap.Resize(
             new SKImageInfo(inputBitmap.Width, inputBitmap.Height),
             new SKSamplingOptions(SKFilterMode.Linear))!;
 
@@ -40,11 +51,6 @@ public static class ImageProcessor
         });
 
         outputBitmap.Pixels = outputPixels;
-
-        if (ownAlpha)
-        {
-            alphaBitmap.Dispose();
-        }
 
         return outputBitmap;
     }
