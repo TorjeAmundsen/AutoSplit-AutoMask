@@ -111,7 +111,7 @@ public partial class TestOutputWindow : Window
 
     private async Task InitializeAsync()
     {
-        _loadedPrefs = LoadPrefs();
+        _loadedPrefs = await LoadPrefsAsync();
 
         await RefreshFeedListAsync(selectAfter: _loadedPrefs?.FeedName);
 
@@ -634,7 +634,7 @@ public partial class TestOutputWindow : Window
         }
     }
 
-    private CapturePreferences? LoadPrefs()
+    private async Task<CapturePreferences?> LoadPrefsAsync()
     {
         if (string.IsNullOrEmpty(_prefsPath) || !File.Exists(_prefsPath))
         {
@@ -643,16 +643,16 @@ public partial class TestOutputWindow : Window
 
         try
         {
-            var json = File.ReadAllText(_prefsPath);
+            var json = await File.ReadAllTextAsync(_prefsPath, System.Text.Encoding.UTF8);
             return JsonSerializer.Deserialize(json, AppJsonContext.Default.CapturePreferences);
         }
-        catch
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
         {
             return null;
         }
     }
 
-    private void SavePrefs(CapturePreferences prefs)
+    private async Task SavePrefsAsync(CapturePreferences prefs)
     {
         if (string.IsNullOrEmpty(_prefsPath))
         {
@@ -660,7 +660,7 @@ public partial class TestOutputWindow : Window
         }
 
         var json = JsonSerializer.Serialize(prefs, AppJsonContext.Default.CapturePreferences);
-        File.WriteAllText(_prefsPath, json);
+        await File.WriteAllTextAsync(_prefsPath, json, System.Text.Encoding.UTF8);
     }
 
     private async Task PromptSaveAndClose()
@@ -670,7 +670,7 @@ public partial class TestOutputWindow : Window
 
         if (result == MessageBoxResult.Yes)
         {
-            SavePrefs(BuildCurrentPrefs());
+            await SavePrefsAsync(BuildCurrentPrefs());
         }
 
         _isClosing = true;

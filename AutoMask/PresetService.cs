@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -26,7 +27,7 @@ public static class PresetService
             try
             {
                 SplitPreset? preset = JsonSerializer.Deserialize(
-                    await File.ReadAllTextAsync(filePath),
+                    await File.ReadAllTextAsync(filePath, Encoding.UTF8),
                     AppJsonContext.Default.SplitPreset);
 
                 if (preset is not null)
@@ -68,7 +69,7 @@ public static class PresetService
             try
             {
                 PremadeSplitsFile? splitsFile = JsonSerializer.Deserialize(
-                    await File.ReadAllTextAsync(filePath),
+                    await File.ReadAllTextAsync(filePath, Encoding.UTF8),
                     AppJsonContext.Default.PremadeSplitsFile);
 
                 if (splitsFile is not null)
@@ -345,7 +346,7 @@ public static class PresetService
         string tmpPath = finalPath + ".tmp";
         try
         {
-            await File.WriteAllTextAsync(tmpPath, json);
+            await File.WriteAllTextAsync(tmpPath, json, Encoding.UTF8);
             File.Move(tmpPath, finalPath, overwrite: true);
         }
         catch

@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Input;
@@ -54,12 +53,9 @@ public partial class MainWindow : Window
         _splitPresets = [];
         _createdFilename = "Output preview";
 
-        var rootDir = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule!.FileName);
-
-        if (string.IsNullOrEmpty(rootDir))
-        {
-            throw new InvalidOperationException("Could not locate root directory");
-        }
+        // AppContext.BaseDirectory is the canonical app root; works under NativeAOT
+        // self-contained where Process.MainModule may be platform-specific or null.
+        string rootDir = AppContext.BaseDirectory;
 
         _currentPresetsDirectory = Path.Combine(rootDir, "presets") + Path.DirectorySeparatorChar;
         _currentSplitsDirectory = Path.Combine(rootDir, "splits") + Path.DirectorySeparatorChar;
@@ -111,43 +107,70 @@ public partial class MainWindow : Window
 
         Opened += async (_, _) => await RefreshPresetsAsync();
 
-        Closed += (_, _) => CleanupSavestateTempDirs();
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        base.OnClosed(e);
+
+        // Dispose all bitmap caches; the window owns these and they don't outlive it.
+        foreach (var b in _inputPreviewCache.Values)
+        {
+            b.Dispose();
+        }
+        _inputPreviewCache.Clear();
+
+        foreach (var b in _inputThumbnailCache.Values)
+        {
+            b.Dispose();
+        }
+        _inputThumbnailCache.Clear();
+
+        foreach (var b in _maskSkBitmapCache.Values)
+        {
+            b.Dispose();
+        }
+        _maskSkBitmapCache.Clear();
+
+        _maskedImage?.Dispose();
+        _maskedImage = null;
+        _previewBitmap?.Dispose();
+        _previewBitmap = null;
+
+        CleanupSavestateTempDirs();
     }
 
     private static void CleanupSavestateTempDirs()
     {
+        // Best-effort cleanup. Failures here are non-actionable for the user (locked
+        // files / TOCTOU on the temp enumeration / permission edge cases) and would
+        // only spam an error dialog at shutdown.
         try
         {
             foreach (string dir in Directory.EnumerateDirectories(Path.GetTempPath(), "AutoMask_savestates_*"))
             {
-                try
-                {
-                    Directory.Delete(dir, recursive: true);
-                }
-                catch
-                {
-                }
+                try { Directory.Delete(dir, recursive: true); }
+                catch (IOException) { }
+                catch (UnauthorizedAccessException) { }
             }
         }
-        catch
-        {
-        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 
     private void CheckSavePossible()
     {
+        // All callers run on the UI thread (event handlers, post-await continuations);
+        // the previous Dispatcher.UIThread.Post wrap was redundant.
         bool hasOutputDir = !string.IsNullOrEmpty(_outputDirectoryPath);
         bool hasPreview = !string.IsNullOrEmpty(_selectedInputImagePath) && !string.IsNullOrEmpty(_alphaImagePath);
         bool saveAllAllowed = hasOutputDir
             && selectedPresetIndex >= 0
             && selectedPresetIndex < _splitPresets.Count
             && _splitPresets[selectedPresetIndex].Splits?.Count == _inputImagePaths?.Count;
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-        {
-            BtnSave.IsEnabled = hasOutputDir;
-            BtnSaveAs.IsEnabled = hasPreview;
-            BtnSaveAllSplits.IsEnabled = saveAllAllowed;
-        });
+        BtnSave.IsEnabled = hasOutputDir;
+        BtnSaveAs.IsEnabled = hasPreview;
+        BtnSaveAllSplits.IsEnabled = saveAllAllowed;
     }
 
     private async Task RefreshPresetsAsync()

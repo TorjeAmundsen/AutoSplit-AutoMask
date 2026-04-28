@@ -87,7 +87,18 @@ public class MessageBox : Window
 
         var tcs = new TaskCompletionSource<MessageBoxResult>();
         msgBox.Closed += (_, _) => tcs.TrySetResult(msgBox._result);
-        msgBox.ShowDialog(owner);
+        // ShowDialog returns a Task that completes when the dialog closes; without observing
+        // it, a synchronous throw (window-create failure, threading mismatch) would leave
+        // the caller awaiting tcs.Task forever. Forward any exception to the TCS instead.
+        _ = msgBox.ShowDialog(owner).ContinueWith(
+            t =>
+            {
+                if (t.IsFaulted && t.Exception is { } ex)
+                {
+                    tcs.TrySetException(ex.InnerExceptions);
+                }
+            },
+            TaskScheduler.Default);
         return tcs.Task;
     }
 }

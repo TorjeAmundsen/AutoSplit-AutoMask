@@ -14,6 +14,8 @@ public sealed class CamDeviceInfo
 [SupportedOSPlatform("windows")]
 public sealed class WebcamCapture : ICaptureSource
 {
+    public event Action<string>? ErrorReported;
+
     private readonly CamDeviceInfo _device;
     private readonly string _displayName;
 
@@ -120,8 +122,13 @@ public sealed class WebcamCapture : ICaptureSource
                     continue;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                // OpenCV native errors (device unplugged, codec failure, OOM during
+                // frame allocation) — surface to UI so the live tester can show why
+                // the feed stopped instead of silently freezing.
+                var msg = $"Webcam read failed: {ex.Message}";
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => ErrorReported?.Invoke(msg));
                 break;
             }
 
