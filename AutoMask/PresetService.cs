@@ -18,35 +18,49 @@ public static class PresetService
             .Where(dir => Directory.EnumerateFiles(dir, "preset.json", SearchOption.TopDirectoryOnly).Any())
             .ToArray();
 
+        // Reading and deserializing each preset.json in parallel — sequential await on a
+        // slow disk (e.g. networked drive, large preset library) summed into noticeable
+        // startup latency.
+        var results = await Task.WhenAll(presetPaths.Select(LoadOnePresetAsync));
+
         List<SplitPreset> foundPresets = [];
         List<LoadFailure> failures = [];
-
-        foreach (string presetPath in presetPaths)
+        foreach (var (preset, failure) in results)
         {
-            string filePath = Path.Combine(presetPath, "preset.json");
-            try
+            if (preset is not null)
             {
-                SplitPreset? preset = JsonSerializer.Deserialize(
-                    await File.ReadAllTextAsync(filePath, Encoding.UTF8),
-                    AppJsonContext.Default.SplitPreset);
-
-                if (preset is not null)
-                {
-                    preset.PresetFolder = presetPath;
-                    foundPresets.Add(preset);
-                }
-                else
-                {
-                    failures.Add(new LoadFailure(filePath, "deserialized to null"));
-                }
+                foundPresets.Add(preset);
             }
-            catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+            else if (failure is not null)
             {
-                failures.Add(new LoadFailure(filePath, ex.Message));
+                failures.Add(failure);
             }
         }
 
         return (foundPresets, failures);
+    }
+
+    private static async Task<(SplitPreset? Preset, LoadFailure? Failure)> LoadOnePresetAsync(string presetPath)
+    {
+        string filePath = Path.Combine(presetPath, "preset.json");
+        try
+        {
+            var preset = JsonSerializer.Deserialize(
+                await File.ReadAllTextAsync(filePath, Encoding.UTF8),
+                AppJsonContext.Default.SplitPreset);
+
+            if (preset is null)
+            {
+                return (null, new LoadFailure(filePath, "deserialized to null"));
+            }
+
+            preset.PresetFolder = presetPath;
+            return (preset, null);
+        }
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+        {
+            return (null, new LoadFailure(filePath, ex.Message));
+        }
     }
 
     public static async Task<(List<PremadeSplitsFile> Files, List<LoadFailure> Failures)> LoadPremadeSplitsAsync(string splitsDirectory)
@@ -60,35 +74,46 @@ public static class PresetService
             .Where(dir => Directory.EnumerateFiles(dir, "splits.json", SearchOption.TopDirectoryOnly).Any())
             .ToArray();
 
+        var results = await Task.WhenAll(splitPaths.Select(LoadOnePremadeSplitsAsync));
+
         List<PremadeSplitsFile> foundSplitFiles = [];
         List<LoadFailure> failures = [];
-
-        foreach (string splitPath in splitPaths)
+        foreach (var (file, failure) in results)
         {
-            string filePath = Path.Combine(splitPath, "splits.json");
-            try
+            if (file is not null)
             {
-                PremadeSplitsFile? splitsFile = JsonSerializer.Deserialize(
-                    await File.ReadAllTextAsync(filePath, Encoding.UTF8),
-                    AppJsonContext.Default.PremadeSplitsFile);
-
-                if (splitsFile is not null)
-                {
-                    splitsFile.FolderPath = splitPath;
-                    foundSplitFiles.Add(splitsFile);
-                }
-                else
-                {
-                    failures.Add(new LoadFailure(filePath, "deserialized to null"));
-                }
+                foundSplitFiles.Add(file);
             }
-            catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+            else if (failure is not null)
             {
-                failures.Add(new LoadFailure(filePath, ex.Message));
+                failures.Add(failure);
             }
         }
 
         return (foundSplitFiles.OrderBy(f => f.GameName).ToList(), failures);
+    }
+
+    private static async Task<(PremadeSplitsFile? File, LoadFailure? Failure)> LoadOnePremadeSplitsAsync(string splitPath)
+    {
+        string filePath = Path.Combine(splitPath, "splits.json");
+        try
+        {
+            var splitsFile = JsonSerializer.Deserialize(
+                await File.ReadAllTextAsync(filePath, Encoding.UTF8),
+                AppJsonContext.Default.PremadeSplitsFile);
+
+            if (splitsFile is null)
+            {
+                return (null, new LoadFailure(filePath, "deserialized to null"));
+            }
+
+            splitsFile.FolderPath = splitPath;
+            return (splitsFile, null);
+        }
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+        {
+            return (null, new LoadFailure(filePath, ex.Message));
+        }
     }
 
     public static string CreateFilenameForSplit(SplitPreset preset, int splitIndex)

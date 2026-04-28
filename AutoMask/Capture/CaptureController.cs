@@ -72,6 +72,8 @@ public sealed class CaptureController : IAsyncDisposable
         }
     }
 
+    private static readonly TimeSpan SourceShutdownTimeout = TimeSpan.FromSeconds(5);
+
     public async Task SetSourceAsync(ICaptureSource? newSource, CancellationToken ct)
     {
         await _swapLock.WaitAsync(ct);
@@ -81,8 +83,7 @@ public sealed class CaptureController : IAsyncDisposable
             if (current is not null)
             {
                 Volatile.Write(ref _active, null);
-                try { await current.StopAsync(); } catch { /* ignore */ }
-                try { await current.DisposeAsync(); } catch { /* ignore */ }
+                await ShutdownSourceAsync(current);
             }
 
             if (newSource is not null)
@@ -95,6 +96,45 @@ public sealed class CaptureController : IAsyncDisposable
         {
             _swapLock.Release();
         }
+    }
+
+    private async Task ShutdownSourceAsync(ICaptureSource source)
+    {
+        // Bounded shutdown so a hung native source (OpenCV deadlock during webcam release,
+        // GDI driver stall) doesn't block the swap forever and prevent the user from
+        // switching to a working source. Errors and timeouts surface via ErrorReported so
+        // the UI can show why the previous source might still be holding resources.
+        try
+        {
+            await source.StopAsync().WaitAsync(SourceShutdownTimeout);
+        }
+        catch (TimeoutException)
+        {
+            ReportShutdownIssue(source, "stop timed out");
+        }
+        catch (Exception ex)
+        {
+            ReportShutdownIssue(source, $"stop failed: {ex.Message}");
+        }
+
+        try
+        {
+            await source.DisposeAsync().AsTask().WaitAsync(SourceShutdownTimeout);
+        }
+        catch (TimeoutException)
+        {
+            ReportShutdownIssue(source, "dispose timed out");
+        }
+        catch (Exception ex)
+        {
+            ReportShutdownIssue(source, $"dispose failed: {ex.Message}");
+        }
+    }
+
+    private void ReportShutdownIssue(ICaptureSource source, string detail)
+    {
+        var msg = $"Capture source '{source.DisplayName}' {detail}";
+        Dispatcher.UIThread.Post(() => ErrorReported?.Invoke(msg));
     }
 
     public void Start()
@@ -243,19 +283,21 @@ public sealed class CaptureController : IAsyncDisposable
                 new SKSamplingOptions(SKFilterMode.Nearest, SKMipmapMode.None));
         }
 
-        // Paint the source into a fixed w×h canvas at offset (−X, −Y) so the crop size
-        // defines the output rectangle and parts outside the source stay black.
-        using var canvasBitmap = new SKBitmap(
-            new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Opaque));
-        using (var canvas = new SKCanvas(canvasBitmap))
+        // Single-pass crop+scale: draw the crop rect of the source straight into the
+        // output bitmap. Skia clamps src rects that fall outside source bounds and the
+        // pre-cleared black background fills any uncovered area, matching the previous
+        // canvas-then-resize behavior without the intermediate w×h SKBitmap allocation.
+        var output = new SKBitmap(new SKImageInfo(outW, outH, SKColorType.Bgra8888, SKAlphaType.Opaque));
+        using (var canvas = new SKCanvas(output))
+        using (var sourceImage = SKImage.FromBitmap(source))
         {
             canvas.Clear(SKColors.Black);
-            canvas.DrawBitmap(source, -crop.X, -crop.Y);
+            var srcRect = new SKRect(crop.X, crop.Y, crop.X + w, crop.Y + h);
+            var dstRect = new SKRect(0, 0, outW, outH);
+            canvas.DrawImage(sourceImage, srcRect, dstRect,
+                new SKSamplingOptions(SKFilterMode.Nearest, SKMipmapMode.None));
         }
-
-        return canvasBitmap.Resize(
-            new SKImageInfo(outW, outH, SKColorType.Bgra8888, SKAlphaType.Opaque),
-            new SKSamplingOptions(SKFilterMode.Nearest, SKMipmapMode.None));
+        return output;
     }
 
     private double UpdateHighest(double similarity)
