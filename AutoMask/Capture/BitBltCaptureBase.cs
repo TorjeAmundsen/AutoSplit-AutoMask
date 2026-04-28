@@ -40,22 +40,33 @@ public abstract class BitBltCaptureBase : ICaptureSource
             return false;
         }
 
-        if (w <= 0 || h <= 0)
+        // try/finally so any throw between acquire and release (EnsureBuffers GDI exhaustion,
+        // BitBlt fault, allocator OOM) doesn't strand srcDc. ReleaseDC must run for caret-DC
+        // and window-DC paths or the system DC pool fills up.
+        bool blitOk;
+        try
+        {
+            if (w <= 0 || h <= 0)
+            {
+                return false;
+            }
+
+            SourceWidth = w;
+            SourceHeight = h;
+
+            if (!EnsureBuffers(srcDc, w, h))
+            {
+                return false;
+            }
+
+            blitOk = Win32.BitBlt(_memDc, 0, 0, w, h, srcDc, ox, oy, Win32.SRCCOPY | Win32.CAPTUREBLT);
+        }
+        finally
         {
             Win32.ReleaseDC(owningHwnd, srcDc);
-            return false;
         }
 
-        SourceWidth = w;
-        SourceHeight = h;
-
-        EnsureBuffers(srcDc, w, h);
-
-        bool ok = Win32.BitBlt(_memDc, 0, 0, w, h, srcDc, ox, oy, Win32.SRCCOPY | Win32.CAPTUREBLT);
-
-        Win32.ReleaseDC(owningHwnd, srcDc);
-
-        if (!ok)
+        if (!blitOk)
         {
             return false;
         }
@@ -85,6 +96,11 @@ public abstract class BitBltCaptureBase : ICaptureSource
 
         if (scans == 0)
         {
+            // Drop the bitmap so a transient GetDIBits failure (e.g. driver glitch on
+            // resolution change) doesn't leave a half-populated buffer that a later
+            // size-match call would skip re-allocating.
+            _frame.Dispose();
+            _frame = null;
             return false;
         }
 
@@ -92,20 +108,42 @@ public abstract class BitBltCaptureBase : ICaptureSource
         return true;
     }
 
-    private void EnsureBuffers(IntPtr srcDc, int w, int h)
+    private bool EnsureBuffers(IntPtr srcDc, int w, int h)
     {
         if (_memDc != IntPtr.Zero && w == _allocatedWidth && h == _allocatedHeight)
         {
-            return;
+            return true;
         }
 
         ReleaseGdiHandles();
 
-        _memDc = Win32.CreateCompatibleDC(srcDc);
-        _gdiBitmap = Win32.CreateCompatibleBitmap(srcDc, w, h);
-        _oldObject = Win32.SelectObject(_memDc, _gdiBitmap);
+        IntPtr memDc = Win32.CreateCompatibleDC(srcDc);
+        if (memDc == IntPtr.Zero)
+        {
+            return false;
+        }
+
+        IntPtr gdiBitmap = Win32.CreateCompatibleBitmap(srcDc, w, h);
+        if (gdiBitmap == IntPtr.Zero)
+        {
+            Win32.DeleteDC(memDc);
+            return false;
+        }
+
+        IntPtr oldObject = Win32.SelectObject(memDc, gdiBitmap);
+        if (oldObject == IntPtr.Zero)
+        {
+            Win32.DeleteObject(gdiBitmap);
+            Win32.DeleteDC(memDc);
+            return false;
+        }
+
+        _memDc = memDc;
+        _gdiBitmap = gdiBitmap;
+        _oldObject = oldObject;
         _allocatedWidth = w;
         _allocatedHeight = h;
+        return true;
     }
 
     private void ReleaseGdiHandles()
