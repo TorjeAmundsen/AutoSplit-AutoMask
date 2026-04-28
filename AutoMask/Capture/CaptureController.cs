@@ -329,8 +329,19 @@ public sealed class CaptureController : IAsyncDisposable
         return true;
     }
 
+    private int _disposed;
+
     public async ValueTask DisposeAsync()
     {
+        // Idempotent: a second call would await the already-disposed _swapLock and throw
+        // ObjectDisposedException. The TestOutputWindow Closing handler can fire twice
+        // when the OS issues simultaneous close requests (Windows taskbar 'Close all
+        // windows'), so the controller has to tolerate it.
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+        {
+            return;
+        }
+
         Stop();
         await SetSourceAsync(null, CancellationToken.None);
         _swapLock.Dispose();

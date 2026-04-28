@@ -109,6 +109,25 @@ public partial class MainWindow : Window
 
     }
 
+    protected override void OnClosing(Avalonia.Controls.WindowClosingEventArgs e)
+    {
+        // Windows taskbar 'Close all windows' fires Close on every top-level window in
+        // parallel. MainWindow closing ends the desktop lifetime and tears down any open
+        // child window, including TestOutputWindow's save-prefs dialog. Defer until the
+        // child window has finished its own close so the prompt isn't killed mid-flight.
+        if (OperatingSystem.IsWindows() && _testOutputWindow is { } child && !child.HasShutdownCompleted)
+        {
+            e.Cancel = true;
+            // Re-issue the close once the child has finished, so the parent's close
+            // proceeds without the user having to click again.
+            child.Closed += (_, _) => Avalonia.Threading.Dispatcher.UIThread.Post(Close);
+            child.Activate();
+            return;
+        }
+
+        base.OnClosing(e);
+    }
+
     protected override void OnClosed(EventArgs e)
     {
         base.OnClosed(e);

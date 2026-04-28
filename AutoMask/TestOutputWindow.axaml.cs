@@ -48,6 +48,14 @@ public partial class TestOutputWindow : Window
     private CapturePreferences? _loadedPrefs;
     private bool _hasUserChanges;
     private bool _isClosing;
+    private bool _closingStarted;
+
+    /// <summary>
+    /// True once the window has finished its own shutdown sequence (capture stopped,
+    /// resources released, save prompt resolved). MainWindow checks this so a parallel
+    /// 'Close all windows' from the taskbar doesn't tear this window down mid-prompt.
+    /// </summary>
+    public bool HasShutdownCompleted => _isClosing;
 
     public TestOutputWindow()
     {
@@ -70,16 +78,24 @@ public partial class TestOutputWindow : Window
         Opened += async (_, _) => await InitializeAsync();
         Closing += async (_, e) =>
         {
+            // Once shutdown completed via the explicit Close() at the end of the flow,
+            // _isClosing is true and the close should proceed unimpeded.
             if (_isClosing)
             {
                 return;
             }
 
-            // Always cancel and run shutdown on a fresh turn - the async lambda is not
-            // awaited by Avalonia's close pipeline, so without Cancel the window tears
-            // down while ShutdownAsync is still stopping the capture thread / webcam /
-            // GDI handles.
+            // Every re-entry while the first close is still running must cancel too —
+            // returning without setting Cancel=true lets Avalonia tear the window down
+            // mid-prompt, which was killing the save dialog when Windows taskbar
+            // 'Close all windows' fired a second Closing event.
             e.Cancel = true;
+
+            if (_closingStarted)
+            {
+                return;
+            }
+            _closingStarted = true;
 
             if (_hasUserChanges)
             {
