@@ -5,8 +5,6 @@ using SkiaSharp;
 
 namespace AutoSplit_AutoMask.Capture;
 
-// Shared plumbing for window + region capture.  Each BitBlt grabs the current subject rect into
-// a reusable GDI compatible bitmap, then GetDIBits copies it into a SkiaSharp-backed buffer.
 [SupportedOSPlatform("windows")]
 public abstract class BitBltCaptureBase : ICaptureSource
 {

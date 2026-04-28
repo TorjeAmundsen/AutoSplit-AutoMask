@@ -33,7 +33,6 @@ public partial class TestOutputWindow : Window
     private readonly CaptureController _controller = new();
     private readonly ObservableCollection<object> _feedOptions = [];
 
-    // Reference inputs captured from MainWindow.
     private SplitPreset? _presetFromMain;
     private int _splitIndexFromMain = -1;
     private string? _inputPathFromMain;

@@ -19,7 +19,7 @@ public sealed class WebcamCapture : ICaptureSource
     private readonly CamDeviceInfo _device;
     private readonly string _displayName;
 
-    private VideoCapture? _cap;
+    private VideoCapture? _videoCapture;
     private Thread? _thread;
     private CancellationTokenSource? _cts;
 
@@ -77,20 +77,20 @@ public sealed class WebcamCapture : ICaptureSource
 
     public Task StartAsync(CancellationToken ct)
     {
-        _cap = new VideoCapture(_device.Index, VideoCaptureAPIs.DSHOW);
-        if (!_cap.IsOpened())
+        _videoCapture = new VideoCapture(_device.Index, VideoCaptureAPIs.DSHOW);
+        if (!_videoCapture.IsOpened())
         {
-            _cap.Dispose();
-            _cap = null;
+            _videoCapture.Dispose();
+            _videoCapture = null;
             throw new InvalidOperationException($"Could not open webcam: {_device.Name}");
         }
 
-        _cap.Set(VideoCaptureProperties.FrameWidth, 1920);
-        _cap.Set(VideoCaptureProperties.FrameHeight, 1080);
-        _cap.Set(VideoCaptureProperties.Fps, 60);
+        _videoCapture.Set(VideoCaptureProperties.FrameWidth, 1920);
+        _videoCapture.Set(VideoCaptureProperties.FrameHeight, 1080);
+        _videoCapture.Set(VideoCaptureProperties.Fps, 60);
 
-        _widthPx = (int)_cap.Get(VideoCaptureProperties.FrameWidth);
-        _heightPx = (int)_cap.Get(VideoCaptureProperties.FrameHeight);
+        _widthPx = (int)_videoCapture.Get(VideoCaptureProperties.FrameWidth);
+        _heightPx = (int)_videoCapture.Get(VideoCaptureProperties.FrameHeight);
         if (_widthPx <= 0 || _heightPx <= 0)
         {
             _widthPx = 640;
@@ -116,7 +116,7 @@ public sealed class WebcamCapture : ICaptureSource
         {
             try
             {
-                if (!_cap!.Read(frame) || frame.Empty())
+                if (!_videoCapture!.Read(frame) || frame.Empty())
                 {
                     Thread.Sleep(5);
                     continue;
@@ -146,20 +146,20 @@ public sealed class WebcamCapture : ICaptureSource
         }
 
         var target = new SKBitmap(new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Opaque));
-        byte* dst = (byte*)target.GetPixels();
+        byte* targetPixels = (byte*)target.GetPixels();
 
         for (int y = 0; y < h; y++)
         {
-            byte* s = (byte*)frame.Ptr(y);
-            byte* d = dst + (long)y * w * 4;
+            byte* sourceRow = (byte*)frame.Ptr(y);
+            byte* targetRow = targetPixels + (long)y * w * 4;
             for (int x = 0; x < w; x++)
             {
-                d[0] = s[0];
-                d[1] = s[1];
-                d[2] = s[2];
-                d[3] = 255;
-                s += 3;
-                d += 4;
+                targetRow[0] = sourceRow[0];
+                targetRow[1] = sourceRow[1];
+                targetRow[2] = sourceRow[2];
+                targetRow[3] = 255;
+                sourceRow += 3;
+                targetRow += 4;
             }
         }
 
@@ -206,17 +206,16 @@ public sealed class WebcamCapture : ICaptureSource
         {
             _cts?.Cancel();
         }
-        catch
+        catch (ObjectDisposedException)
         {
-            // ignored
         }
 
         _thread?.Join(1000);
         _thread = null;
 
-        _cap?.Release();
-        _cap?.Dispose();
-        _cap = null;
+        _videoCapture?.Release();
+        _videoCapture?.Dispose();
+        _videoCapture = null;
 
         return Task.CompletedTask;
     }

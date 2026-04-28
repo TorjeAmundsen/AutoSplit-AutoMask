@@ -62,7 +62,6 @@ public sealed class PresetDisplayItem
     public static PresetDisplayItem ForPreset(EditablePreset p)
         => new() { Preset = p };
 
-    // Properties forwarded to DataTemplate bindings
     public string PresetName => Preset?.PresetName ?? "";
     public string GameName   => IsHeader ? GroupName : Preset?.GameName ?? "";
     public int SplitCount    => Preset?.SplitCount ?? 0;

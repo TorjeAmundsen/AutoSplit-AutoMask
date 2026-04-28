@@ -126,19 +126,19 @@ public sealed class CaptureController : IAsyncDisposable
     private void Loop(CancellationToken ct)
     {
         double frameMs = 1000.0 / TargetFps;
-        var sw = Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
         double nextDueMs = 0.0;
 
         while (!ct.IsCancellationRequested)
         {
-            ICaptureSource? src = Volatile.Read(ref _active);
+            ICaptureSource? source = Volatile.Read(ref _active);
             CaptureState state = Volatile.Read(ref _state);
             byte[]? refPixels = state.RefPixels;
             byte[]? refMask = state.RefMask;
             double required = state.Required;
             CropRect crop = state.Crop;
 
-            if (src is null)
+            if (source is null)
             {
                 Thread.Sleep(20);
                 continue;
@@ -146,7 +146,7 @@ public sealed class CaptureController : IAsyncDisposable
 
             try
             {
-                if (!src.TryGrabFrame(out var raw) || raw is null)
+                if (!source.TryGrabFrame(out var raw) || raw is null)
                 {
                     Thread.Sleep(2);
                     continue;
@@ -159,8 +159,8 @@ public sealed class CaptureController : IAsyncDisposable
                     continue;
                 }
 
-                double cur = 0;
-                double high = Volatile.Read(ref _highest);
+                double currentSimilarity = 0;
+                double highestSimilarity = Volatile.Read(ref _highest);
 
                 byte[] livePixels = _frameBuffers[_writeIndex];
                 if (!ReadBgraBytesInto(scaled, livePixels))
@@ -175,8 +175,8 @@ public sealed class CaptureController : IAsyncDisposable
                 {
                     double similarity = Comparison.L2NormComparer.Compare(refPixels, refMask, livePixels);
 
-                    high = UpdateHighest(similarity);
-                    cur = similarity;
+                    highestSimilarity = UpdateHighest(similarity);
+                    currentSimilarity = similarity;
                 }
 
                 if (Interlocked.CompareExchange(ref _uiPostPending, 1, 0) == 0)
@@ -188,7 +188,7 @@ public sealed class CaptureController : IAsyncDisposable
                         {
                             try
                             {
-                                FrameReady?.Invoke(frameBuffer, cur, high, required);
+                                FrameReady?.Invoke(frameBuffer, currentSimilarity, highestSimilarity, required);
                             }
                             finally
                             {
@@ -209,7 +209,7 @@ public sealed class CaptureController : IAsyncDisposable
                 Thread.Sleep(200);
             }
 
-            double elapsed = sw.Elapsed.TotalMilliseconds;
+            double elapsed = stopwatch.Elapsed.TotalMilliseconds;
             nextDueMs += frameMs;
             double sleep = nextDueMs - elapsed;
             if (sleep > 1)

@@ -687,9 +687,9 @@ public partial class PresetEditor : Window
             skResult.Dispose();
             OutputPreviewImage.Source = _outputPreviewBitmap;
         }
-        catch
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
-            // If preview generation fails, leave the output box empty
+            Utils.LogError($"PresetEditor: preview generation failed: {ex.Message}");
         }
     }
 
@@ -804,7 +804,6 @@ public partial class PresetEditor : Window
                 }
             }
 
-            // Commit the switch
             _suppressPresetSelection = true;
             PresetListBox.SelectedIndex = displayIdx;
             _suppressPresetSelection = false;

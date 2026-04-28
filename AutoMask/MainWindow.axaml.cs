@@ -113,7 +113,6 @@ public partial class MainWindow : Window
     {
         base.OnClosed(e);
 
-        // Dispose all bitmap caches; the window owns these and they don't outlive it.
         foreach (var b in _inputPreviewCache.Values)
         {
             b.Dispose();
@@ -271,7 +270,6 @@ public partial class MainWindow : Window
         int? dataIdx = _presetDisplayMap[displayIdx];
         if (dataIdx == null)
         {
-            // Group header - not selectable, nothing to do
             return;
         }
 
