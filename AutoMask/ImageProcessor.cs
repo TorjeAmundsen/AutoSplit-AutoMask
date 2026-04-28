@@ -9,7 +9,14 @@ public static class ImageProcessor
 {
     public static SKBitmap ApplyScaledAlphaChannel(string inputPath, string alphaPath, Dictionary<string, SKBitmap> maskCache)
     {
-        using var inputBitmap = SKBitmap.Decode(inputPath);
+        using var rawInput = SKBitmap.Decode(inputPath);
+        // Native blit if the decoder picked a non-BGRA layout (rare for PNG on Windows,
+        // possible for JPEG). Cheaper than the three SKColor[] copies the previous version
+        // performed and avoids managed allocations of (width*height*4) bytes per call.
+        using var inputDisposable = rawInput.ColorType == SKColorType.Bgra8888
+            ? null
+            : rawInput.Copy(SKColorType.Bgra8888);
+        SKBitmap inputBitmap = inputDisposable ?? rawInput;
 
         SKBitmap alphaBitmap;
         // Decode under lock so concurrent callers (multiple Task.Run consumers) can't both
@@ -25,34 +32,58 @@ public static class ImageProcessor
             alphaBitmap = cached;
         }
 
+        // Resizing into an explicit BGRA8888 SKImageInfo guarantees the byte loop's layout.
         using var scaledAlpha = alphaBitmap.Resize(
-            new SKImageInfo(inputBitmap.Width, inputBitmap.Height),
+            new SKImageInfo(inputBitmap.Width, inputBitmap.Height, SKColorType.Bgra8888),
             new SKSamplingOptions(SKFilterMode.Linear))!;
 
         int width = inputBitmap.Width;
         int height = inputBitmap.Height;
-        var outputBitmap = new SKBitmap(width, height);
+        var outputBitmap = new SKBitmap(
+            new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul));
 
-        SKColor[] inputPixels = inputBitmap.Pixels;
-        SKColor[] alphaPixels = scaledAlpha.Pixels;
-        SKColor[] outputPixels = new SKColor[width * height];
+        ApplyAlphaThreshold(inputBitmap, scaledAlpha, outputBitmap, width, height);
+
+        return outputBitmap;
+    }
+
+    private static unsafe void ApplyAlphaThreshold(SKBitmap input, SKBitmap alpha, SKBitmap output,
+        int width, int height)
+    {
+        IntPtr inPtr = input.GetPixels();
+        IntPtr alpPtr = alpha.GetPixels();
+        IntPtr outPtr = output.GetPixels();
+        int rowIn = input.RowBytes;
+        int rowAlp = alpha.RowBytes;
+        int rowOut = output.RowBytes;
 
         Parallel.For(0, height, y =>
         {
-            int row = y * width;
-            for (int x = 0; x < width; x++)
+            unsafe
             {
-                int i = row + x;
-                var src = inputPixels[i];
-                outputPixels[i] = alphaPixels[i].Alpha == 255
-                    ? new SKColor(src.Red, src.Green, src.Blue)
-                    : SKColors.Transparent;
+                byte* inRow = (byte*)inPtr + y * rowIn;
+                byte* alpRow = (byte*)alpPtr + y * rowAlp;
+                byte* outRow = (byte*)outPtr + y * rowOut;
+                for (int x = 0; x < width; x++)
+                {
+                    int o = x * 4;
+                    if (alpRow[o + 3] == 255)
+                    {
+                        // Hard threshold: keep input pixel only when scaled mask is fully opaque.
+                        // Resize with linear sampling produces partial alphas at edges, which the
+                        // original SKColor[] loop also rejected.
+                        outRow[o]     = inRow[o];
+                        outRow[o + 1] = inRow[o + 1];
+                        outRow[o + 2] = inRow[o + 2];
+                        outRow[o + 3] = 255;
+                    }
+                    else
+                    {
+                        *(uint*)(outRow + o) = 0u;
+                    }
+                }
             }
         });
-
-        outputBitmap.Pixels = outputPixels;
-
-        return outputBitmap;
     }
 
     public static Bitmap CreateCheckerBitmap(int width, int height)
