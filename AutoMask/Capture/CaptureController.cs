@@ -36,6 +36,16 @@ public sealed class CaptureController : IAsyncDisposable
     private double _highest;
     private int _uiPostPending;
 
+    // Double-buffer the live pixels so the capture loop can refill one buffer while the
+    // UI handler still holds the previous one. _uiPostPending gates a single post in flight,
+    // so two buffers are sufficient. Allocated once at construction; no per-frame GC churn.
+    private readonly byte[][] _frameBuffers =
+    {
+        new byte[CompareWidth * CompareHeight * 4],
+        new byte[CompareWidth * CompareHeight * 4],
+    };
+    private int _writeIndex;
+
     public void UpdateReference(byte[]? refPixels, byte[]? refMask, double required)
     {
         UpdateState(s => s with { RefPixels = refPixels, RefMask = refMask, Required = required });
@@ -152,7 +162,12 @@ public sealed class CaptureController : IAsyncDisposable
                 double cur = 0;
                 double high = Volatile.Read(ref _highest);
 
-                byte[] livePixels = ReadBgraBytes(scaled);
+                byte[] livePixels = _frameBuffers[_writeIndex];
+                if (!ReadBgraBytesInto(scaled, livePixels))
+                {
+                    Thread.Sleep(2);
+                    continue;
+                }
 
                 if (refPixels is not null && refMask is not null
                     && refPixels.Length == livePixels.Length
@@ -181,6 +196,10 @@ public sealed class CaptureController : IAsyncDisposable
                             }
                         },
                         DispatcherPriority.Background);
+
+                    // Flip only on a successful post so the UI handler keeps exclusive access
+                    // to the buffer it received until it sets _uiPostPending back to 0.
+                    _writeIndex ^= 1;
                 }
             }
             catch (Exception ex)
@@ -255,12 +274,17 @@ public sealed class CaptureController : IAsyncDisposable
         }
     }
 
-    private static byte[] ReadBgraBytes(SKBitmap bitmap)
+    private static bool ReadBgraBytesInto(SKBitmap bitmap, byte[] destination)
     {
         int byteCount = bitmap.ByteCount;
-        byte[] result = new byte[byteCount];
-        System.Runtime.InteropServices.Marshal.Copy(bitmap.GetPixels(), result, 0, byteCount);
-        return result;
+        if (byteCount != destination.Length)
+        {
+            // Source resized between iterations or a non-target format slipped through;
+            // skip this frame rather than tear the destination buffer.
+            return false;
+        }
+        System.Runtime.InteropServices.Marshal.Copy(bitmap.GetPixels(), destination, 0, byteCount);
+        return true;
     }
 
     public async ValueTask DisposeAsync()
