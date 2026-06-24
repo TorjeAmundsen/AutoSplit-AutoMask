@@ -1,61 +1,119 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace AutoSplit_AutoMask;
 
+/// <summary>
+/// One JSON file that failed to load. <see cref="Reason"/> is either an exception message or
+/// "deserialized to null" when the JSON parsed but produced no model.
+/// </summary>
+public sealed record LoadFailure(string Path, string Reason);
+
 public static class PresetService
 {
-    public static async Task<List<SplitPreset>> LoadPresetsAsync(string presetsDirectory)
+    public static async Task<(List<SplitPreset> Presets, List<LoadFailure> Failures)> LoadPresetsAsync(string presetsDirectory)
     {
         var presetPaths = Directory.EnumerateDirectories(presetsDirectory)
             .Where(dir => Directory.EnumerateFiles(dir, "preset.json", SearchOption.TopDirectoryOnly).Any())
             .ToArray();
 
+        // Reading and deserializing each preset.json in parallel — sequential await on a
+        // slow disk (e.g. networked drive, large preset library) summed into noticeable
+        // startup latency.
+        var results = await Task.WhenAll(presetPaths.Select(LoadOnePresetAsync));
+
         List<SplitPreset> foundPresets = [];
-
-        foreach (string presetPath in presetPaths)
+        List<LoadFailure> failures = [];
+        foreach (var (preset, failure) in results)
         {
-            SplitPreset? preset = JsonSerializer.Deserialize(
-                await File.ReadAllTextAsync(Path.Combine(presetPath, "preset.json")),
-                AppJsonContext.Default.SplitPreset);
-
             if (preset is not null)
             {
-                preset.PresetFolder = presetPath;
                 foundPresets.Add(preset);
+            }
+            else if (failure is not null)
+            {
+                failures.Add(failure);
             }
         }
 
-        return foundPresets;
+        return (foundPresets, failures);
     }
 
-    public static async Task<List<PremadeSplitsFile>> LoadPremadeSplitsAsync(string splitsDirectory)
+    private static async Task<(SplitPreset? Preset, LoadFailure? Failure)> LoadOnePresetAsync(string presetPath)
+    {
+        string filePath = Path.Combine(presetPath, "preset.json");
+        try
+        {
+            var preset = JsonSerializer.Deserialize(
+                await File.ReadAllTextAsync(filePath, Encoding.UTF8),
+                AppJsonContext.Default.SplitPreset);
+
+            if (preset is null)
+            {
+                return (null, new LoadFailure(filePath, "deserialized to null"));
+            }
+
+            preset.PresetFolder = presetPath;
+            return (preset, null);
+        }
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+        {
+            return (null, new LoadFailure(filePath, ex.Message));
+        }
+    }
+
+    public static async Task<(List<PremadeSplitsFile> Files, List<LoadFailure> Failures)> LoadPremadeSplitsAsync(string splitsDirectory)
     {
         if (!Directory.Exists(splitsDirectory))
         {
-            return [];
+            return ([], []);
         }
 
         var splitPaths = Directory.EnumerateDirectories(splitsDirectory)
             .Where(dir => Directory.EnumerateFiles(dir, "splits.json", SearchOption.TopDirectoryOnly).Any())
             .ToArray();
 
+        var results = await Task.WhenAll(splitPaths.Select(LoadOnePremadeSplitsAsync));
+
         List<PremadeSplitsFile> foundSplitFiles = [];
-
-        foreach (string splitPath in splitPaths)
+        List<LoadFailure> failures = [];
+        foreach (var (file, failure) in results)
         {
-            PremadeSplitsFile? splitsFile = JsonSerializer.Deserialize(
-                await File.ReadAllTextAsync(Path.Combine(splitPath, "splits.json")),
-                AppJsonContext.Default.PremadeSplitsFile);
-
-            if (splitsFile is not null)
+            if (file is not null)
             {
-                splitsFile.FolderPath = splitPath;
-                foundSplitFiles.Add(splitsFile);
+                foundSplitFiles.Add(file);
+            }
+            else if (failure is not null)
+            {
+                failures.Add(failure);
             }
         }
 
-        return foundSplitFiles.OrderBy(f => f.GameName).ToList();
+        return (foundSplitFiles.OrderBy(f => f.GameName).ToList(), failures);
+    }
+
+    private static async Task<(PremadeSplitsFile? File, LoadFailure? Failure)> LoadOnePremadeSplitsAsync(string splitPath)
+    {
+        string filePath = Path.Combine(splitPath, "splits.json");
+        try
+        {
+            var splitsFile = JsonSerializer.Deserialize(
+                await File.ReadAllTextAsync(filePath, Encoding.UTF8),
+                AppJsonContext.Default.PremadeSplitsFile);
+
+            if (splitsFile is null)
+            {
+                return (null, new LoadFailure(filePath, "deserialized to null"));
+            }
+
+            splitsFile.FolderPath = splitPath;
+            return (splitsFile, null);
+        }
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+        {
+            return (null, new LoadFailure(filePath, ex.Message));
+        }
     }
 
     public static string CreateFilenameForSplit(SplitPreset preset, int splitIndex)
@@ -108,6 +166,30 @@ public static class PresetService
     }
 
     /// <summary>
+    /// Returns a filename that is not yet present in <paramref name="used"/>, using
+    /// "name (1).ext", "name (2).ext", ... if the preferred name is already taken.
+    /// The chosen name is added to the set so subsequent calls won't pick it.
+    /// </summary>
+    private static string ReserveUniqueName(string preferred, HashSet<string> used)
+    {
+        if (used.Add(preferred))
+        {
+            return preferred;
+        }
+
+        string ext = Path.GetExtension(preferred);
+        string baseName = Path.GetFileNameWithoutExtension(preferred);
+        for (int i = 1; ; i++)
+        {
+            string candidate = $"{baseName} ({i}){ext}";
+            if (used.Add(candidate))
+            {
+                return candidate;
+            }
+        }
+    }
+
+    /// <summary>
     /// Replaces spaces with underscores and strips characters that are invalid in directory names.
     /// </summary>
     public static string SanitizeFolderName(string presetName)
@@ -138,6 +220,40 @@ public static class PresetService
         var splitRelPaths = new List<string>();
         var splitSavestateRelPaths = new List<string>();
 
+        // Pre-pass: reserve filenames already locked in by splits whose mask/savestate is
+        // already inside the target folder. Two splits referencing different external files
+        // that share a filename would otherwise overwrite each other, and an external copy
+        // could overwrite an internal mask of the same name when processed first.
+        var usedMaskNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var usedSavestateNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var split in preset.Splits)
+        {
+            if (!string.IsNullOrEmpty(split.MaskAbsolutePath))
+            {
+                string maskFull = Path.GetFullPath(split.MaskAbsolutePath);
+                if (maskFull.StartsWith(targetFolderPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    string rel = Path.GetRelativePath(targetFolderFull, maskFull);
+                    // Only top-level mask filenames can collide with copy destinations
+                    // (which always land at the target folder root).
+                    if (!rel.Contains(Path.DirectorySeparatorChar) && !rel.Contains(Path.AltDirectorySeparatorChar))
+                    {
+                        usedMaskNames.Add(rel);
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(split.SavestateAbsolutePath))
+            {
+                string savestateFull = Path.GetFullPath(split.SavestateAbsolutePath);
+                if (savestateFull.StartsWith(savestatesPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    usedSavestateNames.Add(Path.GetFileName(savestateFull));
+                }
+            }
+        }
+
         foreach (var split in preset.Splits)
         {
             if (string.IsNullOrEmpty(split.MaskAbsolutePath))
@@ -154,7 +270,7 @@ public static class PresetService
                 }
                 else
                 {
-                    string destFilename = Path.GetFileName(maskFull);
+                    string destFilename = ReserveUniqueName(Path.GetFileName(maskFull), usedMaskNames);
                     string destPath = Path.Combine(targetFolderFull, destFilename);
                     File.Copy(maskFull, destPath, overwrite: true);
                     // Update the model so subsequent saves treat this file as already in place
@@ -169,18 +285,18 @@ public static class PresetService
                 continue;
             }
 
-            string savestateFull = Path.GetFullPath(split.SavestateAbsolutePath);
+            string savestateFullPath = Path.GetFullPath(split.SavestateAbsolutePath);
 
-            if (savestateFull.StartsWith(savestatesPrefix, StringComparison.OrdinalIgnoreCase))
+            if (savestateFullPath.StartsWith(savestatesPrefix, StringComparison.OrdinalIgnoreCase))
             {
-                splitSavestateRelPaths.Add(Path.GetRelativePath(targetFolderFull, savestateFull));
+                splitSavestateRelPaths.Add(Path.GetRelativePath(targetFolderFull, savestateFullPath));
             }
             else
             {
                 Directory.CreateDirectory(savestatesFolder);
-                string destFilename = Path.GetFileName(savestateFull);
+                string destFilename = ReserveUniqueName(Path.GetFileName(savestateFullPath), usedSavestateNames);
                 string destPath = Path.Combine(savestatesFolder, destFilename);
-                File.Copy(savestateFull, destPath, overwrite: true);
+                File.Copy(savestateFullPath, destPath, overwrite: true);
                 split.SavestateAbsolutePath = destPath;
                 splitSavestateRelPaths.Add(Path.Combine("savestates", destFilename));
             }
@@ -248,7 +364,21 @@ public static class PresetService
         jsonObj["splits"] = splitsArray;
 
         string json = jsonObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
-        await File.WriteAllTextAsync(Path.Combine(targetFolderFull, "preset.json"), json);
+        string finalPath = Path.Combine(targetFolderFull, "preset.json");
+        // Write to a sibling temp file, then atomically replace. File.WriteAllTextAsync
+        // truncates the destination before writing, so a crash mid-write would leave
+        // preset.json empty or partial; a rename on the same volume is atomic on NTFS.
+        string tmpPath = finalPath + ".tmp";
+        try
+        {
+            await File.WriteAllTextAsync(tmpPath, json, Encoding.UTF8);
+            File.Move(tmpPath, finalPath, overwrite: true);
+        }
+        catch
+        {
+            try { if (File.Exists(tmpPath)) { File.Delete(tmpPath); } } catch { /* best-effort */ }
+            throw;
+        }
 
         if (Directory.Exists(savestatesFolder))
         {
@@ -262,7 +392,9 @@ public static class PresetService
             {
                 if (!referencedNames.Contains(Path.GetFileName(file)))
                 {
-                    File.Delete(file);
+                    // Best-effort cleanup; preset.json is already committed and a stale
+                    // savestate file is harmless on disk, so don't fail the whole save.
+                    try { File.Delete(file); } catch { /* ignore */ }
                 }
             }
         }

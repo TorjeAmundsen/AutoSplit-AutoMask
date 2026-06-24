@@ -125,9 +125,9 @@ public partial class ImportSplitsDialog : Window
                     Grid.SetColumn(imageBorder, 1);
                     cardContent.Children.Add(imageBorder);
                 }
-                catch
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
                 {
-                    // Image failed to load - skip thumbnail
+                    Utils.LogError($"ImportSplitsDialog: failed to load thumbnail '{baseImagePath}': {ex.Message}");
                 }
             }
         }

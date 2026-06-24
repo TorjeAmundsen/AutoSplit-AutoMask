@@ -33,7 +33,6 @@ public partial class TestOutputWindow : Window
     private readonly CaptureController _controller = new();
     private readonly ObservableCollection<object> _feedOptions = [];
 
-    // Reference inputs captured from MainWindow.
     private SplitPreset? _presetFromMain;
     private int _splitIndexFromMain = -1;
     private string? _inputPathFromMain;
@@ -49,6 +48,14 @@ public partial class TestOutputWindow : Window
     private CapturePreferences? _loadedPrefs;
     private bool _hasUserChanges;
     private bool _isClosing;
+    private bool _closingStarted;
+
+    /// <summary>
+    /// True once the window has finished its own shutdown sequence (capture stopped,
+    /// resources released, save prompt resolved). MainWindow checks this so a parallel
+    /// 'Close all windows' from the taskbar doesn't tear this window down mid-prompt.
+    /// </summary>
+    public bool HasShutdownCompleted => _isClosing;
 
     public TestOutputWindow()
     {
@@ -71,16 +78,24 @@ public partial class TestOutputWindow : Window
         Opened += async (_, _) => await InitializeAsync();
         Closing += async (_, e) =>
         {
+            // Once shutdown completed via the explicit Close() at the end of the flow,
+            // _isClosing is true and the close should proceed unimpeded.
             if (_isClosing)
             {
                 return;
             }
 
-            // Always cancel and run shutdown on a fresh turn - the async lambda is not
-            // awaited by Avalonia's close pipeline, so without Cancel the window tears
-            // down while ShutdownAsync is still stopping the capture thread / webcam /
-            // GDI handles.
+            // Every re-entry while the first close is still running must cancel too —
+            // returning without setting Cancel=true lets Avalonia tear the window down
+            // mid-prompt, which was killing the save dialog when Windows taskbar
+            // 'Close all windows' fired a second Closing event.
             e.Cancel = true;
+
+            if (_closingStarted)
+            {
+                return;
+            }
+            _closingStarted = true;
 
             if (_hasUserChanges)
             {
@@ -111,7 +126,7 @@ public partial class TestOutputWindow : Window
 
     private async Task InitializeAsync()
     {
-        _loadedPrefs = LoadPrefs();
+        _loadedPrefs = await LoadPrefsAsync();
 
         await RefreshFeedListAsync(selectAfter: _loadedPrefs?.FeedName);
 
@@ -634,7 +649,7 @@ public partial class TestOutputWindow : Window
         }
     }
 
-    private CapturePreferences? LoadPrefs()
+    private async Task<CapturePreferences?> LoadPrefsAsync()
     {
         if (string.IsNullOrEmpty(_prefsPath) || !File.Exists(_prefsPath))
         {
@@ -643,16 +658,16 @@ public partial class TestOutputWindow : Window
 
         try
         {
-            var json = File.ReadAllText(_prefsPath);
+            var json = await File.ReadAllTextAsync(_prefsPath, System.Text.Encoding.UTF8);
             return JsonSerializer.Deserialize(json, AppJsonContext.Default.CapturePreferences);
         }
-        catch
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
         {
             return null;
         }
     }
 
-    private void SavePrefs(CapturePreferences prefs)
+    private async Task SavePrefsAsync(CapturePreferences prefs)
     {
         if (string.IsNullOrEmpty(_prefsPath))
         {
@@ -660,7 +675,7 @@ public partial class TestOutputWindow : Window
         }
 
         var json = JsonSerializer.Serialize(prefs, AppJsonContext.Default.CapturePreferences);
-        File.WriteAllText(_prefsPath, json);
+        await File.WriteAllTextAsync(_prefsPath, json, System.Text.Encoding.UTF8);
     }
 
     private async Task PromptSaveAndClose()
@@ -670,7 +685,7 @@ public partial class TestOutputWindow : Window
 
         if (result == MessageBoxResult.Yes)
         {
-            SavePrefs(BuildCurrentPrefs());
+            await SavePrefsAsync(BuildCurrentPrefs());
         }
 
         _isClosing = true;

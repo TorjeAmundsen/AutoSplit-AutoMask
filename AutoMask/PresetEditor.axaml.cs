@@ -687,9 +687,9 @@ public partial class PresetEditor : Window
             skResult.Dispose();
             OutputPreviewImage.Source = _outputPreviewBitmap;
         }
-        catch
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
-            // If preview generation fails, leave the output box empty
+            Utils.LogError($"PresetEditor: preview generation failed: {ex.Message}");
         }
     }
 
@@ -706,7 +706,7 @@ public partial class PresetEditor : Window
 
     private void ValidateSplitName(string name)
     {
-        bool isInvalid = InvalidNameCharsRegex().IsMatch(name);
+        bool isInvalid = string.IsNullOrWhiteSpace(name) || InvalidNameCharsRegex().IsMatch(name);
 
         if (isInvalid)
         {
@@ -734,7 +734,8 @@ public partial class PresetEditor : Window
             return;
         }
 
-        bool anyInvalidName = _selectedPreset.Splits.Any(s => InvalidNameCharsRegex().IsMatch(s.Name));
+        bool anyInvalidName = _selectedPreset.Splits.Any(s =>
+            string.IsNullOrWhiteSpace(s.Name) || InvalidNameCharsRegex().IsMatch(s.Name));
         bool nameValid = !string.IsNullOrWhiteSpace(_selectedPreset.PresetName);
 
         BtnSave.IsEnabled = nameValid && !anyInvalidName;
@@ -803,7 +804,6 @@ public partial class PresetEditor : Window
                 }
             }
 
-            // Commit the switch
             _suppressPresetSelection = true;
             PresetListBox.SelectedIndex = displayIdx;
             _suppressPresetSelection = false;
@@ -980,14 +980,22 @@ public partial class PresetEditor : Window
         }
 
         List<PremadeSplitsFile> premadeSplits;
+        List<LoadFailure> loadFailures;
         try
         {
-            premadeSplits = await PresetService.LoadPremadeSplitsAsync(_splitsDirectory);
+            (premadeSplits, loadFailures) = await PresetService.LoadPremadeSplitsAsync(_splitsDirectory);
         }
         catch (Exception ex)
         {
             await MessageBox.Show(this, "Error", $"Failed to load pre-made splits: {ex.Message}");
             return;
+        }
+
+        if (loadFailures.Count > 0)
+        {
+            string detail = string.Join("\n", loadFailures.Select(f => $"• {f.Path} - {f.Reason}"));
+            await MessageBox.Show(this, "Pre-made splits load errors",
+                $"{loadFailures.Count} file(s) could not be loaded:\n\n{detail}");
         }
 
         if (premadeSplits.Count == 0)
@@ -1519,20 +1527,35 @@ public partial class PresetEditor : Window
             },
         };
 
-        okBtn.Click += (_, _) => { tcs.TrySetResult(textBox.Text); dialog.Close(); };
-        cancelBtn.Click += (_, _) => { tcs.TrySetResult(null); dialog.Close(); };
-        dialog.Closed += (_, _) => tcs.TrySetResult(null);
+        // Closed fires after every code path (OK/Cancel/Enter/Escape/window-close).
+        // Without a guard, an explicit OK/Enter result was overwritten by the Closed
+        // handler's null on the way out — TrySetResult silently no-ops the second call,
+        // but the order of subscription mattered. Setting the result inside Closed only
+        // when nothing else has run avoids the order coupling entirely.
+        string? pendingResult = null;
+        bool resultSet = false;
+        void Commit(string? value)
+        {
+            if (!resultSet)
+            {
+                resultSet = true;
+                pendingResult = value;
+            }
+            dialog.Close();
+        }
+
+        okBtn.Click += (_, _) => Commit(textBox.Text);
+        cancelBtn.Click += (_, _) => Commit(null);
+        dialog.Closed += (_, _) => tcs.TrySetResult(resultSet ? pendingResult : null);
         textBox.KeyDown += (_, e) =>
         {
             if (e.Key == Avalonia.Input.Key.Enter)
             {
-                tcs.TrySetResult(textBox.Text);
-                dialog.Close();
+                Commit(textBox.Text);
             }
             else if (e.Key == Avalonia.Input.Key.Escape)
             {
-                tcs.TrySetResult(null);
-                dialog.Close();
+                Commit(null);
             }
         };
         dialog.Opened += (_, _) => { textBox.Focus(); textBox.SelectAll(); };
