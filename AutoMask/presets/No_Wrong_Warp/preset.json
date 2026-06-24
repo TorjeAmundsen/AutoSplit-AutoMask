@@ -1,0 +1,153 @@
+﻿{
+  "$schema": "../preset-schema.json",
+  "presetName": "No Wrong Warp",
+  "gameName": "The Legend of Zelda: Ocarina of Time",
+  "splits": [
+    {
+      "mask": "reset.png",
+      "name": "reset",
+      "threshold": 0.96,
+      "pauseTime": 0.1,
+      "savestate": "savestates\\000 start and reset.gzs"
+    },
+    {
+      "mask": "start.png",
+      "name": "start_auto_splitter",
+      "threshold": 0.96,
+      "pauseTime": 10,
+      "inverted": true,
+      "savestate": "savestates\\000 start and reset (1).gzs"
+    },
+    {
+      "mask": "005_deku_text.png",
+      "name": "DekuDummy",
+      "threshold": 0.94,
+      "pauseTime": 6.5,
+      "dummy": true,
+      "savestate": "savestates\\000-kokiri forest.gzs"
+    },
+    {
+      "mask": "006_a_button_flip.png",
+      "name": "EnterDeku",
+      "threshold": 0.92,
+      "pauseTime": 60,
+      "delay": 1000,
+      "savestate": "savestates\\006_a_button_flip.png",
+      "savestateInstructions": "After loading, advance 1 frame before taking your screenshot. The A button doesn\u0027t render correctly if the savestate is on the frame itself, so it had to be 1 frame before."
+    },
+    {
+      "mask": "exit_deku.png",
+      "name": "ExitDeku",
+      "threshold": 0.98,
+      "savestate": "savestates\\002-deku tree.gzs"
+    },
+    {
+      "mask": "master_sword_pedestal.png",
+      "name": "MasterSword",
+      "threshold": 0.95,
+      "savestate": "savestates\\028-temple of time.gzs"
+    },
+    {
+      "mask": "medallion_icon.png",
+      "name": "LightMedallion",
+      "threshold": 0.95,
+      "pauseTime": 60,
+      "inverted": true
+    },
+    {
+      "mask": "pocket_egg.png",
+      "name": "PocketEgg",
+      "threshold": 0.95,
+      "delay": 1100,
+      "inverted": true,
+      "savestate": "savestates\\003-kakariko village.gzs"
+    },
+    {
+      "mask": "cojiro.png",
+      "name": "Cojiro",
+      "threshold": 0.95,
+      "pauseTime": 60,
+      "delay": 1150,
+      "inverted": true,
+      "savestate": "savestates\\004-kakariko village.gzs"
+    },
+    {
+      "mask": "odd_mushroom.png",
+      "name": "OddMushroom",
+      "threshold": 0.95,
+      "pauseTime": 60,
+      "delay": 1200,
+      "inverted": true,
+      "savestate": "savestates\\005-lost woods.gzs"
+    },
+    {
+      "mask": "odd_potion.png",
+      "name": "OddPotion",
+      "threshold": 0.95,
+      "pauseTime": 60,
+      "delay": 1100,
+      "inverted": true,
+      "savestate": "savestates\\006-granny\u0027s potion shop.gzs"
+    },
+    {
+      "mask": "poachers_saw.png",
+      "name": "PoachersSaw",
+      "threshold": 0.95,
+      "delay": 1300,
+      "inverted": true,
+      "savestate": "savestates\\007-lost woods.gzs"
+    },
+    {
+      "mask": "magic.png",
+      "name": "Magic",
+      "threshold": 0.96
+    },
+    {
+      "mask": "inside_ganons_castle.png",
+      "name": "GanonsCastleDummy",
+      "threshold": 0.95,
+      "pauseTime": 11,
+      "dummy": true
+    },
+    {
+      "mask": "full_fade_test_2.png",
+      "name": "TrialsSkip",
+      "threshold": 0.99
+    },
+    {
+      "mask": "ganondorf_dummy.png",
+      "name": "GanondorfDummy",
+      "threshold": 0.96,
+      "dummy": true
+    },
+    {
+      "mask": "full_fade.png",
+      "name": "Ganondorf",
+      "threshold": 0.97,
+      "pauseTime": 60,
+      "delay": 50,
+      "inverted": true,
+      "savestate": "savestates\\011 wrong warp.gzs"
+    },
+    {
+      "mask": "full_fade.png",
+      "name": "Collapse",
+      "threshold": 0.97,
+      "savestate": "savestates\\009-tower collapse.gzs"
+    },
+    {
+      "mask": "011_collapse_cs_zelda_text.png",
+      "name": "CutsceneRNG",
+      "threshold": 0.98,
+      "pauseTime": 30,
+      "delay": 100,
+      "savestate": "savestates\\012 collapse.gzs"
+    },
+    {
+      "mask": "final_slash_zelda.png",
+      "name": "Ganon",
+      "threshold": 0.92,
+      "savestate": "savestates\\013 ganon.gzs"
+    }
+  ]
+}
