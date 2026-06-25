@@ -32,7 +32,7 @@
       "threshold": 0.92,
       "pauseTime": 60,
       "delay": 1000,
-      "savestate": "savestates\\006_a_button_flip.png",
+      "savestate": "savestates\\006 enter deku.gzs",
       "savestateInstructions": "After loading, advance 1 frame before taking your screenshot. The A button doesn\u0027t render correctly if the savestate is on the frame itself, so it had to be 1 frame before."
     },
     {
