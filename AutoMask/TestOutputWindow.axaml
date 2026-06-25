@@ -3,7 +3,7 @@
         xmlns:local="clr-namespace:AutoSplit_AutoMask"
         x:Class="AutoSplit_AutoMask.TestOutputWindow"
         Title="Live output tester"
-        Width="680" Height="488" CanResize="False"
+        Width="680" Height="588" CanResize="False"
         FontSize="12" Background="#2C2C2C">
 
     <Window.DataTemplates>
@@ -98,42 +98,51 @@
             <Image Name="LiveImageView" Stretch="None"/>
         </Border>
 
-        <!-- Row 6 Left: Similarity panel -->
-        <Border Grid.Row="6" Grid.Column="0" BorderBrush="#444444" BorderThickness="1"
-                Background="#232323" HorizontalAlignment="Center" Width="320" Padding="10,8">
-            <Grid RowDefinitions="Auto,6,Auto" ColumnDefinitions="*,*">
-                <!-- Required + Current side by side -->
-                <StackPanel Grid.Row="0" Grid.Column="0">
-                    <TextBlock Text="Required" Foreground="#888888" TextAlignment="Center"/>
-                    <TextBlock Name="RequiredLabel" Text="-" Foreground="#AAAAAA"
-                               FontSize="32" TextAlignment="Center"/>
-                </StackPanel>
-                <StackPanel Grid.Row="0" Grid.Column="1">
-                    <TextBlock Text="Current" Foreground="#888888" TextAlignment="Center"/>
-                    <TextBlock Name="CurrentLabel" Text="-" Foreground="White"
-                               FontSize="32" TextAlignment="Center"/>
-                </StackPanel>
+        <!-- Row 6 Left: Matched-frame preview (under the reference, full size) -->
+        <StackPanel Grid.Row="6" Grid.Column="0" Spacing="4"
+                    HorizontalAlignment="Center" Width="320" VerticalAlignment="Top">
+            <TextBlock Name="MatchedCaption" Text="Matched frame"
+                       Foreground="#CCCCCC" TextAlignment="Center"/>
+            <Border BorderBrush="#484848" BorderThickness="1"
+                    Background="#151515" Width="320" Height="240"
+                    HorizontalAlignment="Center">
+                <Image Name="MatchedImageView" Stretch="None"/>
+            </Border>
+        </StackPanel>
 
-                <!-- Highest centered below -->
-                <StackPanel Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2">
-                    <TextBlock Text="Highest" Foreground="#888888" TextAlignment="Center"/>
-                    <TextBlock Name="HighestLabel" Text="-" Foreground="White"
-                               FontSize="32" TextAlignment="Center"/>
-                </StackPanel>
-
-                <!-- Reset button in bottom-right corner -->
-                <Button Grid.Row="2" Grid.Column="1" Name="BtnResetHighest" Content="↺"
-                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                        Width="24" Height="24" Padding="0" FontSize="14"
-                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                        ToolTip.Tip="Reset highest"
-                        Click="BtnResetHighest_Click"/>
-            </Grid>
-        </Border>
-
-        <!-- Row 6 Right: Feed + Crop controls -->
+        <!-- Row 6 Right: Similarity row + Feed + Crop controls -->
         <StackPanel Grid.Row="6" Grid.Column="2" Spacing="8" VerticalAlignment="Top"
                     HorizontalAlignment="Center" Width="320">
+            <TextBlock Text="Similarity" Foreground="#CCCCCC" TextAlignment="Center"
+                       Margin="0,0,0,-4"/>
+            <!-- Sleek single-row similarity panel -->
+            <Border BorderBrush="#444444" BorderThickness="1"
+                    Background="#232323" Padding="10,6">
+                <Grid ColumnDefinitions="*,*,*,Auto">
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Required" Foreground="#888888" FontSize="11" TextAlignment="Center"/>
+                        <TextBlock Name="RequiredLabel" Text="-" Foreground="#AAAAAA"
+                                   FontSize="20" TextAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Current" Foreground="#888888" FontSize="11" TextAlignment="Center"/>
+                        <TextBlock Name="CurrentLabel" Text="-" Foreground="White"
+                                   FontSize="20" TextAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Highest" Foreground="#888888" FontSize="11" TextAlignment="Center"/>
+                        <TextBlock Name="HighestLabel" Text="-" Foreground="White"
+                                   FontSize="20" TextAlignment="Center"/>
+                    </StackPanel>
+                    <Button Grid.Column="3" Name="BtnResetHighest" Content="↺"
+                            VerticalAlignment="Center" Margin="6,0,0,0"
+                            Width="24" Height="24" Padding="0" FontSize="14"
+                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                            ToolTip.Tip="Reset highest + matched frame"
+                            Click="BtnResetHighest_Click"/>
+                </Grid>
+            </Border>
+
             <!-- Feed source -->
             <Grid ColumnDefinitions="*,8,Auto">
                 <ComboBox Grid.Column="0" Name="ComboBoxFeedSource" Height="28"

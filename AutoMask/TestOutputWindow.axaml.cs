@@ -154,10 +154,13 @@ public partial class TestOutputWindow : Window
         await _controller.DisposeAsync();
         LiveImageView.Source = null;
         ReferenceImageView.Source = null;
+        MatchedImageView.Source = null;
         _liveBitmap?.Dispose();
         _liveBitmap = null;
         _referenceBitmap?.Dispose();
         _referenceBitmap = null;
+        _matchedBitmap?.Dispose();
+        _matchedBitmap = null;
     }
 
     public async void UpdateFromMainWindow(
@@ -324,6 +327,7 @@ public partial class TestOutputWindow : Window
         HighestLabel.Text = "-";
         CurrentLabel.Text = "-";
         _controller.ResetHighest();
+        ClearMatch();
     }
 
     private void SetReferenceMissing(string reason)
@@ -335,6 +339,7 @@ public partial class TestOutputWindow : Window
         CurrentLabel.Text = "-";
         HighestLabel.Text = "-";
         RequiredLabel.Text = "-";
+        ClearMatch();
     }
 
     private async void BtnRefreshFeed_Click(object? sender, RoutedEventArgs e)
@@ -551,13 +556,17 @@ public partial class TestOutputWindow : Window
     {
         _controller.ResetHighest();
         HighestLabel.Text = "-";
+        ClearMatch();
     }
 
     private static readonly IBrush _metGreen = new SolidColorBrush(Color.FromRgb(0x6C, 0xD6, 0x88));
     private static readonly IBrush _metWhite = Brushes.White;
+    private static readonly IBrush _captionGrey = new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0xCC));
 
     private WriteableBitmap? _liveBitmap;
     private Bitmap? _referenceBitmap;
+    private WriteableBitmap? _matchedBitmap;
+    private bool _hasMatch;
 
     private void OnFrameReady(byte[] bgraPixels, double current, double highest, double required)
     {
@@ -578,23 +587,7 @@ public partial class TestOutputWindow : Window
             LiveImageView.Source = _liveBitmap;
         }
 
-        using (var locked = _liveBitmap.Lock())
-        {
-            int srcStride = CaptureController.CompareWidth * 4;
-            if (locked.RowBytes == srcStride)
-            {
-                Marshal.Copy(bgraPixels, 0, locked.Address, bgraPixels.Length);
-            }
-            else
-            {
-                for (int y = 0; y < CaptureController.CompareHeight; y++)
-                {
-                    Marshal.Copy(bgraPixels, y * srcStride,
-                        locked.Address + y * locked.RowBytes, srcStride);
-                }
-            }
-        }
-
+        WriteBgraInto(_liveBitmap, bgraPixels);
         LiveImageView.InvalidateVisual();
 
         bool hasReference = ReferenceImageView.Source is not null;
@@ -602,6 +595,24 @@ public partial class TestOutputWindow : Window
         HighestLabel.Text = hasReference ? highest.ToString("F4") : "-";
         RequiredLabel.Text = required > 0 ? required.ToString("F4") : "-";
         CurrentLabel.Foreground = required > 0 && current >= required ? _metGreen : _metWhite;
+
+        // Freeze the first frame that crosses the threshold so the user can see exactly what
+        // tripped the split. Held until the ↺ reset re-arms it (or the reference changes).
+        if (!_hasMatch && required > 0 && current >= required)
+        {
+            _matchedBitmap ??= new WriteableBitmap(
+                new PixelSize(CaptureController.CompareWidth, CaptureController.CompareHeight),
+                new Vector(96, 96),
+                PixelFormat.Bgra8888,
+                AlphaFormat.Opaque);
+
+            WriteBgraInto(_matchedBitmap, bgraPixels);
+            MatchedImageView.Source = _matchedBitmap;
+            MatchedImageView.InvalidateVisual();
+            MatchedCaption.Text = $"Matched frame — {current:F4}";
+            MatchedCaption.Foreground = _metGreen;
+            _hasMatch = true;
+        }
 
         // If the source just reported a different size on first frame, update our crop bounds
         // so a subsequent reset uses the new size.
@@ -611,6 +622,32 @@ public partial class TestOutputWindow : Window
             // Live bitmap here is 320x240 (post-scale); source size lives on the ICaptureSource.
             // We only track the source dims we saw at creation time; good enough for defaults.
         }
+    }
+
+    private static void WriteBgraInto(WriteableBitmap bitmap, byte[] bgraPixels)
+    {
+        using var locked = bitmap.Lock();
+        int srcStride = CaptureController.CompareWidth * 4;
+        if (locked.RowBytes == srcStride)
+        {
+            Marshal.Copy(bgraPixels, 0, locked.Address, bgraPixels.Length);
+        }
+        else
+        {
+            for (int y = 0; y < CaptureController.CompareHeight; y++)
+            {
+                Marshal.Copy(bgraPixels, y * srcStride,
+                    locked.Address + y * locked.RowBytes, srcStride);
+            }
+        }
+    }
+
+    private void ClearMatch()
+    {
+        _hasMatch = false;
+        MatchedImageView.Source = null;
+        MatchedCaption.Text = "Matched frame";
+        MatchedCaption.Foreground = _captionGrey;
     }
 
     private void OnErrorReported(string message)
