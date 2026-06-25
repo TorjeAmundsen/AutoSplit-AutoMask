@@ -52,7 +52,8 @@
       "name": "LightMedallion",
       "threshold": 0.95,
       "pauseTime": 60,
-      "inverted": true
+      "inverted": true,
+      "savestate": "savestates\\008-chamber of the sages.gzs"
     },
     {
       "mask": "pocket_egg.png",
@@ -100,25 +101,29 @@
     {
       "mask": "magic.png",
       "name": "Magic",
-      "threshold": 0.96
+      "threshold": 0.96,
+      "savestate": "savestates\\009-fairy upgrades.gzs"
     },
     {
       "mask": "inside_ganons_castle.png",
       "name": "GanonsCastleDummy",
       "threshold": 0.95,
       "pauseTime": 11,
-      "dummy": true
+      "dummy": true,
+      "savestate": "savestates\\010-ganon\u0027s castle.gzs"
     },
     {
       "mask": "full_fade_test_2.png",
       "name": "TrialsSkip",
-      "threshold": 0.99
+      "threshold": 0.99,
+      "savestate": "savestates\\012-ganon\u0027s castle.gzs"
     },
     {
       "mask": "ganondorf_dummy.png",
       "name": "GanondorfDummy",
       "threshold": 0.96,
-      "dummy": true
+      "dummy": true,
+      "savestate": "savestates\\011-ganondorf.gzs"
     },
     {
       "mask": "full_fade.png",
@@ -133,6 +138,8 @@
       "mask": "full_fade.png",
       "name": "Collapse",
       "threshold": 0.97,
+      "pauseTime": 60,
+      "delay": 50,
       "savestate": "savestates\\009-tower collapse.gzs"
     },
     {
