@@ -159,8 +159,11 @@ public partial class TestOutputWindow : Window
         _liveBitmap = null;
         _referenceBitmap?.Dispose();
         _referenceBitmap = null;
-        _matchedBitmap?.Dispose();
-        _matchedBitmap = null;
+        foreach (var (bitmap, _) in _matchedFrames)
+        {
+            bitmap.Dispose();
+        }
+        _matchedFrames.Clear();
     }
 
     public async void UpdateFromMainWindow(
@@ -217,7 +220,7 @@ public partial class TestOutputWindow : Window
 
             try
             {
-                ApplyReferenceBitmap(masked, split.Threshold, split.Name);
+                ApplyReferenceBitmap(masked, split.Threshold, split.Name, split.Inverted, split.Delay);
             }
             finally
             {
@@ -266,9 +269,20 @@ public partial class TestOutputWindow : Window
                 required = parsed;
             }
 
+            // AutoSplit encodes the inverted flag as a 'b' inside the brace flag group, e.g. "split_{b}.png".
+            bool inverted = FileNameHasInvertedFlag(fileName);
+
+            // Delay milliseconds are written between hashes, e.g. "split_#1000#.png".
+            uint delayMs = 0;
+            var delayMatch = DelayRegex().Match(fileName);
+            if (delayMatch.Success)
+            {
+                uint.TryParse(delayMatch.Groups[1].Value, out delayMs);
+            }
+
             try
             {
-                ApplyReferenceBitmap(decoded, required, label: fileName);
+                ApplyReferenceBitmap(decoded, required, label: fileName, inverted: inverted, delayMs: delayMs);
             }
             finally
             {
@@ -281,8 +295,11 @@ public partial class TestOutputWindow : Window
         }
     }
 
-    private void ApplyReferenceBitmap(SKBitmap source, double required, string label)
+    private void ApplyReferenceBitmap(SKBitmap source, double required, string label, bool inverted, uint delayMs)
     {
+        _referenceInverted = inverted;
+        _referenceDelayMs = delayMs;
+
         using var scaled = source.Resize(
             new SKImageInfo(CaptureController.CompareWidth, CaptureController.CompareHeight,
                 SKColorType.Bgra8888, SKAlphaType.Unpremul),
@@ -565,8 +582,23 @@ public partial class TestOutputWindow : Window
 
     private WriteableBitmap? _liveBitmap;
     private Bitmap? _referenceBitmap;
-    private WriteableBitmap? _matchedBitmap;
-    private bool _hasMatch;
+
+    // Each captured trigger frame (initial match, drop-below, delayed variants) is kept so the
+    // user can scroll through them with the ◀ ▶ arrows. Index points at the shown frame.
+    private readonly List<(WriteableBitmap Bitmap, string Caption)> _matchedFrames = [];
+    private int _matchedIndex;
+
+    private enum MatchPhase { Waiting, PendingMatch, Matched, PendingDrop, DroppedBelow }
+    private MatchPhase _matchPhase = MatchPhase.Waiting;
+
+    // Mirrors AutoSplit's inverted-split semantics: split fires when the image reaches the
+    // threshold and then drops below it again, so we capture both events for inverted refs.
+    private bool _referenceInverted;
+
+    // When "Use delay" is checked, the match frame is captured this many ms after the split
+    // condition is met (mirroring a split's delay time), not on the triggering frame itself.
+    private uint _referenceDelayMs;
+    private long _matchPendingUntilTick;
 
     private void OnFrameReady(byte[] bgraPixels, double current, double highest, double required)
     {
@@ -596,22 +628,55 @@ public partial class TestOutputWindow : Window
         RequiredLabel.Text = required > 0 ? required.ToString("F4") : "-";
         CurrentLabel.Foreground = required > 0 && current >= required ? _metGreen : _metWhite;
 
-        // Freeze the first frame that crosses the threshold so the user can see exactly what
-        // tripped the split. Held until the ↺ reset re-arms it (or the reference changes).
-        if (!_hasMatch && required > 0 && current >= required)
-        {
-            _matchedBitmap ??= new WriteableBitmap(
-                new PixelSize(CaptureController.CompareWidth, CaptureController.CompareHeight),
-                new Vector(96, 96),
-                PixelFormat.Bgra8888,
-                AlphaFormat.Opaque);
+        // Freeze the frame that trips the split so the user can see exactly what tripped it.
+        // Held until the ↺ reset re-arms it (or the reference changes). When "Use delay" is on,
+        // an extra frame is also captured at the split's delay time to show the post-delay timing.
+        bool aboveThreshold = required > 0 && current >= required;
+        bool useDelay = UseDelayCheck.IsChecked == true && _referenceDelayMs > 0;
+        long now = Environment.TickCount64;
 
-            WriteBgraInto(_matchedBitmap, bgraPixels);
-            MatchedImageView.Source = _matchedBitmap;
-            MatchedImageView.InvalidateVisual();
-            MatchedCaption.Text = $"Matched frame - {current:F4}";
-            MatchedCaption.Foreground = _metGreen;
-            _hasMatch = true;
+        switch (_matchPhase)
+        {
+            case MatchPhase.Waiting when aboveThreshold:
+                // Always freeze the trigger frame immediately. With delay on (non-inverted), the
+                // view updates again at the delayed frame. Inverted defers its delay to the drop.
+                FreezeMatchedFrame(bgraPixels, $"Matched frame - {current:F4}");
+                if (useDelay && !_referenceInverted)
+                {
+                    _matchPendingUntilTick = now + _referenceDelayMs;
+                    _matchPhase = MatchPhase.PendingMatch;
+                }
+                else
+                {
+                    _matchPhase = MatchPhase.Matched;
+                }
+                break;
+
+            case MatchPhase.PendingMatch when now >= _matchPendingUntilTick:
+                FreezeMatchedFrame(bgraPixels, $"Matched frame +{_referenceDelayMs} ms - {current:F4}");
+                _matchPhase = MatchPhase.Matched;
+                break;
+
+            case MatchPhase.Matched when _referenceInverted && !aboveThreshold:
+                // AutoSplit fires an inverted split on the first frame that drops back below the
+                // threshold after matching. Freeze that frame now; with delay on, update again
+                // at the delayed frame.
+                FreezeMatchedFrame(bgraPixels, $"Split frame - {current:F4}");
+                if (useDelay)
+                {
+                    _matchPendingUntilTick = now + _referenceDelayMs;
+                    _matchPhase = MatchPhase.PendingDrop;
+                }
+                else
+                {
+                    _matchPhase = MatchPhase.DroppedBelow;
+                }
+                break;
+
+            case MatchPhase.PendingDrop when now >= _matchPendingUntilTick:
+                FreezeMatchedFrame(bgraPixels, $"Split frame +{_referenceDelayMs} ms - {current:F4}");
+                _matchPhase = MatchPhase.DroppedBelow;
+                break;
         }
 
         // If the source just reported a different size on first frame, update our crop bounds
@@ -642,12 +707,71 @@ public partial class TestOutputWindow : Window
         }
     }
 
+    private void FreezeMatchedFrame(byte[] bgraPixels, string caption)
+    {
+        var bitmap = new WriteableBitmap(
+            new PixelSize(CaptureController.CompareWidth, CaptureController.CompareHeight),
+            new Vector(96, 96),
+            PixelFormat.Bgra8888,
+            AlphaFormat.Opaque);
+
+        WriteBgraInto(bitmap, bgraPixels);
+        _matchedFrames.Add((bitmap, caption));
+        _matchedIndex = _matchedFrames.Count - 1;
+        RenderMatchedFrame();
+    }
+
+    private void RenderMatchedFrame()
+    {
+        if (_matchedFrames.Count == 0)
+        {
+            MatchedImageView.Source = null;
+            MatchedCaption.Text = "Matched frame";
+            MatchedCaption.Foreground = _captionGrey;
+        }
+        else
+        {
+            var (bitmap, caption) = _matchedFrames[_matchedIndex];
+            MatchedImageView.Source = bitmap;
+            MatchedImageView.InvalidateVisual();
+            MatchedCaption.Text = _matchedFrames.Count > 1
+                ? $"{caption}  ({_matchedIndex + 1}/{_matchedFrames.Count})"
+                : caption;
+            MatchedCaption.Foreground = _metGreen;
+        }
+
+        BtnMatchedPrev.IsEnabled = _matchedIndex > 0;
+        BtnMatchedNext.IsEnabled = _matchedIndex < _matchedFrames.Count - 1;
+    }
+
+    private void BtnMatchedPrev_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_matchedIndex > 0)
+        {
+            _matchedIndex--;
+            RenderMatchedFrame();
+        }
+    }
+
+    private void BtnMatchedNext_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_matchedIndex < _matchedFrames.Count - 1)
+        {
+            _matchedIndex++;
+            RenderMatchedFrame();
+        }
+    }
+
     private void ClearMatch()
     {
-        _hasMatch = false;
-        MatchedImageView.Source = null;
-        MatchedCaption.Text = "Matched frame";
-        MatchedCaption.Foreground = _captionGrey;
+        _matchPhase = MatchPhase.Waiting;
+        foreach (var (bitmap, _) in _matchedFrames)
+        {
+            bitmap.Dispose();
+        }
+        _matchedFrames.Clear();
+        _matchedIndex = 0;
+        RenderMatchedFrame();
     }
 
     private void OnErrorReported(string message)
@@ -731,6 +855,18 @@ public partial class TestOutputWindow : Window
         Close();
     }
 
+    private static bool FileNameHasInvertedFlag(string fileName)
+    {
+        var match = FlagGroupRegex().Match(fileName);
+        return match.Success && match.Groups[1].Value.Contains('b', StringComparison.OrdinalIgnoreCase);
+    }
+
     [System.Text.RegularExpressions.GeneratedRegex(@"\(([0-9]*\.?[0-9]+)\)")]
     private static partial System.Text.RegularExpressions.Regex ThresholdRegex();
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"\{([a-zA-Z]*)\}")]
+    private static partial System.Text.RegularExpressions.Regex FlagGroupRegex();
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"#([0-9]+)#")]
+    private static partial System.Text.RegularExpressions.Regex DelayRegex();
 }
