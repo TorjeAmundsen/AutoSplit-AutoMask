@@ -85,7 +85,7 @@ public partial class TestOutputWindow : Window
                 return;
             }
 
-            // Every re-entry while the first close is still running must cancel too —
+            // Every re-entry while the first close is still running must cancel too -
             // returning without setting Cancel=true lets Avalonia tear the window down
             // mid-prompt, which was killing the save dialog when Windows taskbar
             // 'Close all windows' fired a second Closing event.
@@ -609,7 +609,7 @@ public partial class TestOutputWindow : Window
             WriteBgraInto(_matchedBitmap, bgraPixels);
             MatchedImageView.Source = _matchedBitmap;
             MatchedImageView.InvalidateVisual();
-            MatchedCaption.Text = $"Matched frame — {current:F4}";
+            MatchedCaption.Text = $"Matched frame - {current:F4}";
             MatchedCaption.Foreground = _metGreen;
             _hasMatch = true;
         }

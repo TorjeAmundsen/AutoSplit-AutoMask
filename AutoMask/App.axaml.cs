@@ -36,7 +36,7 @@ public partial class App : Application
                 catch
                 {
                     // Avalonia's documentation explicitly warns against allocating or
-                    // performing resource-heavy work in this handler — secondary failures
+                    // performing resource-heavy work in this handler - secondary failures
                     // here can't be reported anywhere useful.
                 }
 

@@ -1529,7 +1529,7 @@ public partial class PresetEditor : Window
 
         // Closed fires after every code path (OK/Cancel/Enter/Escape/window-close).
         // Without a guard, an explicit OK/Enter result was overwritten by the Closed
-        // handler's null on the way out — TrySetResult silently no-ops the second call,
+        // handler's null on the way out - TrySetResult silently no-ops the second call,
         // but the order of subscription mattered. Setting the result inside Closed only
         // when nothing else has run avoids the order coupling entirely.
         string? pendingResult = null;

@@ -122,16 +122,19 @@
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="Required" Foreground="#888888" FontSize="11" TextAlignment="Center"/>
                         <TextBlock Name="RequiredLabel" Text="-" Foreground="#AAAAAA"
+                                   FontFamily="Cascadia Code,Cascadia Mono,Consolas,monospace"
                                    FontSize="20" TextAlignment="Center"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1">
                         <TextBlock Text="Current" Foreground="#888888" FontSize="11" TextAlignment="Center"/>
                         <TextBlock Name="CurrentLabel" Text="-" Foreground="White"
+                                   FontFamily="Cascadia Code,Cascadia Mono,Consolas,monospace"
                                    FontSize="20" TextAlignment="Center"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <TextBlock Text="Highest" Foreground="#888888" FontSize="11" TextAlignment="Center"/>
                         <TextBlock Name="HighestLabel" Text="-" Foreground="White"
+                                   FontFamily="Cascadia Code,Cascadia Mono,Consolas,monospace"
                                    FontSize="20" TextAlignment="Center"/>
                     </StackPanel>
                     <Button Grid.Column="3" Name="BtnResetHighest" Content="↺"
