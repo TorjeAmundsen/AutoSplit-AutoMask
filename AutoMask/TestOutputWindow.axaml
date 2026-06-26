@@ -123,8 +123,10 @@
         <!-- Row 6 Right: Similarity row + Feed + Crop controls -->
         <StackPanel Grid.Row="6" Grid.Column="2" Spacing="8" VerticalAlignment="Top"
                     HorizontalAlignment="Center" Width="320">
-            <TextBlock Text="Similarity" Foreground="#CCCCCC" TextAlignment="Center"
-                       Margin="0,0,0,-4"/>
+            <Grid Height="20" Margin="0,0,0,-4">
+                <TextBlock Text="Similarity" Foreground="#CCCCCC" TextAlignment="Center"
+                           VerticalAlignment="Center"/>
+            </Grid>
             <!-- Sleek single-row similarity panel -->
             <Border BorderBrush="#444444" BorderThickness="1"
                     Background="#232323" Padding="10,6">
@@ -157,13 +159,16 @@
             </Border>
 
             <!-- Feed source -->
-            <Grid ColumnDefinitions="*,8,Auto">
-                <ComboBox Grid.Column="0" Name="ComboBoxFeedSource" Height="28"
-                          HorizontalAlignment="Stretch"
-                          SelectionChanged="ComboBoxFeedSource_SelectionChanged"/>
-                <Button Grid.Column="2" Name="BtnRefreshFeed" Content="Refresh"
-                        Height="28" Click="BtnRefreshFeed_Click"/>
-            </Grid>
+            <StackPanel Spacing="2">
+                <TextBlock Text="Select live feed" Foreground="#888888"/>
+                <Grid ColumnDefinitions="*,8,Auto">
+                    <ComboBox Grid.Column="0" Name="ComboBoxFeedSource" Height="28"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="ComboBoxFeedSource_SelectionChanged"/>
+                    <Button Grid.Column="2" Name="BtnRefreshFeed" Content="Refresh"
+                            Height="28" Click="BtnRefreshFeed_Click"/>
+                </Grid>
+            </StackPanel>
 
             <!-- Crop fields -->
             <Grid ColumnDefinitions="*,8,*" RowDefinitions="Auto,Auto,6,Auto,Auto,6,Auto">

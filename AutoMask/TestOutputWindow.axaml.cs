@@ -659,9 +659,9 @@ public partial class TestOutputWindow : Window
 
             case MatchPhase.Matched when _referenceInverted && !aboveThreshold:
                 // AutoSplit fires an inverted split on the first frame that drops back below the
-                // threshold after matching. Freeze that frame now; with delay on, update again
-                // at the delayed frame.
-                FreezeMatchedFrame(bgraPixels, $"Split frame - {current:F4}");
+                // threshold after matching. With delay on this is the trigger and the actual
+                // split frame follows after the delay; without delay it is the split frame itself.
+                FreezeMatchedFrame(bgraPixels, $"{(useDelay ? "Trigger" : "Split")} frame - {current:F4}");
                 if (useDelay)
                 {
                     _matchPendingUntilTick = now + _referenceDelayMs;

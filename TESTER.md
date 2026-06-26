@@ -42,7 +42,7 @@ The Required, Current, and Highest values are rendered in a monospace font so th
 The panel under the reference freezes the exact frame that trips the split, so you can see what the feed looked like at the trigger point. This mirrors how AutoSplit decides to split:
 
 - **Normal splits**: the first frame whose similarity reaches the threshold is captured ("Matched frame").
-- **Inverted splits**: the initial match is captured, and then the first frame that drops back below the threshold again is also captured ("Split frame"), since this is the frame AutoSplit splits on for inverted images.
+- **Inverted splits**: the initial match is captured, and then the first frame that drops back below the threshold again is also captured, since this is the frame AutoSplit splits on for inverted images. Without a delay this frame is the "Split frame"; with a delay it is the "Trigger frame" and the actual "Split frame" is captured once the delay elapses.
 
 ### Use delay
 
