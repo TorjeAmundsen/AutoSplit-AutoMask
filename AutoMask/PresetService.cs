@@ -18,7 +18,7 @@ public static class PresetService
             .Where(dir => Directory.EnumerateFiles(dir, "preset.json", SearchOption.TopDirectoryOnly).Any())
             .ToArray();
 
-        // Reading and deserializing each preset.json in parallel — sequential await on a
+        // Reading and deserializing each preset.json in parallel - sequential await on a
         // slow disk (e.g. networked drive, large preset library) summed into noticeable
         // startup latency.
         var results = await Task.WhenAll(presetPaths.Select(LoadOnePresetAsync));

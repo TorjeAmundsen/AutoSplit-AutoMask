@@ -125,7 +125,7 @@ public sealed class WebcamCapture : ICaptureSource
             catch (Exception ex)
             {
                 // OpenCV native errors (device unplugged, codec failure, OOM during
-                // frame allocation) — surface to UI so the live tester can show why
+                // frame allocation) - surface to UI so the live tester can show why
                 // the feed stopped instead of silently freezing.
                 var msg = $"Webcam read failed: {ex.Message}";
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => ErrorReported?.Invoke(msg));

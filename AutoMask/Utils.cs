@@ -59,7 +59,7 @@ public static class Utils
         }
         catch
         {
-            // Nothing more to do — secondary failures during crash logging are not actionable.
+            // Nothing more to do - secondary failures during crash logging are not actionable.
         }
     }
 }

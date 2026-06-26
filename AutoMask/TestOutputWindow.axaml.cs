@@ -85,7 +85,7 @@ public partial class TestOutputWindow : Window
                 return;
             }
 
-            // Every re-entry while the first close is still running must cancel too —
+            // Every re-entry while the first close is still running must cancel too -
             // returning without setting Cancel=true lets Avalonia tear the window down
             // mid-prompt, which was killing the save dialog when Windows taskbar
             // 'Close all windows' fired a second Closing event.
@@ -154,10 +154,16 @@ public partial class TestOutputWindow : Window
         await _controller.DisposeAsync();
         LiveImageView.Source = null;
         ReferenceImageView.Source = null;
+        MatchedImageView.Source = null;
         _liveBitmap?.Dispose();
         _liveBitmap = null;
         _referenceBitmap?.Dispose();
         _referenceBitmap = null;
+        foreach (var (bitmap, _) in _matchedFrames)
+        {
+            bitmap.Dispose();
+        }
+        _matchedFrames.Clear();
     }
 
     public async void UpdateFromMainWindow(
@@ -214,7 +220,7 @@ public partial class TestOutputWindow : Window
 
             try
             {
-                ApplyReferenceBitmap(masked, split.Threshold, split.Name);
+                ApplyReferenceBitmap(masked, split.Threshold, split.Name, split.Inverted, split.Delay);
             }
             finally
             {
@@ -263,9 +269,20 @@ public partial class TestOutputWindow : Window
                 required = parsed;
             }
 
+            // AutoSplit encodes the inverted flag as a 'b' inside the brace flag group, e.g. "split_{b}.png".
+            bool inverted = FileNameHasInvertedFlag(fileName);
+
+            // Delay milliseconds are written between hashes, e.g. "split_#1000#.png".
+            uint delayMs = 0;
+            var delayMatch = DelayRegex().Match(fileName);
+            if (delayMatch.Success)
+            {
+                uint.TryParse(delayMatch.Groups[1].Value, out delayMs);
+            }
+
             try
             {
-                ApplyReferenceBitmap(decoded, required, label: fileName);
+                ApplyReferenceBitmap(decoded, required, label: fileName, inverted: inverted, delayMs: delayMs);
             }
             finally
             {
@@ -278,8 +295,11 @@ public partial class TestOutputWindow : Window
         }
     }
 
-    private void ApplyReferenceBitmap(SKBitmap source, double required, string label)
+    private void ApplyReferenceBitmap(SKBitmap source, double required, string label, bool inverted, uint delayMs)
     {
+        _referenceInverted = inverted;
+        _referenceDelayMs = delayMs;
+
         using var scaled = source.Resize(
             new SKImageInfo(CaptureController.CompareWidth, CaptureController.CompareHeight,
                 SKColorType.Bgra8888, SKAlphaType.Unpremul),
@@ -324,6 +344,7 @@ public partial class TestOutputWindow : Window
         HighestLabel.Text = "-";
         CurrentLabel.Text = "-";
         _controller.ResetHighest();
+        ClearMatch();
     }
 
     private void SetReferenceMissing(string reason)
@@ -335,6 +356,7 @@ public partial class TestOutputWindow : Window
         CurrentLabel.Text = "-";
         HighestLabel.Text = "-";
         RequiredLabel.Text = "-";
+        ClearMatch();
     }
 
     private async void BtnRefreshFeed_Click(object? sender, RoutedEventArgs e)
@@ -551,13 +573,32 @@ public partial class TestOutputWindow : Window
     {
         _controller.ResetHighest();
         HighestLabel.Text = "-";
+        ClearMatch();
     }
 
     private static readonly IBrush _metGreen = new SolidColorBrush(Color.FromRgb(0x6C, 0xD6, 0x88));
     private static readonly IBrush _metWhite = Brushes.White;
+    private static readonly IBrush _captionGrey = new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0xCC));
 
     private WriteableBitmap? _liveBitmap;
     private Bitmap? _referenceBitmap;
+
+    // Each captured trigger frame (initial match, drop-below, delayed variants) is kept so the
+    // user can scroll through them with the ◀ ▶ arrows. Index points at the shown frame.
+    private readonly List<(WriteableBitmap Bitmap, string Caption)> _matchedFrames = [];
+    private int _matchedIndex;
+
+    private enum MatchPhase { Waiting, PendingMatch, Matched, PendingDrop, DroppedBelow }
+    private MatchPhase _matchPhase = MatchPhase.Waiting;
+
+    // Mirrors AutoSplit's inverted-split semantics: split fires when the image reaches the
+    // threshold and then drops below it again, so we capture both events for inverted refs.
+    private bool _referenceInverted;
+
+    // When "Use delay" is checked, the match frame is captured this many ms after the split
+    // condition is met (mirroring a split's delay time), not on the triggering frame itself.
+    private uint _referenceDelayMs;
+    private long _matchPendingUntilTick;
 
     private void OnFrameReady(byte[] bgraPixels, double current, double highest, double required)
     {
@@ -578,23 +619,7 @@ public partial class TestOutputWindow : Window
             LiveImageView.Source = _liveBitmap;
         }
 
-        using (var locked = _liveBitmap.Lock())
-        {
-            int srcStride = CaptureController.CompareWidth * 4;
-            if (locked.RowBytes == srcStride)
-            {
-                Marshal.Copy(bgraPixels, 0, locked.Address, bgraPixels.Length);
-            }
-            else
-            {
-                for (int y = 0; y < CaptureController.CompareHeight; y++)
-                {
-                    Marshal.Copy(bgraPixels, y * srcStride,
-                        locked.Address + y * locked.RowBytes, srcStride);
-                }
-            }
-        }
-
+        WriteBgraInto(_liveBitmap, bgraPixels);
         LiveImageView.InvalidateVisual();
 
         bool hasReference = ReferenceImageView.Source is not null;
@@ -602,6 +627,57 @@ public partial class TestOutputWindow : Window
         HighestLabel.Text = hasReference ? highest.ToString("F4") : "-";
         RequiredLabel.Text = required > 0 ? required.ToString("F4") : "-";
         CurrentLabel.Foreground = required > 0 && current >= required ? _metGreen : _metWhite;
+
+        // Freeze the frame that trips the split so the user can see exactly what tripped it.
+        // Held until the ↺ reset re-arms it (or the reference changes). When "Use delay" is on,
+        // an extra frame is also captured at the split's delay time to show the post-delay timing.
+        bool aboveThreshold = required > 0 && current >= required;
+        bool useDelay = UseDelayCheck.IsChecked == true && _referenceDelayMs > 0;
+        long now = Environment.TickCount64;
+
+        switch (_matchPhase)
+        {
+            case MatchPhase.Waiting when aboveThreshold:
+                // Always freeze the trigger frame immediately. With delay on (non-inverted), the
+                // view updates again at the delayed frame. Inverted defers its delay to the drop.
+                FreezeMatchedFrame(bgraPixels, $"Matched frame - {current:F4}");
+                if (useDelay && !_referenceInverted)
+                {
+                    _matchPendingUntilTick = now + _referenceDelayMs;
+                    _matchPhase = MatchPhase.PendingMatch;
+                }
+                else
+                {
+                    _matchPhase = MatchPhase.Matched;
+                }
+                break;
+
+            case MatchPhase.PendingMatch when now >= _matchPendingUntilTick:
+                FreezeMatchedFrame(bgraPixels, $"Matched frame +{_referenceDelayMs} ms - {current:F4}");
+                _matchPhase = MatchPhase.Matched;
+                break;
+
+            case MatchPhase.Matched when _referenceInverted && !aboveThreshold:
+                // AutoSplit fires an inverted split on the first frame that drops back below the
+                // threshold after matching. With delay on this is the trigger and the actual
+                // split frame follows after the delay; without delay it is the split frame itself.
+                FreezeMatchedFrame(bgraPixels, $"{(useDelay ? "Trigger" : "Split")} frame - {current:F4}");
+                if (useDelay)
+                {
+                    _matchPendingUntilTick = now + _referenceDelayMs;
+                    _matchPhase = MatchPhase.PendingDrop;
+                }
+                else
+                {
+                    _matchPhase = MatchPhase.DroppedBelow;
+                }
+                break;
+
+            case MatchPhase.PendingDrop when now >= _matchPendingUntilTick:
+                FreezeMatchedFrame(bgraPixels, $"Split frame +{_referenceDelayMs} ms - {current:F4}");
+                _matchPhase = MatchPhase.DroppedBelow;
+                break;
+        }
 
         // If the source just reported a different size on first frame, update our crop bounds
         // so a subsequent reset uses the new size.
@@ -611,6 +687,91 @@ public partial class TestOutputWindow : Window
             // Live bitmap here is 320x240 (post-scale); source size lives on the ICaptureSource.
             // We only track the source dims we saw at creation time; good enough for defaults.
         }
+    }
+
+    private static void WriteBgraInto(WriteableBitmap bitmap, byte[] bgraPixels)
+    {
+        using var locked = bitmap.Lock();
+        int srcStride = CaptureController.CompareWidth * 4;
+        if (locked.RowBytes == srcStride)
+        {
+            Marshal.Copy(bgraPixels, 0, locked.Address, bgraPixels.Length);
+        }
+        else
+        {
+            for (int y = 0; y < CaptureController.CompareHeight; y++)
+            {
+                Marshal.Copy(bgraPixels, y * srcStride,
+                    locked.Address + y * locked.RowBytes, srcStride);
+            }
+        }
+    }
+
+    private void FreezeMatchedFrame(byte[] bgraPixels, string caption)
+    {
+        var bitmap = new WriteableBitmap(
+            new PixelSize(CaptureController.CompareWidth, CaptureController.CompareHeight),
+            new Vector(96, 96),
+            PixelFormat.Bgra8888,
+            AlphaFormat.Opaque);
+
+        WriteBgraInto(bitmap, bgraPixels);
+        _matchedFrames.Add((bitmap, caption));
+        _matchedIndex = _matchedFrames.Count - 1;
+        RenderMatchedFrame();
+    }
+
+    private void RenderMatchedFrame()
+    {
+        if (_matchedFrames.Count == 0)
+        {
+            MatchedImageView.Source = null;
+            MatchedCaption.Text = "Matched frame";
+            MatchedCaption.Foreground = _captionGrey;
+        }
+        else
+        {
+            var (bitmap, caption) = _matchedFrames[_matchedIndex];
+            MatchedImageView.Source = bitmap;
+            MatchedImageView.InvalidateVisual();
+            MatchedCaption.Text = _matchedFrames.Count > 1
+                ? $"{caption}  ({_matchedIndex + 1}/{_matchedFrames.Count})"
+                : caption;
+            MatchedCaption.Foreground = _metGreen;
+        }
+
+        BtnMatchedPrev.IsEnabled = _matchedIndex > 0;
+        BtnMatchedNext.IsEnabled = _matchedIndex < _matchedFrames.Count - 1;
+    }
+
+    private void BtnMatchedPrev_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_matchedIndex > 0)
+        {
+            _matchedIndex--;
+            RenderMatchedFrame();
+        }
+    }
+
+    private void BtnMatchedNext_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_matchedIndex < _matchedFrames.Count - 1)
+        {
+            _matchedIndex++;
+            RenderMatchedFrame();
+        }
+    }
+
+    private void ClearMatch()
+    {
+        _matchPhase = MatchPhase.Waiting;
+        foreach (var (bitmap, _) in _matchedFrames)
+        {
+            bitmap.Dispose();
+        }
+        _matchedFrames.Clear();
+        _matchedIndex = 0;
+        RenderMatchedFrame();
     }
 
     private void OnErrorReported(string message)
@@ -694,6 +855,18 @@ public partial class TestOutputWindow : Window
         Close();
     }
 
+    private static bool FileNameHasInvertedFlag(string fileName)
+    {
+        var match = FlagGroupRegex().Match(fileName);
+        return match.Success && match.Groups[1].Value.Contains('b', StringComparison.OrdinalIgnoreCase);
+    }
+
     [System.Text.RegularExpressions.GeneratedRegex(@"\(([0-9]*\.?[0-9]+)\)")]
     private static partial System.Text.RegularExpressions.Regex ThresholdRegex();
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"\{([a-zA-Z]*)\}")]
+    private static partial System.Text.RegularExpressions.Regex FlagGroupRegex();
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"#([0-9]+)#")]
+    private static partial System.Text.RegularExpressions.Regex DelayRegex();
 }
