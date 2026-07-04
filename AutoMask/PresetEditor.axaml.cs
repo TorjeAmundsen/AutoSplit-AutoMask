@@ -1005,7 +1005,7 @@ public partial class PresetEditor : Window
             return;
         }
 
-        var dialog = new ImportSplitsDialog(premadeSplits);
+        var dialog = new ImportSplitsDialog(premadeSplits, _splitsDirectory);
         await dialog.ShowDialog(this);
 
         if (dialog.SelectedSplits.Count == 0)

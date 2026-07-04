@@ -1,0 +1,16 @@
+{
+    "$schema": "../../splits-schema.json",
+    "gameName": "The Legend of Zelda: Ocarina of Time",
+    "splits": [
+        {
+            "mask": "../masks/bottle.png",
+            "name": "Bottle",
+            "description": "Splits on bottle model over head, common manual split timing",
+            "baseImage": "../thumbnails/base_bottle.png",
+            "threshold": 0.93,
+            "pauseTime": 35,
+            "delay": 1100,
+            "inverted": true
+        }
+    ]
+}

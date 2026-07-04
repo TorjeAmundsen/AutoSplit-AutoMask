@@ -1,0 +1,21 @@
+{
+    "$schema": "../../splits-schema.json",
+    "gameName": "The Legend of Zelda: Ocarina of Time",
+    "splits": [
+        {
+            "mask": "../masks/escape.png",
+            "name": "Escape",
+            "description": "Aqua escape, splits on full white fade",
+            "baseImage": "../thumbnails/base_aqua_escape.png",
+            "threshold": 0.97,
+            "delay": 150
+        },
+        {
+            "mask": "../masks/full_fade.png",
+            "name": "Full white fade",
+            "description": "Generic white fade transition or white flash after successful wrong warp",
+            "baseImage": "../thumbnails/base_white_fade.png",
+            "threshold": 0.97
+        }
+    ]
+}

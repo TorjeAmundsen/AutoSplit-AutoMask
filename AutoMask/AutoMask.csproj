@@ -42,6 +42,9 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Compile Update="AddPremadeSplitDialog.axaml.cs">
+        <DependentUpon>AddPremadeSplitDialog.axaml</DependentUpon>
+      </Compile>
       <Compile Update="ImportSplitsDialog.axaml.cs">
         <DependentUpon>ImportSplitsDialog.axaml</DependentUpon>
       </Compile>

@@ -1,0 +1,172 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="AutoSplit_AutoMask.AddPremadeSplitDialog"
+        Title="Add New Pre-made Split" Height="740" Width="560"
+        MinHeight="520" MinWidth="520" FontSize="12"
+        WindowStartupLocation="CenterOwner"
+        Background="#2C2C2C">
+
+    <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="CheckBox">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="6,0,0,0"/>
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Background" Value="#363636"/>
+        </Style>
+        <Style Selector="AutoCompleteBox">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Background" Value="#363636"/>
+        </Style>
+        <Style Selector="TextBox.Invalid">
+            <Setter Property="BorderBrush" Value="#CC4444"/>
+        </Style>
+        <Style Selector="TextBlock.label">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+        </Style>
+    </Window.Styles>
+
+    <DockPanel Margin="12">
+
+        <Border DockPanel.Dock="Bottom" BorderBrush="#444444" BorderThickness="0,1,0,0"
+                Padding="0,8,0,0" Margin="0,8,0,0">
+            <Grid>
+                <Button Name="BtnSave" Content="Save" Width="100"
+                        IsEnabled="False" Click="BtnSave_Click" HorizontalAlignment="Left"/>
+                <Button Content="Cancel" Width="80" Click="BtnCancel_Click" HorizontalAlignment="Right"/>
+            </Grid>
+        </Border>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="8" Margin="0,0,8,0">
+
+                <!-- Game -->
+                <Grid ColumnDefinitions="90,*">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Game:"/>
+                    <AutoCompleteBox Grid.Column="1" Name="GameBox" Height="24"
+                                     FilterMode="Contains" PlaceholderText="Select or type a game"
+                                     TextChanged="GameBox_TextChanged"/>
+                </Grid>
+
+                <!-- Section -->
+                <Grid ColumnDefinitions="90,*">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Section:"/>
+                    <AutoCompleteBox Grid.Column="1" Name="SectionBox" Height="24"
+                                     FilterMode="Contains" PlaceholderText="Select or type a section"
+                                     TextChanged="SectionBox_TextChanged"/>
+                </Grid>
+
+                <!-- Name -->
+                <Grid ColumnDefinitions="90,*">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Name:"/>
+                    <TextBox Grid.Column="1" Name="NameBox" Height="24"
+                             TextChanged="NameBox_TextChanged"/>
+                </Grid>
+
+                <!-- Description -->
+                <Grid ColumnDefinitions="90,*">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Description:" VerticalAlignment="Top" Margin="0,4,0,0"/>
+                    <TextBox Grid.Column="1" Name="DescriptionBox" Height="50"
+                             AcceptsReturn="True" TextWrapping="Wrap"/>
+                </Grid>
+
+                <!-- Threshold -->
+                <Border BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="10,4">
+                    <Grid ColumnDefinitions="Auto,8,60,8,*">
+                        <CheckBox Grid.Column="0" Name="ThresholdEnabledCheck" Content="Threshold"
+                                  IsChecked="True" IsCheckedChanged="NumericToggle_Changed"/>
+                        <TextBox Grid.Column="2" Name="ThresholdBox" Height="24"
+                                 IsEnabled="{Binding #ThresholdEnabledCheck.IsChecked}"
+                                 TextChanged="ThresholdBox_TextChanged"/>
+                        <Slider Grid.Column="4" Name="ThresholdSlider"
+                                Minimum="0" Maximum="1" SmallChange="0.01" LargeChange="0.05"
+                                IsEnabled="{Binding #ThresholdEnabledCheck.IsChecked}"
+                                VerticalAlignment="Center"
+                                ValueChanged="ThresholdSlider_ValueChanged"/>
+                    </Grid>
+                </Border>
+
+                <!-- Pause + Delay -->
+                <Grid ColumnDefinitions="*,8,*">
+                    <Border Grid.Column="0" BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="10,4">
+                        <Grid ColumnDefinitions="Auto,8,*,3,Auto">
+                            <CheckBox Grid.Column="0" Name="PauseEnabledCheck" Content="Pause"
+                                      IsCheckedChanged="NumericToggle_Changed"/>
+                            <TextBox Grid.Column="2" Name="PauseBox" Height="24"
+                                     IsEnabled="{Binding #PauseEnabledCheck.IsChecked}"
+                                     TextChanged="PauseBox_TextChanged"/>
+                            <TextBlock Grid.Column="4" Text="s" VerticalAlignment="Center" Foreground="#888888"/>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Column="2" BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="10,4">
+                        <Grid ColumnDefinitions="Auto,8,*,4,Auto">
+                            <CheckBox Grid.Column="0" Name="DelayEnabledCheck" Content="Delay"
+                                      IsCheckedChanged="NumericToggle_Changed"/>
+                            <TextBox Grid.Column="2" Name="DelayBox" Height="24"
+                                     IsEnabled="{Binding #DelayEnabledCheck.IsChecked}"
+                                     TextChanged="DelayBox_TextChanged"/>
+                            <TextBlock Grid.Column="4" Text="ms" VerticalAlignment="Center" Foreground="#888888"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- Dummy + Inverted -->
+                <Grid ColumnDefinitions="*,8,*">
+                    <Border Grid.Column="0" BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="10,4">
+                        <CheckBox Name="DummyCheck" Content="Dummy"/>
+                    </Border>
+                    <Border Grid.Column="2" BorderBrush="#444444" BorderThickness="1" CornerRadius="3" Padding="10,4">
+                        <CheckBox Name="InvertedCheck" Content="Inverted"/>
+                    </Border>
+                </Grid>
+
+                <!-- Mask -->
+                <Grid ColumnDefinitions="90,*,Auto">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Mask:"/>
+                    <TextBox Grid.Column="1" Name="MaskPathBox" Height="24" IsReadOnly="True"/>
+                    <Button Grid.Column="2" Content="Browse..." Height="24" Margin="6,0,0,0"
+                            Click="BtnBrowseMask_Click"/>
+                </Grid>
+                <Border BorderBrush="#444444" BorderThickness="1" Background="#151515"
+                        Height="150" HorizontalAlignment="Stretch">
+                    <Grid>
+                        <TextBlock Name="MaskPreviewError" Text="Failed to load image" Foreground="#CC4444"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="False"/>
+                        <Image Name="MaskPreviewImage" Stretch="Uniform" Margin="2"/>
+                    </Grid>
+                </Border>
+
+                <!-- Base image / thumbnail -->
+                <Grid ColumnDefinitions="90,*,Auto,Auto">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Base image:"/>
+                    <TextBox Grid.Column="1" Name="BasePathBox" Height="24" IsReadOnly="True"/>
+                    <Button Grid.Column="2" Content="Browse..." Height="24" Margin="6,0,0,0"
+                            Click="BtnBrowseBase_Click"/>
+                    <Button Grid.Column="3" Name="BtnClearBase" Content="Clear" Height="24" Margin="4,0,0,0"
+                            IsEnabled="False" Click="BtnClearBase_Click"/>
+                </Grid>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Border BorderBrush="#444444" BorderThickness="1" Background="#151515" Width="128" Height="96">
+                        <Image Name="BasePreviewImage" Stretch="Uniform" Margin="2"/>
+                    </Border>
+                    <TextBlock VerticalAlignment="Center" Foreground="#888888" TextWrapping="Wrap" Width="300"
+                               Text="Scaled to a 64x48 thumbnail on save. Named after the split (e.g. enter_deku_thumb.png)."/>
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
+
+    </DockPanel>
+</Window>

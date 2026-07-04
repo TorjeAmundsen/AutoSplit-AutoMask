@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -9,22 +10,32 @@ namespace AutoSplit_AutoMask;
 public partial class ImportSplitsDialog : Window
 {
     private static readonly SolidColorBrush DimTextBrush = new(Color.Parse("#888888"));
+    private static readonly SolidColorBrush GameHeaderBrush = new(Color.Parse("#AAAAAA"));
+    private static readonly SolidColorBrush SectionHeaderBrush = new(Color.Parse("#999999"));
     private static readonly SolidColorBrush CardBorderBrush = new(Color.Parse("#444444"));
     private static readonly SolidColorBrush CardBackgroundBrush = new(Color.Parse("#2A2A2A"));
     private static readonly SolidColorBrush CardSelectedBrush = new(Color.Parse("#1E3A5C"));
 
     private readonly List<(PremadeSplitsFile File, PremadeSplit Split, CheckBox CheckBox)> _splitEntries = [];
 
+    private List<PremadeSplitsFile> _premadeSplits;
+    private readonly string _splitsDirectory;
+
     public List<(PremadeSplitsFile File, PremadeSplit Split)> SelectedSplits { get; } = [];
 
-    public ImportSplitsDialog(List<PremadeSplitsFile> premadeSplits)
+    public ImportSplitsDialog(List<PremadeSplitsFile> premadeSplits, string splitsDirectory)
     {
         InitializeComponent();
+        _premadeSplits = premadeSplits;
+        _splitsDirectory = splitsDirectory;
         PopulateSplitsList(premadeSplits);
     }
 
     private void PopulateSplitsList(List<PremadeSplitsFile> premadeSplits)
     {
+        // premadeSplits arrives sorted by game then section, so each distinct game name is
+        // contiguous and gets a single header.
+        string? currentGame = null;
         foreach (var splitsFile in premadeSplits)
         {
             if (splitsFile.Splits == null || splitsFile.Splits.Count == 0)
@@ -32,22 +43,79 @@ public partial class ImportSplitsDialog : Window
                 continue;
             }
 
-            var header = new TextBlock
+            string gameName = splitsFile.GameName ?? "Unknown Game";
+            if (gameName != currentGame)
             {
-                Text = splitsFile.GameName ?? "Unknown Game",
-                FontWeight = FontWeight.SemiBold,
-                FontSize = 11,
-                Foreground = new SolidColorBrush(Color.Parse("#AAAAAA")),
-                Margin = new Thickness(0, 6, 0, 4),
-                TextTrimming = TextTrimming.CharacterEllipsis,
-            };
-            SplitsPanel.Children.Add(header);
+                currentGame = gameName;
+                SplitsPanel.Children.Add(new TextBlock
+                {
+                    Text = gameName,
+                    FontWeight = FontWeight.SemiBold,
+                    FontSize = 11,
+                    Foreground = GameHeaderBrush,
+                    Margin = new Thickness(0, 6, 0, 4),
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                });
+            }
 
+            if (string.IsNullOrWhiteSpace(splitsFile.SectionName))
+            {
+                // Sectionless group: cards sit directly under the game header.
+                foreach (var split in splitsFile.Splits)
+                {
+                    SplitsPanel.Children.Add(BuildSplitCard(splitsFile, split));
+                }
+                continue;
+            }
+
+            var cards = new StackPanel { Spacing = 2, Margin = new Thickness(8, 0, 0, 0) };
             foreach (var split in splitsFile.Splits)
             {
-                SplitsPanel.Children.Add(BuildSplitCard(splitsFile, split));
+                cards.Children.Add(BuildSplitCard(splitsFile, split));
             }
+
+            SplitsPanel.Children.Add(BuildSectionHeader(splitsFile.SectionName, cards));
+            SplitsPanel.Children.Add(cards);
         }
+    }
+
+    private static Border BuildSectionHeader(string sectionName, Control content)
+    {
+        var glyph = new TextBlock
+        {
+            Text = "▾",
+            FontSize = 10,
+            Foreground = SectionHeaderBrush,
+            Width = 12,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        var row = new StackPanel { Orientation = Orientation.Horizontal };
+        row.Children.Add(glyph);
+        row.Children.Add(new TextBlock
+        {
+            Text = sectionName,
+            FontWeight = FontWeight.SemiBold,
+            FontSize = 11,
+            Foreground = SectionHeaderBrush,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = VerticalAlignment.Center,
+        });
+
+        var header = new Border
+        {
+            Child = row,
+            Margin = new Thickness(8, 4, 0, 2),
+            Padding = new Thickness(2, 1),
+            Background = Brushes.Transparent,
+            Cursor = new Cursor(StandardCursorType.Hand),
+        };
+        header.PointerPressed += (_, _) =>
+        {
+            content.IsVisible = !content.IsVisible;
+            glyph.Text = content.IsVisible ? "▾" : "▸";
+        };
+        return header;
     }
 
     private Border BuildSplitCard(PremadeSplitsFile splitsFile, PremadeSplit split)
@@ -173,7 +241,7 @@ public partial class ImportSplitsDialog : Window
             parts.Add("Inverted");
         }
 
-        return string.Join("  ·  ", parts);
+        return string.Join("    ", parts);
     }
 
     private void UpdateImportButtonState()
@@ -192,6 +260,31 @@ public partial class ImportSplitsDialog : Window
         }
 
         Close();
+    }
+
+    private async void BtnAddNew_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var dialog = new AddPremadeSplitDialog(_premadeSplits, _splitsDirectory);
+        await dialog.ShowDialog(this);
+        if (!dialog.Saved)
+        {
+            return;
+        }
+
+        try
+        {
+            (_premadeSplits, _) = await PresetService.LoadPremadeSplitsAsync(_splitsDirectory);
+        }
+        catch (Exception ex)
+        {
+            await MessageBox.Show(this, "Error", $"Failed to reload pre-made splits: {ex.Message}");
+            return;
+        }
+
+        _splitEntries.Clear();
+        SplitsPanel.Children.Clear();
+        PopulateSplitsList(_premadeSplits);
+        UpdateImportButtonState();
     }
 
     private void BtnCancel_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

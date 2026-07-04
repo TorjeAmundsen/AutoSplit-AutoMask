@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using SkiaSharp;
 
 namespace AutoSplit_AutoMask;
 
@@ -70,11 +71,35 @@ public static class PresetService
             return ([], []);
         }
 
-        var splitPaths = Directory.EnumerateDirectories(splitsDirectory)
-            .Where(dir => Directory.EnumerateFiles(dir, "splits.json", SearchOption.TopDirectoryOnly).Any())
-            .ToArray();
+        // Each game folder either holds splits.json directly (one sectionless group) or holds
+        // section subfolders that each hold their own splits.json. A section's display name is
+        // its folder name with the leading numeric ordering prefix stripped.
+        List<(string Path, string? Section)> specs = [];
+        foreach (var gameDir in Directory.EnumerateDirectories(splitsDirectory))
+        {
+            if (Directory.EnumerateFiles(gameDir, "splits.json", SearchOption.TopDirectoryOnly).Any())
+            {
+                specs.Add((gameDir, null));
+                continue;
+            }
 
-        var results = await Task.WhenAll(splitPaths.Select(LoadOnePremadeSplitsAsync));
+            var sections = Directory.EnumerateDirectories(gameDir)
+                .Where(dir => Directory.EnumerateFiles(dir, "splits.json", SearchOption.TopDirectoryOnly).Any())
+                .Select(dir =>
+                {
+                    var (order, display) = ParseSectionFolderName(Path.GetFileName(dir));
+                    return (Path: dir, Section: (string?)display, Order: order);
+                })
+                .OrderBy(s => s.Order)
+                .ThenBy(s => s.Section, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var section in sections)
+            {
+                specs.Add((section.Path, section.Section));
+            }
+        }
+
+        var results = await Task.WhenAll(specs.Select(s => LoadOnePremadeSplitsAsync(s.Path, s.Section)));
 
         List<PremadeSplitsFile> foundSplitFiles = [];
         List<LoadFailure> failures = [];
@@ -90,10 +115,36 @@ public static class PresetService
             }
         }
 
+        // OrderBy is a stable sort, so the per-game section order built above is preserved.
         return (foundSplitFiles.OrderBy(f => f.GameName).ToList(), failures);
     }
 
-    private static async Task<(PremadeSplitsFile? File, LoadFailure? Failure)> LoadOnePremadeSplitsAsync(string splitPath)
+    // "01 Start, Reset, End" -> (1, "Start, Reset, End"). Folders without a leading number sort
+    // last (int.MaxValue) and keep their name unchanged.
+    private static (int Order, string Display) ParseSectionFolderName(string folderName)
+    {
+        int digits = 0;
+        while (digits < folderName.Length && char.IsDigit(folderName[digits]))
+        {
+            digits++;
+        }
+
+        if (digits == 0 || !int.TryParse(folderName[..digits], out int order))
+        {
+            return (int.MaxValue, folderName);
+        }
+
+        int start = digits;
+        while (start < folderName.Length && (char.IsWhiteSpace(folderName[start]) || folderName[start] is '-' or '_' or '.'))
+        {
+            start++;
+        }
+
+        string display = folderName[start..].Trim();
+        return (order, display.Length > 0 ? display : folderName);
+    }
+
+    private static async Task<(PremadeSplitsFile? File, LoadFailure? Failure)> LoadOnePremadeSplitsAsync(string splitPath, string? sectionName)
     {
         string filePath = Path.Combine(splitPath, "splits.json");
         try
@@ -108,6 +159,7 @@ public static class PresetService
             }
 
             splitsFile.FolderPath = splitPath;
+            splitsFile.SectionName = sectionName;
             return (splitsFile, null);
         }
         catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
@@ -400,5 +452,237 @@ public static class PresetService
         }
 
         preset.OriginalFolder = targetFolderFull;
+    }
+
+    /// <summary>
+    /// Writes a single new pre-made split into the bundled splits library: resolves the game and
+    /// section folders (creating a new section with the next numeric prefix when needed), copies
+    /// the mask into the game's shared <c>masks/</c> folder, scales the optional base image to a
+    /// 64x48 thumbnail in <c>thumbnails/</c>, and appends the split to the section's splits.json.
+    /// <paramref name="existing"/> is the already-loaded library, used to resolve folder paths for
+    /// games/sections that already exist. Throws on any I/O or decode failure.
+    /// </summary>
+    internal static async Task AddPremadeSplitAsync(
+        string splitsDirectory,
+        IReadOnlyList<PremadeSplitsFile> existing,
+        string gameName,
+        string sectionName,
+        NewPremadeSplitInput input)
+    {
+        // Resolve the game directory: reuse the folder an existing game already lives in
+        // (the parent of any of its section folders), otherwise derive a new one.
+        var gameFile = existing.FirstOrDefault(f =>
+            f.FolderPath != null &&
+            string.Equals(f.GameName, gameName, StringComparison.OrdinalIgnoreCase));
+        string gameDir = gameFile?.FolderPath != null
+            ? (gameFile.SectionName != null ? Path.GetDirectoryName(gameFile.FolderPath)! : gameFile.FolderPath)
+            : Path.Combine(splitsDirectory, SanitizeFolderName(gameName));
+
+        // Resolve the section directory: reuse an existing section's folder, else create
+        // "NN <section>" with the next free numeric prefix.
+        var sectionFile = existing.FirstOrDefault(f =>
+            f.FolderPath != null && f.SectionName != null &&
+            string.Equals(f.GameName, gameName, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(f.SectionName, sectionName, StringComparison.OrdinalIgnoreCase));
+        string sectionDir = sectionFile?.FolderPath
+            ?? Path.Combine(gameDir, $"{NextSectionPrefix(gameDir):D2} {SanitizeSectionName(sectionName)}");
+
+        string masksDir = Path.Combine(gameDir, "masks");
+        string thumbsDir = Path.Combine(gameDir, "thumbnails");
+        Directory.CreateDirectory(masksDir);
+        Directory.CreateDirectory(thumbsDir);
+        Directory.CreateDirectory(sectionDir);
+
+        // Mask: keep the source filename so re-picking the same file reuses one copy.
+        string maskFull = Path.GetFullPath(input.MaskSourcePath);
+        var (maskName, maskPresent) = ResolveAssetName(masksDir, Path.GetFileName(maskFull),
+            candidate => FilesEqual(candidate, maskFull));
+        if (!maskPresent)
+        {
+            File.Copy(maskFull, Path.Combine(masksDir, maskName), overwrite: false);
+        }
+
+        // Thumbnail: scale to 64x48 and name it from the split (e.g. "Enter Deku" -> enter_deku_thumb.png).
+        string? baseRel = null;
+        if (!string.IsNullOrEmpty(input.BaseImageSourcePath))
+        {
+            byte[] thumbBytes = ScaleToThumbnailPng(input.BaseImageSourcePath);
+            var (thumbName, thumbPresent) = ResolveAssetName(thumbsDir, ThumbnailFileName(input.Name),
+                candidate => BytesEqualFile(thumbBytes, candidate));
+            if (!thumbPresent)
+            {
+                await File.WriteAllBytesAsync(Path.Combine(thumbsDir, thumbName), thumbBytes);
+            }
+            baseRel = $"../thumbnails/{thumbName}";
+        }
+
+        // Build the split object, omitting fields left at their defaults (same rules as preset.json).
+        var splitObj = new JsonObject
+        {
+            ["mask"] = $"../masks/{maskName}",
+            ["name"] = input.Name,
+        };
+        if (!string.IsNullOrWhiteSpace(input.Description)) { splitObj["description"] = input.Description; }
+        if (baseRel != null) { splitObj["baseImage"] = baseRel; }
+        if (input.ThresholdEnabled) { splitObj["threshold"] = input.Threshold; }
+        if (input.PauseEnabled) { splitObj["pauseTime"] = input.PauseTime; }
+        if (input.DelayEnabled) { splitObj["delay"] = input.Delay; }
+        if (input.Dummy) { splitObj["dummy"] = true; }
+        if (input.Inverted) { splitObj["inverted"] = true; }
+
+        // Append to (or create) the section's splits.json.
+        string sectionJsonPath = Path.Combine(sectionDir, "splits.json");
+        JsonObject root;
+        if (File.Exists(sectionJsonPath))
+        {
+            root = JsonNode.Parse(await File.ReadAllTextAsync(sectionJsonPath, Encoding.UTF8)) as JsonObject
+                   ?? throw new InvalidOperationException($"{sectionJsonPath} is not a JSON object.");
+        }
+        else
+        {
+            root = new JsonObject
+            {
+                ["$schema"] = "../../splits-schema.json",
+                ["gameName"] = gameName,
+            };
+        }
+
+        JsonArray splitsArray;
+        if (root["splits"] is JsonArray arr)
+        {
+            splitsArray = arr;
+        }
+        else
+        {
+            splitsArray = new JsonArray();
+            root["splits"] = splitsArray;
+        }
+        splitsArray.Add((JsonNode)splitObj);
+
+        string json = root.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
+        string tmpPath = sectionJsonPath + ".tmp";
+        try
+        {
+            await File.WriteAllTextAsync(tmpPath, json, Encoding.UTF8);
+            File.Move(tmpPath, sectionJsonPath, overwrite: true);
+        }
+        catch
+        {
+            try { if (File.Exists(tmpPath)) { File.Delete(tmpPath); } } catch { /* best-effort */ }
+            throw;
+        }
+    }
+
+    // Highest numeric section prefix already used under a game folder, plus one (1 if none).
+    private static int NextSectionPrefix(string gameDir)
+    {
+        if (!Directory.Exists(gameDir))
+        {
+            return 1;
+        }
+
+        int max = 0;
+        foreach (string dir in Directory.EnumerateDirectories(gameDir))
+        {
+            var (order, _) = ParseSectionFolderName(Path.GetFileName(dir));
+            if (order != int.MaxValue && order > max)
+            {
+                max = order;
+            }
+        }
+        return max + 1;
+    }
+
+    // Section folder names keep spaces/commas; only filesystem-invalid characters are stripped.
+    private static string SanitizeSectionName(string name)
+    {
+        char[] invalid = Path.GetInvalidFileNameChars();
+        string sanitized = new string(name.Where(c => !invalid.Contains(c)).ToArray()).Trim();
+        return sanitized.Length > 0 ? sanitized : "Section";
+    }
+
+    private static string ThumbnailFileName(string splitName)
+    {
+        char[] invalid = Path.GetInvalidFileNameChars();
+        string baseName = new string(splitName.ToLowerInvariant().Replace(' ', '_')
+            .Where(c => !invalid.Contains(c)).ToArray());
+        return $"{(baseName.Length > 0 ? baseName : "split")}_thumb.png";
+    }
+
+    private static byte[] ScaleToThumbnailPng(string sourcePath)
+    {
+        using SKBitmap src = SKBitmap.Decode(sourcePath)
+            ?? throw new InvalidOperationException($"Could not decode image: {sourcePath}");
+        using SKBitmap scaled = src.Resize(new SKImageInfo(64, 48, SKColorType.Bgra8888),
+            new SKSamplingOptions(SKFilterMode.Linear))
+            ?? throw new InvalidOperationException($"Could not resize image: {sourcePath}");
+        using SKImage img = SKImage.FromBitmap(scaled);
+        using SKData data = img.Encode(SKEncodedImageFormat.Png, 100);
+        return data.ToArray();
+    }
+
+    // Picks a filename in <paramref name="folder"/>: the preferred name if free, the existing file
+    // if <paramref name="matchesExisting"/> says it's identical (AlreadyPresent=true), else the next
+    // " (n)" variant.
+    private static (string Name, bool AlreadyPresent) ResolveAssetName(
+        string folder, string preferred, Func<string, bool> matchesExisting)
+    {
+        string ext = Path.GetExtension(preferred);
+        string baseName = Path.GetFileNameWithoutExtension(preferred);
+        string candidate = preferred;
+        for (int i = 1; ; i++)
+        {
+            string candidatePath = Path.Combine(folder, candidate);
+            if (!File.Exists(candidatePath))
+            {
+                return (candidate, false);
+            }
+            if (matchesExisting(candidatePath))
+            {
+                return (candidate, true);
+            }
+            candidate = $"{baseName} ({i}){ext}";
+        }
+    }
+
+    private static bool FilesEqual(string pathA, string pathB)
+    {
+        var a = new FileInfo(pathA);
+        var b = new FileInfo(pathB);
+        if (!a.Exists || !b.Exists || a.Length != b.Length)
+        {
+            return false;
+        }
+
+        using FileStream sa = a.OpenRead();
+        using FileStream sb = b.OpenRead();
+        int ba, bb;
+        do
+        {
+            ba = sa.ReadByte();
+            bb = sb.ReadByte();
+            if (ba != bb)
+            {
+                return false;
+            }
+        } while (ba != -1);
+        return true;
+    }
+
+    private static bool BytesEqualFile(byte[] content, string path)
+    {
+        try
+        {
+            var info = new FileInfo(path);
+            if (!info.Exists || info.Length != content.Length)
+            {
+                return false;
+            }
+            return File.ReadAllBytes(path).AsSpan().SequenceEqual(content);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 }

@@ -207,9 +207,40 @@ If any presets have unsaved changes when you click **Close** (or close the windo
 
 The **📥** toolbar button opens a dialog where you can import common, ready-to-use splits into the currently selected preset. Pre-made splits come bundled with the application and include mask images and recommended properties already configured.
 
-In the import dialog, splits are grouped by game. Each split is shown as a card with its name, a short description, property summary (threshold, pause, delay, etc.), and a thumbnail of the recommended base image when available. Check the splits you want and click **Import Selected** - they are inserted after the currently selected split in the preset.
+In the import dialog, splits are grouped by game and, optionally, by **section** within a game. Each section header can be clicked to collapse or expand it. Each split is shown as a card with its name, a short description, property summary (threshold, pause, delay, etc.), and a thumbnail of the recommended base image when available. Check the splits you want and click **Import Selected** - they are inserted after the currently selected split in the preset. Collapsing a section does not clear its checked splits.
 
 Mask images are copied into the preset folder when you save.
+
+### Adding a New Pre-made Split
+
+The **Add New…** button in the import dialog opens an editor for creating a brand-new pre-made split. Pick (or type) a game and a section, give the split a name, set its properties (threshold, pause, delay, dummy, inverted), choose a **mask** PNG, and optionally choose a **base image**. On save:
+
+- The mask is copied into the game's `masks/` folder (keeping its source filename so the same mask can be reused by other splits).
+- The base image is **automatically scaled down to a 64×48 thumbnail** and saved into the game's `thumbnails/` folder, named after the split (lowercased, spaces → underscores, with a `_thumb` suffix — e.g. *Enter Deku* → `enter_deku_thumb.png`).
+- The split is appended to the section's `splits.json` (a new section gets the next numeric prefix). The import list refreshes so the new split appears immediately.
+
+### Pre-made Splits Disk Layout
+
+Pre-made splits live in the bundled `splits/` directory, one folder per game. Each game keeps its full-resolution mask images in a shared `masks/` folder and its 64×48 base-image thumbnails in a shared `thumbnails/` folder, both under the game directory, so the same image can be reused by multiple splits or sections without being duplicated on disk. A game folder can hold splits in either layout:
+
+```
+splits/
+  OcarinaOfTime/
+    masks/                     # full-res mask PNGs for this game
+      reset.png  start.png  escape.png  ...
+    thumbnails/                # 64x48 base images
+      base_links_house.png  base_ganon.png  ...
+    01 Start, Reset, End/      # a section
+      splits.json              # mask -> ../masks/<file>, baseImage -> ../thumbnails/<file>
+    02 Transitions/            # another section
+      splits.json
+```
+
+or, with no sections, a single `splits.json` directly inside the game folder (referencing `masks/<file>` and `thumbnails/<file>`).
+
+- The **game name** comes from each `splits.json`'s `gameName`; all sections of a game share it.
+- A **section's display name** is its subfolder name. A leading number orders the sections in the dialog and is stripped from the displayed name (e.g. `01 Start, Reset, End` shows as **Start, Reset, End**). Sections without a number prefix sort last, alphabetically.
+- Mask and base-image paths in each `splits.json` are relative to the folder that contains it, so a section references the shared images as `../masks/<file>` and `../thumbnails/<file>`.
 
 ---
 

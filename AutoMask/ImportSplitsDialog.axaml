@@ -26,6 +26,7 @@
             <Grid>
                 <Button Name="BtnImportSelected" Content="Import Selected" Width="120"
                         IsEnabled="False" Click="BtnImportSelected_Click" HorizontalAlignment="Left"/>
+                <Button Content="Add New..." Width="100" Click="BtnAddNew_Click" HorizontalAlignment="Center"/>
                 <Button Content="Cancel" Width="80" Click="BtnCancel_Click" HorizontalAlignment="Right"/>
             </Grid>
         </Border>
