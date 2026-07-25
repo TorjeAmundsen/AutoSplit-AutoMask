@@ -77,14 +77,43 @@ public sealed class WebcamCapture : ICaptureSource
 
     public Task StartAsync(CancellationToken ct)
     {
-        _videoCapture = new VideoCapture(_device.Index, VideoCaptureAPIs.DSHOW);
-        if (!_videoCapture.IsOpened())
+        // Opening a DirectShow device blocks for several seconds when it is already in
+        // use by another program (e.g. a capture card held by OBS). Run the open on a
+        // dedicated short-lived thread so the UI thread stays responsive; a thread pool
+        // worker is avoided for the same COM-taint reason as EnumerateDevicesAsync.
+        var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
         {
-            _videoCapture.Dispose();
-            _videoCapture = null;
-            throw new InvalidOperationException($"Could not open webcam: {_device.Name}");
+            try
+            {
+                Open(ct);
+                tcs.SetResult();
+            }
+            catch (Exception ex)
+            {
+                tcs.SetException(ex);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "Webcam Open",
+        };
+        thread.Start();
+        return tcs.Task;
+    }
+
+    private void Open(CancellationToken ct)
+    {
+        var videoCapture = new VideoCapture(_device.Index, VideoCaptureAPIs.DSHOW);
+        if (!videoCapture.IsOpened())
+        {
+            videoCapture.Dispose();
+            throw new InvalidOperationException(
+                $"Could not open '{_device.Name}'. It may be in use by another program. "
+                + "If OBS is using it, select OBS Virtual Camera instead.");
         }
 
+        _videoCapture = videoCapture;
         _videoCapture.Set(VideoCaptureProperties.FrameWidth, 1920);
         _videoCapture.Set(VideoCaptureProperties.FrameHeight, 1080);
         _videoCapture.Set(VideoCaptureProperties.Fps, 60);
@@ -103,8 +132,6 @@ public sealed class WebcamCapture : ICaptureSource
         _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _thread = new Thread(CaptureLoop) { IsBackground = true, Name = "Webcam Capture" };
         _thread.Start();
-
-        return Task.CompletedTask;
     }
 
     private void CaptureLoop()
