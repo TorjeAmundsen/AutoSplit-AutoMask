@@ -5,7 +5,7 @@
 
 The live output tester lets you compare a reference image against a live video feed in real time. Open it from the main window via the **Live tester** button. The reference and the live video feed are both nearest-neighbor scaled down to 320x240 before they are compared using L2 Norm, because this is how AutoSplit does it. This aims to achieve complete parity with how AutoSplit handles its comparison, so you can accurately test your output images before putting them into AutoSplit.
 
-Other comparison methods than L2 Norm are currently not supported, and will not be implemented until someone submits and issue about needing it.
+Other comparison methods than L2 Norm are currently not supported, and will not be implemented until someone submits an issue about needing it.
 
 ## Reference image
 
