@@ -14,24 +14,18 @@ using SkiaSharp;
 
 namespace AutoSplit_AutoMask;
 
-public sealed record FeedGroupHeader(string Title);
-
 [SupportedOSPlatform("windows")]
 public partial class TestOutputWindow : Window
 {
-    private enum FeedKind { Window, Region, Webcam }
-
     private sealed class FeedOption
     {
         public string Label { get; init; } = "";
-        public FeedKind Kind { get; init; }
-        public WindowCapture.WindowHandle Window { get; init; }
         public CamDeviceInfo? Camera { get; init; }
         public override string ToString() => Label;
     }
 
     private readonly CaptureController _controller = new();
-    private readonly ObservableCollection<object> _feedOptions = [];
+    private readonly ObservableCollection<FeedOption> _feedOptions = [];
 
     private SplitPreset? _presetFromMain;
     private int _splitIndexFromMain = -1;
@@ -40,6 +34,7 @@ public partial class TestOutputWindow : Window
     private bool _useCustomReference;
 
     private bool _loadingFeeds;
+    private FeedOption? _activeFeedOption;
     private bool _suppressCropEvents;
     private int _activeSourceW = 320;
     private int _activeSourceH = 240;
@@ -62,15 +57,6 @@ public partial class TestOutputWindow : Window
         InitializeComponent();
 
         ComboBoxFeedSource.ItemsSource = _feedOptions;
-        ComboBoxFeedSource.ContainerPrepared += (_, e) =>
-        {
-            if (e.Container is ComboBoxItem item)
-            {
-                bool isHeader = e.Index < _feedOptions.Count && _feedOptions[e.Index] is FeedGroupHeader;
-                item.IsHitTestVisible = !isHeader;
-                item.Focusable = !isHeader;
-            }
-        };
 
         _controller.FrameReady += OnFrameReady;
         _controller.ErrorReported += OnErrorReported;
@@ -375,18 +361,13 @@ public partial class TestOutputWindow : Window
             try
             {
                 var cams = await WebcamCapture.EnumerateDevicesAsync();
-                if (cams.Count > 0)
+                foreach (var cam in cams)
                 {
-                    _feedOptions.Add(new FeedGroupHeader("Webcams"));
-                    foreach (var cam in cams)
+                    _feedOptions.Add(new FeedOption
                     {
-                        _feedOptions.Add(new FeedOption
-                        {
-                            Label = cam.Name,
-                            Kind = FeedKind.Webcam,
-                            Camera = cam,
-                        });
-                    }
+                        Label = cam.Name,
+                        Camera = cam,
+                    });
                 }
             }
             catch (Exception ex)
@@ -394,35 +375,24 @@ public partial class TestOutputWindow : Window
                 OnErrorReported($"Webcam enumeration failed: {ex.Message}");
             }
 
-            var windows = WindowCapture.ListWindows();
-            if (windows.Count > 0)
-            {
-                _feedOptions.Add(new FeedGroupHeader("Windows"));
-                foreach (var w in windows)
-                {
-                    _feedOptions.Add(new FeedOption
-                    {
-                        Label = w.Title,
-                        Kind = FeedKind.Window,
-                        Window = w,
-                    });
-                }
-            }
-
-            _feedOptions.Add(new FeedGroupHeader("Screen"));
-            _feedOptions.Add(new FeedOption { Label = "Screen region", Kind = FeedKind.Region });
-
             int select = -1;
             if (selectAfter is not null)
             {
                 for (int i = 0; i < _feedOptions.Count; i++)
                 {
-                    if (_feedOptions[i] is FeedOption opt && opt.Label == selectAfter)
+                    if (_feedOptions[i].Label == selectAfter)
                     {
                         select = i;
                         break;
                     }
                 }
+            }
+
+            // The refresh created new FeedOption instances; remap the active one by label
+            // so a later failed switch can revert the selection to an item in the list.
+            if (_activeFeedOption is not null)
+            {
+                _activeFeedOption = _feedOptions.FirstOrDefault(o => o.Label == _activeFeedOption.Label);
             }
 
             ComboBoxFeedSource.SelectedIndex = select;
@@ -449,50 +419,52 @@ public partial class TestOutputWindow : Window
         if (ComboBoxFeedSource.SelectedItem is not FeedOption opt)
         {
             await _controller.SetSourceAsync(null, CancellationToken.None);
+            _activeFeedOption = null;
             return;
         }
 
-        ICaptureSource? source = null;
+        // Disabled while switching so the user can't queue up a second switch while a
+        // slow device open (webcam in use elsewhere) is still in flight.
+        ComboBoxFeedSource.IsEnabled = false;
         try
         {
-            source = opt.Kind switch
+            var source = CreateWebcamCapture(opt.Camera!);
+            try
             {
-                FeedKind.Window => WindowCapture.Create(opt.Window),
-                FeedKind.Region => CreateDefaultRegionCapture(),
-                FeedKind.Webcam => CreateWebcamCapture(opt.Camera!),
-                _ => null,
-            };
-        }
-        catch (Exception ex)
-        {
-            OnErrorReported($"Could not create source: {ex.Message}");
-            return;
-        }
+                await _controller.SetSourceAsync(source, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                await source.DisposeAsync();
+                RevertSelectionTo(_activeFeedOption);
+                await MessageBox.Show(this, "Could not open source", ex.Message);
+                return;
+            }
 
-        if (source is null)
-        {
-            return;
+            _activeFeedOption = opt;
+            _activeSourceW = source.SourceWidth;
+            _activeSourceH = source.SourceHeight;
+            ResetCropToFull();
         }
-
-        try
+        finally
         {
-            await _controller.SetSourceAsync(source, CancellationToken.None);
+            ComboBoxFeedSource.IsEnabled = true;
         }
-        catch (Exception ex)
-        {
-            OnErrorReported($"Failed to start source: {ex.Message}");
-            return;
-        }
-
-        _activeSourceW = source.SourceWidth;
-        _activeSourceH = source.SourceHeight;
-        ResetCropToFull();
     }
 
-    private static RegionCapture CreateDefaultRegionCapture()
+    private void RevertSelectionTo(FeedOption? previous)
     {
-        var (vx, vy, vw, vh) = RegionCapture.GetVirtualScreenRect();
-        return new RegionCapture(vx, vy, vw, vh);
+        // The previous source is still running (SetSourceAsync only stops it after the
+        // new source started successfully), so only the combo selection needs restoring.
+        _loadingFeeds = true;
+        try
+        {
+            ComboBoxFeedSource.SelectedItem = previous;
+        }
+        finally
+        {
+            _loadingFeeds = false;
+        }
     }
 
     private static WebcamCapture CreateWebcamCapture(CamDeviceInfo device)
@@ -545,23 +517,11 @@ public partial class TestOutputWindow : Window
         _suppressCropEvents = true;
         try
         {
-            if (ComboBoxFeedSource.SelectedItem is FeedOption { Kind: FeedKind.Region })
-            {
-                var (vx, vy, vw, vh) = RegionCapture.GetVirtualScreenRect();
-                CropX.Value = vx;
-                CropY.Value = vy;
-                CropW.Value = vw;
-                CropH.Value = vh;
-                _controller.UpdateCrop(new CaptureController.CropRect(vx, vy, vw, vh));
-            }
-            else
-            {
-                CropX.Value = 0;
-                CropY.Value = 0;
-                CropW.Value = w;
-                CropH.Value = h;
-                _controller.UpdateCrop(new CaptureController.CropRect(0, 0, w, h));
-            }
+            CropX.Value = 0;
+            CropY.Value = 0;
+            CropW.Value = w;
+            CropH.Value = h;
+            _controller.UpdateCrop(new CaptureController.CropRect(0, 0, w, h));
         }
         finally
         {
@@ -678,15 +638,6 @@ public partial class TestOutputWindow : Window
                 _matchPhase = MatchPhase.DroppedBelow;
                 break;
         }
-
-        // If the source just reported a different size on first frame, update our crop bounds
-        // so a subsequent reset uses the new size.
-        if (ComboBoxFeedSource.SelectedItem is FeedOption opt
-            && opt.Kind != FeedKind.Region)
-        {
-            // Live bitmap here is 320x240 (post-scale); source size lives on the ICaptureSource.
-            // We only track the source dims we saw at creation time; good enough for defaults.
-        }
     }
 
     private static void WriteBgraInto(WriteableBitmap bitmap, byte[] bgraPixels)
@@ -784,7 +735,6 @@ public partial class TestOutputWindow : Window
         var feedOpt = ComboBoxFeedSource.SelectedItem as FeedOption;
         return new CapturePreferences
         {
-            FeedKind = feedOpt?.Kind.ToString(),
             FeedName = feedOpt?.Label,
             CropX = (int)(CropX.Value ?? 0),
             CropY = (int)(CropY.Value ?? 0),

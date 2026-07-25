@@ -6,9 +6,8 @@ public interface ICaptureSource : IAsyncDisposable
 {
     string DisplayName { get; }
 
-    // Native capture size (before any crop).  For a window this is client rect; for region
-    // it's the region rect; for a webcam it's the camera frame.  Used to default the crop
-    // spinboxes + clamp their values.
+    // Native capture size (before any crop), i.e. the camera frame size.  Used to default
+    // the crop spinboxes + clamp their values.
     int SourceWidth { get; }
     int SourceHeight { get; }
 

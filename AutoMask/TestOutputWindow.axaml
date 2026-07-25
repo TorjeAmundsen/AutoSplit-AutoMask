@@ -1,17 +1,9 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="clr-namespace:AutoSplit_AutoMask"
         x:Class="AutoSplit_AutoMask.TestOutputWindow"
         Title="Live output tester"
         Width="680" Height="588" CanResize="False"
         FontSize="12" Background="#2C2C2C">
-
-    <Window.DataTemplates>
-        <DataTemplate DataType="{x:Type local:FeedGroupHeader}">
-            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="11"
-                       Foreground="#999999" Margin="0,1,0,1"/>
-        </DataTemplate>
-    </Window.DataTemplates>
 
     <Window.Styles>
         <Style Selector="TextBox">

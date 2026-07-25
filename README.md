@@ -97,7 +97,7 @@ Note that only **Save all** moves base images to the `base` subfolder - when sav
 
 ## Live Output Tester
 
-Click **Live tester** to open a real-time comparison window. It captures a live video feed from a window, webcam, or screen region and compares it against the current output image using the same L2 Norm algorithm as AutoSplit. See [TESTER.md](TESTER.md) for details.
+Click **Live tester** to open a real-time comparison window. It captures a live video feed from a webcam source (such as OBS Virtual Cam) and compares it against the current output image using the same L2 Norm algorithm as AutoSplit. See [TESTER.md](TESTER.md) for details.
 
 ## Presets
 

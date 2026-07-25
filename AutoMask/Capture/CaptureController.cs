@@ -79,17 +79,20 @@ public sealed class CaptureController : IAsyncDisposable
         await _swapLock.WaitAsync(ct);
         try
         {
-            var current = Volatile.Read(ref _active);
-            if (current is not null)
-            {
-                Volatile.Write(ref _active, null);
-                await ShutdownSourceAsync(current);
-            }
-
+            // Start the new source before stopping the old one, so a source that fails
+            // to open (webcam already in use by another program) throws out of here while
+            // the current feed keeps running instead of freezing on its last frame.
             if (newSource is not null)
             {
                 await newSource.StartAsync(ct);
-                Volatile.Write(ref _active, newSource);
+            }
+
+            var current = Volatile.Read(ref _active);
+            Volatile.Write(ref _active, newSource);
+
+            if (current is not null)
+            {
+                await ShutdownSourceAsync(current);
             }
         }
         finally
