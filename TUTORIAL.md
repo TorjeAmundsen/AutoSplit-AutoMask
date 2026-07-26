@@ -2,6 +2,8 @@
 
 Your game feed must have **no black borders**. AutoMask can adjust for aspect ratio differences, but it cannot detect or correct for black bars or over-cropping. The setup below uses OBS Virtual Cam (the recommended capture method for AutoSplit) with OBS filters doing all cropping and scaling, so that AutoSplit sees exactly your game feed and nothing else.
 
+<img width="960" height="420" alt="Side-by-side comparison of an un-cropped, un-scaled game feed with black bars around it vs a cropped and scaled one" src="https://github.com/user-attachments/assets/0e83e003-b5b1-4332-8f97-7e2d71819e00" />
+
 ## 1. Crop your feed with the Crop/Pad filter
 
 Crop your capture source using the **Crop/Pad** filter (right-click your capture source, then **Filters**), **not** with OBS's transform features (dragging to scale, alt-dragging to crop in the preview window). Transforms only change how the source is displayed on your canvas - the source itself, and therefore what OBS Virtual Cam outputs, stays uncropped. If your feed is currently set up with transforms, right-click the source and press **Reset transform** in the **Transform** menu, then redo it with filters.
@@ -24,6 +26,9 @@ For this I made [AutoLUT](https://torjeamundsen.github.io/AutoLUT/), which gener
 
 ## 4. Set up OBS Virtual Camera
 
+<img width="396" height="199" alt="OBS Virtual Cam settings window showing the correct settings" src="https://github.com/user-attachments/assets/5c01052e-1a73-4542-8e5b-738f453944e6" />
+
+
 In OBS, click the gear icon next to **Start Virtual Camera** and set:
 
 - **Output Type**: **Source**
@@ -37,12 +42,18 @@ Download [AutoSplit](https://github.com/Toufool/AutoSplit) and the [LiveSplit Au
 
 ## 6. Set AutoSplit's capture method
 
+<img width="288" height="361" alt="AutoSplit's settings window showing correct 'Capture method' and 'Capture device'" src="https://github.com/user-attachments/assets/fe91d02c-8542-428d-9f50-662e186c0a26" />
+
+
 In AutoSplit, open **Settings**, go to the capture settings, and set:
 
 - **Capture Method**: **Video Capture Device**
 - **Capture Device**: **OBS Virtual Camera**
 
 ## 7. Crop the capture region in AutoSplit
+
+<img width="898" height="339" alt="Side-by-side comparison of an un-cropped 1920x1080 OBS Virtual Cam feed in AutoSplit with black bars on the sides vs a correctly cropped one" src="https://github.com/user-attachments/assets/af58d019-e734-4866-95bf-70c3fa94d8ee" />
+
 
 OBS Virtual Cam displays your selected source centered in OBS's canvas resolution, so you need to crop in AutoSplit so it only sees your game feed. With a 1920x1080 canvas and a 1440x1080 scaled feed, the feed sits centered with 240 pixels of padding on each side (half of the missing 480), so set:
 
@@ -77,7 +88,7 @@ Click **Load base image(s)** and select all your screenshots. Screenshots taken 
 
 ## 12. Set the output folder
 
-Click the folder icon next to the output path field to choose an output folder - typically the same folder AutoSplit is pointed at.
+Click the folder icon next to the output path field to choose an output folder - typically the same folder AutoSplit is already pointed at.
 
 ## 13. Save all
 
