@@ -1,3 +1,11 @@
+## Downloads to prepare
+
+- [AutoSplit](https://github.com/Toufool/AutoSplit/releases)
+
+- [LiveSplit.AutoSplitIntegration (Windows only)](https://github.com/Toufool/LiveSplit.AutoSplitIntegration/releases/latest/download/LiveSplit.AutoSplitIntegration.dll)
+
+- [AutoMask](https://github.com/TorjeAmundsen/AutoSplit-AutoMask/releases)
+
 # AutoSplit + OBS Setup
 
 Your game feed must have **no black borders**. AutoMask can adjust for aspect ratio differences, but it cannot detect or correct for black bars or over-cropping. The setup below uses OBS Virtual Cam (the recommended capture method for AutoSplit) with OBS filters doing all cropping and scaling, so that AutoSplit sees exactly your game feed and nothing else.
