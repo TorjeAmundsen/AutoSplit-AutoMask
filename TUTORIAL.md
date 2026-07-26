@@ -40,6 +40,8 @@ Then start the Virtual Camera. With Output Type set to Source, the Virtual Cam o
 
 Download [AutoSplit](https://github.com/Toufool/AutoSplit) and the [LiveSplit AutoSplit Integration plugin](https://github.com/Toufool/LiveSplit.AutoSplitIntegration#autosplit-integration--), and set up the integration as per its instructions. The integration lets AutoSplit control your LiveSplit timer directly.
 
+Linux users: You'll have to rely on AutoSplit via its hotkey settings instead, since this plugin is Windows only.
+
 ## 6. Set AutoSplit's capture method
 
 <img width="288" height="361" alt="AutoSplit's settings window showing correct 'Capture method' and 'Capture device'" src="https://github.com/user-attachments/assets/fe91d02c-8542-428d-9f50-662e186c0a26" />
