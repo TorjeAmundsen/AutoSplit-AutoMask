@@ -55,6 +55,18 @@ public static class PresetService
             }
 
             preset.PresetFolder = presetPath;
+            if (preset.Splits is not null)
+            {
+                // Presets made on Windows store paths like "savestates\\x.gzs". Linux and macOS don't treat '\' as a separator.
+                for (int i = 0; i < preset.Splits.Count; i++)
+                {
+                    preset.Splits[i] = preset.Splits[i] with
+                    {
+                        Savestate = preset.Splits[i].Savestate.Replace('\\', Path.DirectorySeparatorChar)
+                    };
+                }
+            }
+
             return (preset, null);
         }
         catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)

@@ -382,66 +382,76 @@ public partial class MainWindow : Window
             return;
         }
 
-        string tempDir = Path.Combine(Path.GetTempPath(), $"AutoMask_savestates_{Guid.NewGuid():N}");
-        Directory.CreateDirectory(tempDir);
-
-        int padWidth = preset.Splits.Count.ToString().Length;
-        var copiedPaths = new List<string>();
-
-        for (int i = 0; i < preset.Splits.Count; i++)
+        try
         {
-            var split = preset.Splits[i];
-            if (string.IsNullOrEmpty(split.Savestate))
+            string tempDir = Path.Combine(Path.GetTempPath(), $"AutoMask_savestates_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(tempDir);
+
+            int padWidth = preset.Splits.Count.ToString().Length;
+            var copiedPaths = new List<string>();
+
+            for (int i = 0; i < preset.Splits.Count; i++)
             {
-                continue;
+                var split = preset.Splits[i];
+                if (string.IsNullOrEmpty(split.Savestate))
+                {
+                    continue;
+                }
+
+                string src = Path.Combine(preset.PresetFolder, split.Savestate);
+                if (!File.Exists(src))
+                {
+                    continue;
+                }
+
+                string ext = Path.GetExtension(src);
+                string instructionsSuffix = string.IsNullOrEmpty(split.SavestateInstructions) ? "" : "_SEE_INSTRUCTIONS";
+                string destName = $"{i.ToString().PadLeft(padWidth, '0')}_{split.Name}{instructionsSuffix}{ext}";
+                string destPath = Path.Combine(tempDir, destName);
+                File.Copy(src, destPath, overwrite: true);
+                copiedPaths.Add(destPath);
             }
 
-            string src = Path.Combine(preset.PresetFolder, split.Savestate);
-            if (!File.Exists(src))
+            if (copiedPaths.Count == 0)
             {
-                continue;
+                await ShowMessage("Error", "No savestate files found for this preset.");
+                return;
             }
 
-            string ext = Path.GetExtension(src);
-            string instructionsSuffix = string.IsNullOrEmpty(split.SavestateInstructions) ? "" : "_SEE_INSTRUCTIONS";
-            string destName = $"{i.ToString().PadLeft(padWidth, '0')}_{split.Name}{instructionsSuffix}{ext}";
-            string destPath = Path.Combine(tempDir, destName);
-            File.Copy(src, destPath, overwrite: true);
-            copiedPaths.Add(destPath);
-        }
-
-        if (copiedPaths.Count == 0)
-        {
-            return;
-        }
-
-        if (Clipboard is null)
-        {
-            return;
-        }
-
-        var data = new DataTransfer();
-        int addedCount = 0;
-        foreach (string path in copiedPaths)
-        {
-            var file = await StorageProvider.TryGetFileFromPathAsync(new Uri(path));
-            if (file is null)
+            if (Clipboard is null)
             {
-                continue;
+                await ShowMessage("Error", "The clipboard is not available.");
+                return;
             }
 
-            data.Add(DataTransferItem.Create(DataFormat.File, file));
-            addedCount++;
-        }
+            var data = new DataTransfer();
+            int addedCount = 0;
+            foreach (string path in copiedPaths)
+            {
+                var file = await StorageProvider.TryGetFileFromPathAsync(new Uri(path));
+                if (file is null)
+                {
+                    continue;
+                }
 
-        if (addedCount == 0)
+                data.Add(DataTransferItem.Create(DataFormat.File, file));
+                addedCount++;
+            }
+
+            if (addedCount == 0)
+            {
+                await ShowMessage("Error", "Could not add the savestates to the clipboard.");
+                return;
+            }
+
+            await Clipboard.SetDataAsync(data);
+
+            ShowStatus($"Copied {addedCount} savestate(s) to clipboard");
+        }
+        catch (Exception ex)
         {
-            return;
+            await ShowMessage("Error", "Copying savestates failed.", ex.Message);
         }
-
-        await Clipboard.SetDataAsync(data);
-
-        ShowStatus($"Copied {addedCount} savestate(s) to clipboard");
     }
 
     private async void BtnSelectOutputDirectory_Click(object sender, RoutedEventArgs e)
