@@ -52,3 +52,8 @@ jobs:
                   done
                   version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' AutoMask/AutoMask.csproj)
                   bash macos/bundle.sh build/osx-arm64 build/osx-x64 "$version" build/macos-universal
+
+            - uses: actions/upload-artifact@v7
+              with:
+                  name: AutoMask-pr${{ github.event.number }}-${{ matrix.rid }}
+                  path: build/${{ matrix.rid }}
