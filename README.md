@@ -1,6 +1,8 @@
 # Download
 
-Download the [latest release](/../../releases/latest) for your platform. The builds are self-contained Native AOT executables - no .NET runtime required.
+Download the [latest release](/../../releases/latest) for your platform: `win-x64`, `linux-x64` or `macos-universal` (one app for Apple Silicon and Intel Macs). The builds are self-contained Native AOT executables - no .NET runtime required.
+
+On macOS, unzip it and move `AutoMask.app` to your Applications folder. macOS blocks the first start because the app isn't notarized: run `xattr -dr com.apple.quarantine /Applications/AutoMask.app`, or allow it in System Settings > Privacy & Security > Open Anyway. The live tester asks for camera access the first time you pick a capture source.
 
 # AutoMask for AutoSplit
 
@@ -20,7 +22,7 @@ Click **Live tester** to open a real-time comparison window. It captures a live 
 
 ## Presets
 
-Presets define the sequence of splits and their mask images, thresholds, timing, and other settings for a specific game and category. They are stored in the `presets/` folder next to the executable.
+Presets define the sequence of splits and their mask images, thresholds, timing, and other settings for a specific game and category. They are stored in the `presets/` folder next to the executable. On macOS they are in `~/Library/Application Support/AutoMask/presets` instead (with `splits/` and `config/` next to it), since the app bundle can't be written to; the presets that come with the app are copied there on first launch.
 
 Click **Edit** next to the preset dropdown to open the preset editor, where you can create new presets, modify existing ones, and manage splits. See [PRESETS](PRESETS.md) for full documentation on the preset editor.
 
@@ -44,4 +46,4 @@ Requires .NET 10 SDK. Release builds use Native AOT compilation.
 ./build.ps1 --all
 ```
 
-The Linux cross-compilation requires Docker to be running.
+The Linux cross-compilation requires Docker to be running. The `macos-universal` build needs a Mac, because Apple's SDK may only be used there; `--all` skips it on Windows and Linux. It publishes `osx-arm64` and `osx-x64`, then `macos/bundle.sh` merges them into one `AutoMask.app`.

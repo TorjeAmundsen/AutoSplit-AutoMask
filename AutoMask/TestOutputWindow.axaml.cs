@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls;
@@ -14,7 +13,6 @@ using SkiaSharp;
 
 namespace AutoSplit_AutoMask;
 
-[SupportedOSPlatform("windows")]
 public partial class TestOutputWindow : Window
 {
     private sealed class FeedOption
@@ -360,7 +358,7 @@ public partial class TestOutputWindow : Window
 
             try
             {
-                var cams = await WebcamCapture.EnumerateDevicesAsync();
+                var cams = await CaptureDevices.EnumerateAsync();
                 foreach (var cam in cams)
                 {
                     _feedOptions.Add(new FeedOption
@@ -428,7 +426,7 @@ public partial class TestOutputWindow : Window
         ComboBoxFeedSource.IsEnabled = false;
         try
         {
-            var source = CreateWebcamCapture(opt.Camera!);
+            var source = CaptureDevices.Create(opt.Camera!);
             try
             {
                 await _controller.SetSourceAsync(source, CancellationToken.None);
@@ -465,11 +463,6 @@ public partial class TestOutputWindow : Window
         {
             _loadingFeeds = false;
         }
-    }
-
-    private static WebcamCapture CreateWebcamCapture(CamDeviceInfo device)
-    {
-        return new WebcamCapture(device);
     }
 
     private void CropValueChanged(object? sender, NumericUpDownValueChangedEventArgs e)

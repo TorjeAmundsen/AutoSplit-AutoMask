@@ -19,6 +19,8 @@ References built from a preset split instead take their threshold, inverted flag
 
 Select a webcam source from the dropdown. OBS Virtual Cam is the recommended capture method, matching how AutoSplit is meant to be used. The feed displays at 320x240 regardless of source resolution, because this is how AutoSplit also behaves. Use the **Refresh** button to update the list if devices have changed.
 
+The feed is read with DirectShow on Windows (the same way AutoSplit reads it), V4L2 on Linux and AVFoundation on macOS. On Linux, your user needs to be in the `video` group, which desktop users usually are. On macOS, allow AutoMask under System Settings > Privacy & Security > Camera if you denied the prompt, then quit and reopen it.
+
 The feed runs independently of the reference, it will display even if no reference image is loaded. Similarity comparison only begins once a reference is available.
 
 ## Crop

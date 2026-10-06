@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using AutoSplit_AutoMask.Capture;
 using SkiaSharp;
 
 namespace AutoSplit_AutoMask;
@@ -59,9 +60,7 @@ public partial class MainWindow : Window
         _splitPresets = [];
         _createdFilename = "Output preview";
 
-        // AppContext.BaseDirectory is the canonical app root; works under NativeAOT
-        // self-contained where Process.MainModule may be platform-specific or null.
-        string rootDir = AppContext.BaseDirectory;
+        string rootDir = GetDataDirectory();
 
         _currentPresetsDirectory = Path.Combine(rootDir, "presets") + Path.DirectorySeparatorChar;
         _currentSplitsDirectory = Path.Combine(rootDir, "splits") + Path.DirectorySeparatorChar;
@@ -72,10 +71,10 @@ public partial class MainWindow : Window
 
         OutputCheckerBg.Source = ImageProcessor.CreateCheckerBitmap(320, 240);
 
-        if (!OperatingSystem.IsWindows())
+        if (!CaptureDevices.IsSupported)
         {
             BtnOpenLiveTester.IsEnabled = false;
-            ToolTip.SetTip(BtnOpenLiveTester, "Live tester is only available on Windows");
+            ToolTip.SetTip(BtnOpenLiveTester, "Live tester is only available on Windows, macOS and Linux");
         }
         
         // Set DataContext last so binding-triggered event handlers fire with all fields initialized
@@ -129,7 +128,7 @@ public partial class MainWindow : Window
         // parallel. MainWindow closing ends the desktop lifetime and tears down any open
         // child window, including TestOutputWindow's save-prefs dialog. Defer until the
         // child window has finished its own close so the prompt isn't killed mid-flight.
-        if (OperatingSystem.IsWindows() && _testOutputWindow is { } child && !child.HasShutdownCompleted)
+        if (_testOutputWindow is { } child && !child.HasShutdownCompleted)
         {
             e.Cancel = true;
             // Re-issue the close once the child has finished, so the parent's close
@@ -526,7 +525,7 @@ public partial class MainWindow : Window
         _createdFilename = CreateCurrentFilename();
         PreviewImageLabel.Text = _createdFilename;
 
-        if (_testOutputWindow is not null && OperatingSystem.IsWindows())
+        if (_testOutputWindow is not null)
         {
             SplitPreset? preset = selectedPresetIndex >= 0 && selectedPresetIndex < _splitPresets.Count
                 ? _splitPresets[selectedPresetIndex]
@@ -1046,7 +1045,7 @@ public partial class MainWindow : Window
 
     private void BtnOpenTestOutput_Click(object? sender, RoutedEventArgs e)
     {
-        if (!OperatingSystem.IsWindows())
+        if (!CaptureDevices.IsSupported)
         {
             return;
         }

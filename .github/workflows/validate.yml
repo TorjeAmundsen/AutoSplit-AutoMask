@@ -13,6 +13,8 @@ jobs:
                       rid: win-x64
                     - os: ubuntu-latest
                       rid: linux-x64
+                    - os: macos-latest
+                      rid: macos-universal
         runs-on: ${{ matrix.os }}
         steps:
             - uses: actions/checkout@v6
@@ -26,6 +28,7 @@ jobs:
               run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev
 
             - name: Publish (AOT)
+              if: matrix.rid != 'macos-universal'
               shell: bash
               run: |
                   dotnet publish AutoMask/AutoMask.csproj \
@@ -34,3 +37,18 @@ jobs:
                     --self-contained true \
                     -p:PublishAot=true \
                     -o build/${{ matrix.rid }}
+
+            - name: Publish (AOT) and bundle (macOS)
+              if: matrix.rid == 'macos-universal'
+              shell: bash
+              run: |
+                  for rid in osx-arm64 osx-x64; do
+                    dotnet publish AutoMask/AutoMask.csproj \
+                      -c Release \
+                      -r $rid \
+                      --self-contained true \
+                      -p:PublishAot=true \
+                      -o build/$rid
+                  done
+                  version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' AutoMask/AutoMask.csproj)
+                  bash macos/bundle.sh build/osx-arm64 build/osx-x64 "$version" build/macos-universal

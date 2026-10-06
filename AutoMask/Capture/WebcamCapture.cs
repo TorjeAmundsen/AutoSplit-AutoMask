@@ -5,12 +5,6 @@ using SkiaSharp;
 
 namespace AutoSplit_AutoMask.Capture;
 
-public sealed class CamDeviceInfo
-{
-    public string Name { get; init; } = "";
-    public int Index { get; init; }
-}
-
 [SupportedOSPlatform("windows")]
 public sealed class WebcamCapture : ICaptureSource
 {
@@ -26,9 +20,7 @@ public sealed class WebcamCapture : ICaptureSource
     private int _widthPx;
     private int _heightPx;
 
-    private readonly object _gate = new();
-    private SKBitmap? _latest;
-    private SKBitmap? _handedOut;
+    private readonly LatestFrame _frames = new();
 
     public WebcamCapture(CamDeviceInfo device)
     {
@@ -190,42 +182,10 @@ public sealed class WebcamCapture : ICaptureSource
             }
         }
 
-        SKBitmap? toDispose;
-        lock (_gate)
-        {
-            toDispose = _latest;
-            _latest = target;
-        }
-        toDispose?.Dispose();
+        _frames.Publish(target);
     }
 
-    public bool TryGrabFrame(out SKBitmap? frame)
-    {
-        SKBitmap? pending;
-        SKBitmap? toDispose;
-
-        lock (_gate)
-        {
-            pending = _latest;
-            _latest = null;
-            toDispose = pending is null ? null : _handedOut;
-            if (pending is not null)
-            {
-                _handedOut = pending;
-            }
-        }
-
-        toDispose?.Dispose();
-
-        if (pending is null)
-        {
-            frame = null;
-            return false;
-        }
-
-        frame = pending;
-        return true;
-    }
+    public bool TryGrabFrame(out SKBitmap? frame) => _frames.TryTake(out frame);
 
     public Task StopAsync()
     {
@@ -250,13 +210,6 @@ public sealed class WebcamCapture : ICaptureSource
     public async ValueTask DisposeAsync()
     {
         await StopAsync();
-
-        lock (_gate)
-        {
-            _latest?.Dispose();
-            _latest = null;
-            _handedOut?.Dispose();
-            _handedOut = null;
-        }
+        _frames.Dispose();
     }
 }

@@ -3,7 +3,7 @@ $ErrorActionPreference = "Stop"
 $project = "AutoMask/AutoMask.csproj"
 $dockerImage = "automask-build"
 
-$rids = @("win-x64", "linux-x64")
+$rids = @("win-x64", "linux-x64", "macos-universal")
 
 $debug = $args -contains "--debug"
 
@@ -85,6 +85,28 @@ function Build($rid) {
     return $output
 }
 
+# One AutoMask.app for Apple Silicon and Intel Macs, from an osx-arm64 and an osx-x64 publish.
+function BuildMacUniversal($zip) {
+    if (-not $IsMacOS) {
+        Write-Error "macOS builds need a Mac, because Apple's SDK may only be used there."
+        exit 1
+    }
+
+    $arm64 = Build "osx-arm64"
+    $x64 = Build "osx-x64"
+
+    Write-Host "Bundling AutoMask.app (macos-universal)..."
+    $bundleArgs = @("$PSScriptRoot/macos/bundle.sh", $arm64, $x64, $csprojVersion, "$PSScriptRoot/build/macos-universal")
+    if ($zip) {
+        $bundleArgs += "$PSScriptRoot/build/AutoMask-$appVersion-macos-universal.zip"
+    }
+    bash @bundleArgs | Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Bundling failed with exit code $LASTEXITCODE"
+        exit $LASTEXITCODE
+    }
+}
+
 function ZipBuild($outputPath, $rid) {
     $zipName = "$PSScriptRoot/build/AutoMask-$appVersion-$rid.zip"
 
@@ -125,6 +147,14 @@ if ($args -contains "--presets") {
 
 if ($args -contains "--all") {
     foreach ($rid in $rids) {
+        if ($rid -eq "macos-universal") {
+            if ($IsMacOS) {
+                BuildMacUniversal $true
+            } else {
+                Write-Host "Skipping macos-universal: macOS builds need a Mac."
+            }
+            continue
+        }
         $out = Build $rid
         ZipBuild $out $rid
     }
@@ -141,5 +171,9 @@ for ($i = 0; $i -lt $rids.Count; $i++) {
 $ridChoice = Read-Host "Choice"
 $rid = $rids[[int]$ridChoice - 1]
 
-Build $rid
+if ($rid -eq "macos-universal") {
+    BuildMacUniversal $false
+} else {
+    Build $rid
+}
 Write-Host "Build complete."
