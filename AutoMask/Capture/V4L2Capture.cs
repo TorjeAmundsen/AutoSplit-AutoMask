@@ -7,12 +7,14 @@ namespace AutoSplit_AutoMask.Capture;
 
 // V4L2 capture, ported from AutoSplitRewrite's autosplit-capture/src/v4l2.rs. Device indexes
 // are the N in /dev/videoN, which is what AutoSplit's cv2.VideoCapture(index) opens on Linux.
-// Frames are captured at the device's current format, converted with the math OpenCV's V4L2
+// Frames are captured at the device's current size and format (AutoSplit gets 640x480 and
+// OpenCV's format order by accident, see TESTER.md), converted with the math OpenCV's V4L2
 // backend uses.
 [SupportedOSPlatform("linux")]
 public sealed unsafe class V4L2Capture : ICaptureSource
 {
-    // The formats OpenCV tries, in its order, when the current one isn't usable.
+    // The formats OpenCV tries that can be converted here, in OpenCV's order, when the current
+    // one isn't usable. GREY is only used as the current format; OpenCV tries it last.
     private static readonly (string FourCC, V4L2PixelFormat Format)[] TriedFormats =
     [
         ("BGR3", V4L2PixelFormat.Bgr24),
@@ -307,7 +309,11 @@ public sealed unsafe class V4L2Capture : ICaptureSource
     public Task StopAsync() => _stopTask ??= Task.Run(() =>
     {
         _stop = true;
-        _thread?.Join(1000);
+        if (_thread is { } thread && !thread.Join(1000))
+        {
+            // Still inside a frame: leaking the fd and buffers beats unmapping them under it
+            return;
+        }
         _thread = null;
         Release();
     });

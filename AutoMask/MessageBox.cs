@@ -52,7 +52,8 @@ public class MessageBox : Window
                 Content = content,
                 MinWidth = 72,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
-                IsDefault = isDefault,
+                // Enter must not confirm a Yes/No prompt that deletes or overwrites something
+                IsDefault = isDefault && buttons == MessageBoxButton.Ok,
             };
             if (isDefault)
             {

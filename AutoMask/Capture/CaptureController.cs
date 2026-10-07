@@ -216,7 +216,7 @@ public sealed class CaptureController : IAsyncDisposable
                     {
                         noVideoReported = true;
                         PostNoVideo($"No video from '{source.DisplayName}' for {NoVideoTimeout.TotalSeconds:0} seconds. "
-                            + "If it was disconnected, select it again.");
+                            + "If it was disconnected, connect it again and click Refresh.");
                     }
                     Thread.Sleep(2);
                     continue;

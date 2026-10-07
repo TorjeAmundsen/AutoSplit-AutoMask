@@ -155,6 +155,10 @@ if ($args -contains "--all") {
             }
             continue
         }
+        if ($rid -eq "win-x64" -and -not $IsWindows) {
+            Write-Host "Skipping win-x64: Windows builds need Windows."
+            continue
+        }
         $out = Build $rid
         ZipBuild $out $rid
     }

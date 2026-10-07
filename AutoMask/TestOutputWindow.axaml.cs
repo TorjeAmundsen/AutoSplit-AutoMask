@@ -347,10 +347,16 @@ public partial class TestOutputWindow : Window
         ClearMatch();
     }
 
+    // Refresh also reopens the selected source, which brings back one that stopped sending
+    // video (unplugged and plugged back in, or OBS restarted its virtual camera)
     private async void BtnRefreshFeed_Click(object? sender, RoutedEventArgs e)
     {
         var current = ComboBoxFeedSource.SelectedItem as FeedOption;
         await RefreshFeedListAsync(selectAfter: current?.Label);
+        if (ComboBoxFeedSource.SelectedItem is FeedOption)
+        {
+            await ActivateSelectedFeedAsync(reopen: true);
+        }
     }
 
     private async Task RefreshFeedListAsync(string? selectAfter)
@@ -416,7 +422,7 @@ public partial class TestOutputWindow : Window
         _hasUserChanges = true;
     }
 
-    private async Task ActivateSelectedFeedAsync()
+    private async Task ActivateSelectedFeedAsync(bool reopen = false)
     {
         if (ComboBoxFeedSource.SelectedItem is not FeedOption opt)
         {
@@ -433,6 +439,12 @@ public partial class TestOutputWindow : Window
             var source = CaptureDevices.Create(opt.Camera!);
             try
             {
+                // A device can't be opened a second time while the running source holds it
+                if (reopen)
+                {
+                    await _controller.SetSourceAsync(null, CancellationToken.None);
+                    _activeFeedOption = null;
+                }
                 await _controller.SetSourceAsync(source, CancellationToken.None);
             }
             catch (Exception ex)
@@ -443,10 +455,15 @@ public partial class TestOutputWindow : Window
                 return;
             }
 
+            bool sizeChanged = source.SourceWidth != _activeSourceW || source.SourceHeight != _activeSourceH;
             _activeFeedOption = opt;
             _activeSourceW = source.SourceWidth;
             _activeSourceH = source.SourceHeight;
-            ResetCropToFull();
+            // A reopened source keeps the crop unless its size changed
+            if (!reopen || sizeChanged)
+            {
+                ResetCropToFull();
+            }
         }
         finally
         {

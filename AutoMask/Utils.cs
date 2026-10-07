@@ -17,13 +17,14 @@ public static class Utils
         {
             Process.Start("explorer.exe", $"\"{path}\"");
         }
+        // ArgumentList passes the path as one argument; an argument string is split at spaces
         else if (OperatingSystem.IsMacOS())
         {
-            Process.Start("open", path);
+            Process.Start(new ProcessStartInfo("open") { ArgumentList = { path } });
         }
         else if (OperatingSystem.IsLinux())
         {
-            Process.Start("xdg-open", path);
+            Process.Start(new ProcessStartInfo("xdg-open") { ArgumentList = { path } });
         }
     }
 
@@ -54,9 +55,13 @@ public static class Utils
         // into the same .partial folder and can leave a folder with files missing
         using (AcquireSeedLock(Path.Combine(dataDir, ".seed.lock")))
         {
-            // Only after an update, so presets the user deleted don't come back on every launch
+            // Only on first launch or after an update, so presets or folders the user deleted
+            // don't come back on every launch, and an older version doesn't bring back its files
             string versionFile = Path.Combine(dataDir, ".bundled-version");
-            bool newVersion = !File.Exists(versionFile) || File.ReadAllText(versionFile) != AutoMaskVersion;
+            if (File.Exists(versionFile) && !IsNewerVersion(AutoMaskVersion, File.ReadAllText(versionFile)))
+            {
+                return dataDir;
+            }
             foreach (string folder in new[] { "presets", "splits" })
             {
                 string target = Path.Combine(dataDir, folder);
@@ -67,14 +72,11 @@ public static class Utils
                 }
                 if (Directory.Exists(target))
                 {
-                    if (newVersion)
+                    CopyMissingFiles(source, target);
+                    // The JSON schemas are the app's, not the user's, so they follow the version
+                    foreach (string schema in Directory.EnumerateFiles(source, "*-schema.json"))
                     {
-                        CopyMissingFiles(source, target);
-                        // The JSON schemas are the app's, not the user's, so they follow the version
-                        foreach (string schema in Directory.EnumerateFiles(source, "*-schema.json"))
-                        {
-                            File.Copy(schema, Path.Combine(target, Path.GetFileName(schema)), overwrite: true);
-                        }
+                        File.Copy(schema, Path.Combine(target, Path.GetFileName(schema)), overwrite: true);
                     }
                     continue;
                 }
@@ -88,12 +90,21 @@ public static class Utils
                 CopyMissingFiles(source, partial);
                 Directory.Move(partial, target);
             }
-            if (newVersion)
-            {
-                File.WriteAllText(versionFile, AutoMaskVersion);
-            }
+            File.WriteAllText(versionFile, AutoMaskVersion);
         }
         return dataDir;
+    }
+
+    // Compares the numbers before the suffix (0.12.0 of 0.12.0-alpha). The same numbers with a
+    // different suffix count as newer, since alpha and release builds can't be ordered here.
+    private static bool IsNewerVersion(string current, string seeded)
+    {
+        if (!Version.TryParse(current.Split('-')[0], out var currentNumber)
+            || !Version.TryParse(seeded.Split('-')[0], out var seededNumber))
+        {
+            return current != seeded;
+        }
+        return currentNumber > seededNumber || (currentNumber == seededNumber && current != seeded);
     }
 
     // FileShare.None locks the file for other processes too (flock on macOS and Linux), and the

@@ -46,4 +46,4 @@ Requires .NET 10 SDK. Release builds use Native AOT compilation.
 ./build.ps1 --all
 ```
 
-The Linux cross-compilation requires Docker to be running. The `macos-universal` build needs a Mac, because Apple's SDK may only be used there; `--all` skips it on Windows and Linux. It publishes `osx-arm64` and `osx-x64`, then `macos/bundle.sh` merges them into one `AutoMask.app`.
+The Linux cross-compilation requires Docker to be running. The `macos-universal` build needs a Mac, because Apple's SDK may only be used there; `--all` skips it on Windows and Linux, and skips `win-x64` everywhere but Windows. It publishes `osx-arm64` and `osx-x64`, then `macos/bundle.sh` merges them into one `AutoMask.app`.

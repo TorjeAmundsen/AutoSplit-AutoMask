@@ -20,7 +20,9 @@ internal enum V4L2PixelFormat
 
 internal readonly record struct FrameLayout(V4L2PixelFormat Format, int Width, int Height, int Stride);
 
-// Converts V4L2 frames to BGRA the way OpenCV's V4L2 backend does for AutoSplit on Linux.
+// Converts V4L2 frames to BGRA the way OpenCV's V4L2 backend does for AutoSplit on Linux, except
+// that rows are read with their stride (OpenCV ignores bytesperline and assumes packed rows) and
+// BGR24 becomes a whole image (OpenCV copies it into a one-row Mat).
 // Ported from AutoSplitRewrite's autosplit-capture/src/convert.rs. The YUV paths are OpenCV
 // 4.11's cvtColor COLOR_YUV2BGR_* math: BT.601 limited range in 20-bit fixed point.
 internal static unsafe class PixelConversion

@@ -97,16 +97,19 @@ public sealed unsafe class AvFoundationCapture : ICaptureSource
         Task<bool> granted;
         lock (AccessGate)
         {
-            if (_accessRequest is null)
+            // Read from a local: an answer on this thread would already have cleared the field
+            var request = _accessRequest;
+            if (request is null)
             {
-                _accessRequest = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                request = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                _accessRequest = request;
                 if (_accessBlock == 0)
                 {
                     _accessBlock = ObjC.NewGlobalBlock((nint)(delegate* unmanaged<nint, byte, void>)&OnAccessAnswered);
                 }
                 ObjC.SendVoid(deviceClass, "requestAccessForMediaType:completionHandler:", MediaTypeVideo, _accessBlock);
             }
-            granted = _accessRequest.Task;
+            granted = request.Task;
         }
 
         if (!granted.GetAwaiter().GetResult())
