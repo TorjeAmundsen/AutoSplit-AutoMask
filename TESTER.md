@@ -21,6 +21,8 @@ Select a webcam source from the dropdown. OBS Virtual Cam is the recommended cap
 
 The feed is read with DirectShow on Windows (the same way AutoSplit reads it), V4L2 on Linux and AVFoundation on macOS. On Linux, your user needs to be in the `video` group, which desktop users usually are. On macOS, allow AutoMask under System Settings > Privacy & Security > Camera if you denied the prompt, then quit and reopen it.
 
+On Linux, AutoSplit asks the device for 640x480 (or the nearest size it supports), while the live tester keeps the device's current size. With OBS Virtual Camera both get the same size. With a webcam or capture card opened directly, the similarity you see here can differ from AutoSplit's.
+
 The feed runs independently of the reference, it will display even if no reference image is loaded. Similarity comparison only begins once a reference is available.
 
 ## Crop

@@ -40,6 +40,7 @@ public sealed unsafe class V4L2Capture : ICaptureSource
     private readonly List<(nint Address, nuint Length)> _buffers = [];
     private Thread? _thread;
     private volatile bool _stop;
+    private Task? _stopTask;
 
     public V4L2Capture(CamDeviceInfo device)
     {
@@ -301,14 +302,15 @@ public sealed unsafe class V4L2Capture : ICaptureSource
 
     public bool TryGrabFrame(out SKBitmap? frame) => _frames.TryTake(out frame);
 
-    public Task StopAsync()
+    // The join can wait out a poll timeout, so it runs off the caller's (UI) thread. Stopping
+    // again, as DisposeAsync does, returns the same task.
+    public Task StopAsync() => _stopTask ??= Task.Run(() =>
     {
         _stop = true;
         _thread?.Join(1000);
         _thread = null;
         Release();
-        return Task.CompletedTask;
-    }
+    });
 
     private void Release()
     {
@@ -329,10 +331,11 @@ public sealed unsafe class V4L2Capture : ICaptureSource
         }
     }
 
+    // LatestFrame drops frames that arrive after it's disposed, so it needn't wait for the stop
     public ValueTask DisposeAsync()
     {
-        StopAsync();
+        Task stop = StopAsync();
         _frames.Dispose();
-        return ValueTask.CompletedTask;
+        return new ValueTask(stop);
     }
 }

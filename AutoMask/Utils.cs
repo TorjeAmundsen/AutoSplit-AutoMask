@@ -30,8 +30,9 @@ public static class Utils
     /// <summary>
     /// Where presets/, splits/ and config/ live: next to the executable, except inside the
     /// macOS app bundle, where writing would break the bundle's signature and App Translocation
-    /// can make it read-only. There they live in ~/Library/Application Support/AutoMask, and the
-    /// bundled presets and splits are copied there when a folder doesn't exist yet.
+    /// can make it read-only. There they live in ~/Library/Application Support/AutoMask. The
+    /// bundled presets and splits are copied there on first launch, and files a new version
+    /// adds are copied on its first launch. Files already there are kept, except the JSON schemas.
     /// </summary>
     public static string GetDataDirectory()
     {
@@ -48,37 +49,85 @@ public static class Utils
         string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         string dataDir = Path.Combine(home, "Library", "Application Support", "AutoMask");
         string resources = Path.GetFullPath(Path.Combine(appDir, "..", "Resources"));
-        foreach (string folder in new[] { "presets", "splits" })
+        Directory.CreateDirectory(dataDir);
+        // A second instance (open -n, or the executable started directly) would otherwise copy
+        // into the same .partial folder and can leave a folder with files missing
+        using (AcquireSeedLock(Path.Combine(dataDir, ".seed.lock")))
         {
-            string target = Path.Combine(dataDir, folder);
-            string source = Path.Combine(resources, folder);
-            if (Directory.Exists(target) || !Directory.Exists(source))
+            // Only after an update, so presets the user deleted don't come back on every launch
+            string versionFile = Path.Combine(dataDir, ".bundled-version");
+            bool newVersion = !File.Exists(versionFile) || File.ReadAllText(versionFile) != AutoMaskVersion;
+            foreach (string folder in new[] { "presets", "splits" })
             {
-                continue;
-            }
+                string target = Path.Combine(dataDir, folder);
+                string source = Path.Combine(resources, folder);
+                if (!Directory.Exists(source))
+                {
+                    continue;
+                }
+                if (Directory.Exists(target))
+                {
+                    if (newVersion)
+                    {
+                        CopyMissingFiles(source, target);
+                        // The JSON schemas are the app's, not the user's, so they follow the version
+                        foreach (string schema in Directory.EnumerateFiles(source, "*-schema.json"))
+                        {
+                            File.Copy(schema, Path.Combine(target, Path.GetFileName(schema)), overwrite: true);
+                        }
+                    }
+                    continue;
+                }
 
-            // Copied under a temporary name first, so an interrupted copy is redone next launch
-            string partial = target + ".partial";
-            if (Directory.Exists(partial))
-            {
-                Directory.Delete(partial, recursive: true);
+                // Copied under a temporary name first, so an interrupted copy is redone next launch
+                string partial = target + ".partial";
+                if (Directory.Exists(partial))
+                {
+                    Directory.Delete(partial, recursive: true);
+                }
+                CopyMissingFiles(source, partial);
+                Directory.Move(partial, target);
             }
-            CopyDirectory(source, partial);
-            Directory.Move(partial, target);
+            if (newVersion)
+            {
+                File.WriteAllText(versionFile, AutoMaskVersion);
+            }
         }
         return dataDir;
     }
 
-    private static void CopyDirectory(string source, string target)
+    // FileShare.None locks the file for other processes too (flock on macOS and Linux), and the
+    // lock goes away with the process if it dies mid-copy.
+    private static FileStream AcquireSeedLock(string path)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(30);
+        while (true)
+        {
+            try
+            {
+                return new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            }
+            catch (IOException) when (DateTime.UtcNow < deadline)
+            {
+                Thread.Sleep(100);
+            }
+        }
+    }
+
+    private static void CopyMissingFiles(string source, string target)
     {
         Directory.CreateDirectory(target);
         foreach (string file in Directory.EnumerateFiles(source))
         {
-            File.Copy(file, Path.Combine(target, Path.GetFileName(file)));
+            string destination = Path.Combine(target, Path.GetFileName(file));
+            if (!File.Exists(destination))
+            {
+                File.Copy(file, destination);
+            }
         }
         foreach (string dir in Directory.EnumerateDirectories(source))
         {
-            CopyDirectory(dir, Path.Combine(target, Path.GetFileName(dir)));
+            CopyMissingFiles(dir, Path.Combine(target, Path.GetFileName(dir)));
         }
     }
 

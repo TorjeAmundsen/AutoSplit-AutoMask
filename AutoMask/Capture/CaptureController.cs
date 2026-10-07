@@ -24,6 +24,9 @@ public sealed class CaptureController : IAsyncDisposable
     // Pixel buffer is BGRA, tightly packed, CompareWidth * CompareHeight * 4 bytes.
     public event Action<byte[], double, double, double>? FrameReady;
     public event Action<string>? ErrorReported;
+    // A message when the active source stops sending frames; null once frames come back or
+    // the source changes. Calls alternate, starting with a message.
+    public event Action<string?>? NoVideoChanged;
 
     private readonly SemaphoreSlim _swapLock = new(1, 1);
 
@@ -73,6 +76,10 @@ public sealed class CaptureController : IAsyncDisposable
     }
 
     private static readonly TimeSpan SourceShutdownTimeout = TimeSpan.FromSeconds(5);
+
+    // No backend reports a lost device (unplugged, or OBS stopped its virtual camera), so a
+    // source that sends nothing for this long is reported once.
+    private static readonly TimeSpan NoVideoTimeout = TimeSpan.FromSeconds(3);
 
     public async Task SetSourceAsync(ICaptureSource? newSource, CancellationToken ct)
     {
@@ -171,6 +178,9 @@ public sealed class CaptureController : IAsyncDisposable
         double frameMs = 1000.0 / TargetFps;
         var stopwatch = Stopwatch.StartNew();
         double nextDueMs = 0.0;
+        ICaptureSource? watchedSource = null;
+        TimeSpan lastFrameAt = TimeSpan.Zero;
+        bool noVideoReported = false;
 
         while (!ct.IsCancellationRequested)
         {
@@ -180,6 +190,17 @@ public sealed class CaptureController : IAsyncDisposable
             byte[]? refMask = state.RefMask;
             double required = state.Required;
             CropRect crop = state.Crop;
+
+            if (source != watchedSource)
+            {
+                watchedSource = source;
+                lastFrameAt = stopwatch.Elapsed;
+                if (noVideoReported)
+                {
+                    noVideoReported = false;
+                    PostNoVideo(null);
+                }
+            }
 
             if (source is null)
             {
@@ -191,8 +212,20 @@ public sealed class CaptureController : IAsyncDisposable
             {
                 if (!source.TryGrabFrame(out var raw) || raw is null)
                 {
+                    if (!noVideoReported && stopwatch.Elapsed - lastFrameAt > NoVideoTimeout)
+                    {
+                        noVideoReported = true;
+                        PostNoVideo($"No video from '{source.DisplayName}' for {NoVideoTimeout.TotalSeconds:0} seconds. "
+                            + "If it was disconnected, select it again.");
+                    }
                     Thread.Sleep(2);
                     continue;
+                }
+                lastFrameAt = stopwatch.Elapsed;
+                if (noVideoReported)
+                {
+                    noVideoReported = false;
+                    PostNoVideo(null);
                 }
 
                 using var scaled = CropAndScaleNearest(raw, crop, CompareWidth, CompareHeight);
@@ -265,6 +298,9 @@ public sealed class CaptureController : IAsyncDisposable
             }
         }
     }
+
+    private void PostNoVideo(string? message) =>
+        Dispatcher.UIThread.Post(() => NoVideoChanged?.Invoke(message));
 
     private static SKBitmap? CropAndScaleNearest(SKBitmap source, CropRect crop, int outW, int outH)
     {

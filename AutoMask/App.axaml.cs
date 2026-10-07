@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
@@ -16,7 +17,21 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow();
+            string dataDirectory;
+            try
+            {
+                dataDirectory = Utils.GetDataDirectory();
+                Directory.CreateDirectory(Path.Combine(dataDirectory, "presets"));
+                Directory.CreateDirectory(Path.Combine(dataDirectory, "config"));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                _ = ShowDataDirectoryErrorAndQuit(desktop, ex);
+                base.OnFrameworkInitializationCompleted();
+                return;
+            }
+
+            desktop.MainWindow = new MainWindow(dataDirectory);
 
             // Catches uncaught exceptions raised on the UI dispatcher (including async-void
             // event handlers' continuations). Setting Handled = true keeps the app running
@@ -45,5 +60,20 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static async Task ShowDataDirectoryErrorAndQuit(IClassicDesktopStyleApplicationLifetime desktop, Exception ex)
+    {
+        // Quit when the box closes, also if it fails to show
+        desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        try
+        {
+            await MessageBox.Show(null, "Error",
+                $"AutoMask couldn't set up the folder for its presets and splits:\n\n{ex.Message}");
+        }
+        finally
+        {
+            desktop.Shutdown(1);
+        }
     }
 }

@@ -20,6 +20,9 @@
     <string>__VERSION__</string>
     <key>CFBundleVersion</key>
     <string>__VERSION__</string>
+    <!-- What Native AOT builds the executable for (ILCompiler's default AppleMinOSVersion) -->
+    <key>LSMinimumSystemVersion</key>
+    <string>12.0</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
     <key>NSHighResolutionCapable</key>

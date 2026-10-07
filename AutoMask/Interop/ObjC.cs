@@ -130,19 +130,6 @@ internal static unsafe partial class ObjC
         return result;
     }
 
-    public static nint NewString(string value)
-    {
-        nint utf8 = Marshal.StringToCoTaskMemUTF8(value);
-        try
-        {
-            return Send(GetClass("NSString"), "stringWithUTF8String:", utf8);
-        }
-        finally
-        {
-            Marshal.FreeCoTaskMem(utf8);
-        }
-    }
-
     public static string? ToManagedString(nint nsString) =>
         nsString == 0 ? null : Marshal.PtrToStringUTF8(Send(nsString, "UTF8String"));
 

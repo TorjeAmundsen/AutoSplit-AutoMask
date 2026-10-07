@@ -14,7 +14,8 @@ public class MessageBox : Window
 
     private MessageBox() { }
 
-    public static Task<MessageBoxResult> Show(Window owner, string title, string message,
+    // Without an owner (no window open yet) the box is centered on the screen instead
+    public static Task<MessageBoxResult> Show(Window? owner, string title, string message,
         MessageBoxButton buttons = MessageBoxButton.Ok)
     {
         var msgBox = new MessageBox
@@ -23,7 +24,7 @@ public class MessageBox : Window
             Width = 420,
             SizeToContent = SizeToContent.Height,
             CanResize = false,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            WindowStartupLocation = owner is null ? WindowStartupLocation.CenterScreen : WindowStartupLocation.CenterOwner,
             Background = new SolidColorBrush(Color.Parse("#2C2C2C")),
             FontSize = 12,
         };
@@ -51,6 +52,7 @@ public class MessageBox : Window
                 Content = content,
                 MinWidth = 72,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
+                IsDefault = isDefault,
             };
             if (isDefault)
             {
@@ -90,6 +92,11 @@ public class MessageBox : Window
         // ShowDialog returns a Task that completes when the dialog closes; without observing
         // it, a synchronous throw (window-create failure, threading mismatch) would leave
         // the caller awaiting tcs.Task forever. Forward any exception to the TCS instead.
+        if (owner is null)
+        {
+            msgBox.Show();
+            return tcs.Task;
+        }
         _ = msgBox.ShowDialog(owner).ContinueWith(
             t =>
             {

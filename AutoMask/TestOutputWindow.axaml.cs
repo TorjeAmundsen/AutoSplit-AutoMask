@@ -36,6 +36,8 @@ public partial class TestOutputWindow : Window
     private bool _suppressCropEvents;
     private int _activeSourceW = 320;
     private int _activeSourceH = 240;
+    private string? _noVideoMessage;
+    private string? _statusBeforeNoVideo;
 
     private string _prefsPath = "";
     private CapturePreferences? _loadedPrefs;
@@ -58,6 +60,7 @@ public partial class TestOutputWindow : Window
 
         _controller.FrameReady += OnFrameReady;
         _controller.ErrorReported += OnErrorReported;
+        _controller.NoVideoChanged += OnNoVideoChanged;
 
         Opened += async (_, _) => await InitializeAsync();
         Closing += async (_, e) =>
@@ -135,6 +138,7 @@ public partial class TestOutputWindow : Window
     {
         _controller.FrameReady -= OnFrameReady;
         _controller.ErrorReported -= OnErrorReported;
+        _controller.NoVideoChanged -= OnNoVideoChanged;
         await _controller.DisposeAsync();
         LiveImageView.Source = null;
         ReferenceImageView.Source = null;
@@ -721,6 +725,21 @@ public partial class TestOutputWindow : Window
     private void OnErrorReported(string message)
     {
         ReferenceStatusLabel.Text = message;
+    }
+
+    // Puts the label back once video returns, unless something else has replaced the message
+    private void OnNoVideoChanged(string? message)
+    {
+        if (message is not null)
+        {
+            _statusBeforeNoVideo = ReferenceStatusLabel.Text;
+            ReferenceStatusLabel.Text = message;
+        }
+        else if (ReferenceStatusLabel.Text == _noVideoMessage)
+        {
+            ReferenceStatusLabel.Text = _statusBeforeNoVideo;
+        }
+        _noVideoMessage = message;
     }
 
     private CapturePreferences BuildCurrentPrefs()

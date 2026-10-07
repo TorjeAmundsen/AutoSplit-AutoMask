@@ -22,7 +22,7 @@ Click **Live tester** to open a real-time comparison window. It captures a live 
 
 ## Presets
 
-Presets define the sequence of splits and their mask images, thresholds, timing, and other settings for a specific game and category. They are stored in the `presets/` folder next to the executable. On macOS they are in `~/Library/Application Support/AutoMask/presets` instead (with `splits/` and `config/` next to it), since the app bundle can't be written to; the presets that come with the app are copied there on first launch.
+Presets define the sequence of splits and their mask images, thresholds, timing, and other settings for a specific game and category. They are stored in the `presets/` folder next to the executable. On macOS they are in `~/Library/Application Support/AutoMask/presets` instead (with `splits/` and `config/` next to it), since the app bundle can't be written to. The presets that come with the app are copied there on first launch, and presets a new version adds are copied the first time that version starts. Files already there are never overwritten (apart from the JSON schema files), so your edits stay, but a bundled preset you deleted comes back after an update.
 
 Click **Edit** next to the preset dropdown to open the preset editor, where you can create new presets, modify existing ones, and manage splits. See [PRESETS](PRESETS.md) for full documentation on the preset editor.
 

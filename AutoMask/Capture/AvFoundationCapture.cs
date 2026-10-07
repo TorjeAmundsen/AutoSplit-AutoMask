@@ -33,6 +33,7 @@ public sealed unsafe class AvFoundationCapture : ICaptureSource
     private nint _output;
     private nint _delegate;
     private nint _queue;
+    private Task? _stopTask;
 
     public AvFoundationCapture(CamDeviceInfo device)
     {
@@ -300,13 +301,14 @@ public sealed unsafe class AvFoundationCapture : ICaptureSource
 
     public bool TryGrabFrame(out SKBitmap? frame) => _frames.TryTake(out frame);
 
-    public Task StopAsync()
+    // stopRunning blocks until the session has stopped, so it runs off the caller's (UI)
+    // thread. Stopping again, as DisposeAsync does, returns the same task.
+    public Task StopAsync() => _stopTask ??= Task.Run(() =>
     {
         nint pool = ObjC.AutoreleasePoolPush();
         Release();
         ObjC.AutoreleasePoolPop(pool);
-        return Task.CompletedTask;
-    }
+    });
 
     private void Release()
     {
@@ -341,10 +343,11 @@ public sealed unsafe class AvFoundationCapture : ICaptureSource
         }
     }
 
+    // LatestFrame drops frames that arrive after it's disposed, so it needn't wait for the stop
     public ValueTask DisposeAsync()
     {
-        StopAsync();
+        Task stop = StopAsync();
         _frames.Dispose();
-        return ValueTask.CompletedTask;
+        return new ValueTask(stop);
     }
 }
