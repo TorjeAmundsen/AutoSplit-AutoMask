@@ -33,6 +33,10 @@ public sealed class CaptureController : IAsyncDisposable
     private Thread? _thread;
     private CancellationTokenSource? _cts;
 
+    // The loop holds this from reading _active until it's done with the grabbed frame, and
+    // SetSourceAsync swaps _active under it, so a source is never disposed (freeing the frame
+    // it handed out) while the loop still reads that frame
+    private readonly object _sourceGate = new();
     private ICaptureSource? _active;
 
     private CaptureState _state = new(null, null, 0.0, new CropRect(0, 0, 0, 0));
@@ -94,8 +98,12 @@ public sealed class CaptureController : IAsyncDisposable
                 await newSource.StartAsync(ct);
             }
 
-            var current = Volatile.Read(ref _active);
-            Volatile.Write(ref _active, newSource);
+            ICaptureSource? current;
+            lock (_sourceGate)
+            {
+                current = _active;
+                _active = newSource;
+            }
 
             if (current is not null)
             {
@@ -184,33 +192,46 @@ public sealed class CaptureController : IAsyncDisposable
 
         while (!ct.IsCancellationRequested)
         {
-            ICaptureSource? source = Volatile.Read(ref _active);
             CaptureState state = Volatile.Read(ref _state);
             byte[]? refPixels = state.RefPixels;
             byte[]? refMask = state.RefMask;
             double required = state.Required;
             CropRect crop = state.Crop;
 
-            if (source != watchedSource)
-            {
-                watchedSource = source;
-                lastFrameAt = stopwatch.Elapsed;
-                if (noVideoReported)
-                {
-                    noVideoReported = false;
-                    PostNoVideo(null);
-                }
-            }
-
-            if (source is null)
-            {
-                Thread.Sleep(20);
-                continue;
-            }
-
             try
             {
-                if (!source.TryGrabFrame(out var raw) || raw is null)
+                ICaptureSource? source;
+                bool grabbed = false;
+                SKBitmap? scaledFrame = null;
+                lock (_sourceGate)
+                {
+                    source = _active;
+                    if (source is not null && source.TryGrabFrame(out var raw) && raw is not null)
+                    {
+                        grabbed = true;
+                        scaledFrame = CropAndScaleNearest(raw, crop, CompareWidth, CompareHeight);
+                    }
+                }
+                using var scaled = scaledFrame;
+
+                if (source != watchedSource)
+                {
+                    watchedSource = source;
+                    lastFrameAt = stopwatch.Elapsed;
+                    if (noVideoReported)
+                    {
+                        noVideoReported = false;
+                        PostNoVideo(null);
+                    }
+                }
+
+                if (source is null)
+                {
+                    Thread.Sleep(20);
+                    continue;
+                }
+
+                if (!grabbed)
                 {
                     if (!noVideoReported && stopwatch.Elapsed - lastFrameAt > NoVideoTimeout)
                     {
@@ -228,7 +249,6 @@ public sealed class CaptureController : IAsyncDisposable
                     PostNoVideo(null);
                 }
 
-                using var scaled = CropAndScaleNearest(raw, crop, CompareWidth, CompareHeight);
                 if (scaled is null)
                 {
                     Thread.Sleep(2);

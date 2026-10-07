@@ -33,6 +33,8 @@ public partial class TestOutputWindow : Window
 
     private bool _loadingFeeds;
     private FeedOption? _activeFeedOption;
+    // Kept when a Refresh doesn't list the device (unplugged), so a later Refresh can reopen it
+    private string? _lastOpenedFeedLabel;
     private bool _suppressCropEvents;
     private int _activeSourceW = 320;
     private int _activeSourceH = 240;
@@ -352,7 +354,7 @@ public partial class TestOutputWindow : Window
     private async void BtnRefreshFeed_Click(object? sender, RoutedEventArgs e)
     {
         var current = ComboBoxFeedSource.SelectedItem as FeedOption;
-        await RefreshFeedListAsync(selectAfter: current?.Label);
+        await RefreshFeedListAsync(selectAfter: current?.Label ?? _lastOpenedFeedLabel);
         if (ComboBoxFeedSource.SelectedItem is FeedOption)
         {
             await ActivateSelectedFeedAsync(reopen: true);
@@ -428,6 +430,7 @@ public partial class TestOutputWindow : Window
         {
             await _controller.SetSourceAsync(null, CancellationToken.None);
             _activeFeedOption = null;
+            _lastOpenedFeedLabel = null;
             return;
         }
 
@@ -457,6 +460,7 @@ public partial class TestOutputWindow : Window
 
             bool sizeChanged = source.SourceWidth != _activeSourceW || source.SourceHeight != _activeSourceH;
             _activeFeedOption = opt;
+            _lastOpenedFeedLabel = opt.Label;
             _activeSourceW = source.SourceWidth;
             _activeSourceH = source.SourceHeight;
             // A reopened source keeps the crop unless its size changed
@@ -764,7 +768,7 @@ public partial class TestOutputWindow : Window
         var feedOpt = ComboBoxFeedSource.SelectedItem as FeedOption;
         return new CapturePreferences
         {
-            FeedName = feedOpt?.Label,
+            FeedName = feedOpt?.Label ?? _lastOpenedFeedLabel,
             CropX = (int)(CropX.Value ?? 0),
             CropY = (int)(CropY.Value ?? 0),
             CropW = (int)(CropW.Value ?? 1),
