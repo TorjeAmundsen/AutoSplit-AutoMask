@@ -11,6 +11,9 @@
             <Setter Property="SelectionBrush" Value="#4D9ECA"/>
             <Setter Property="SelectionForegroundBrush" Value="White"/>
         </Style>
+        <Style Selector="TextBox.Invalid">
+            <Setter Property="BorderBrush" Value="#CC3333"/>
+        </Style>
         <Style Selector="NumericUpDown">
             <Setter Property="MinHeight" Value="0"/>
             <Setter Property="MinWidth" Value="0"/>
@@ -128,6 +131,13 @@
                         <TextBlock Name="RequiredLabel" Text="-" Foreground="#AAAAAA"
                                    FontFamily="Cascadia Code,Cascadia Mono,Consolas,monospace"
                                    FontSize="20" TextAlignment="Center"/>
+                        <!-- -1 vertical margin offsets the 1px border so the panel keeps the label's height -->
+                        <TextBox Name="RequiredBox" IsVisible="False" Margin="4,-1"
+                                 FontFamily="Cascadia Code,Cascadia Mono,Consolas,monospace"
+                                 FontSize="20" Padding="0" MinHeight="0"
+                                 HorizontalContentAlignment="Center"
+                                 ToolTip.Tip="This image has no threshold. Enter what your AutoSplit's default threshold is set to (Default 0.95)"
+                                 TextChanged="RequiredBox_TextChanged"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1">
                         <TextBlock Text="Current" Foreground="#888888" FontSize="11" TextAlignment="Center"/>

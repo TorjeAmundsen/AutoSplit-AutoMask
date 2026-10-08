@@ -30,6 +30,8 @@ public partial class TestOutputWindow : Window
     private string? _inputPathFromMain;
     private Dictionary<string, SKBitmap>? _maskCacheFromMain;
     private bool _useCustomReference;
+    // Set while the reference has no threshold, so the Required box drives the controller
+    private bool _requiredEditable;
 
     private bool _loadingFeeds;
     private FeedOption? _activeFeedOption;
@@ -210,7 +212,7 @@ public partial class TestOutputWindow : Window
 
             try
             {
-                ApplyReferenceBitmap(masked, split.Threshold, split.Name, split.Inverted, split.Delay);
+                ApplyReferenceBitmap(masked, split.Threshold ?? double.NaN, split.Name, split.Inverted, split.Delay);
             }
             finally
             {
@@ -316,7 +318,16 @@ public partial class TestOutputWindow : Window
         _referenceBitmap = ImageProcessor.ToAvaloniaBitmap(scaled);
         ReferenceImageView.Source = _referenceBitmap;
 
-        _controller.UpdateReference(refPixels, refMask, double.IsNaN(required) ? 0.0 : required);
+        _requiredEditable = double.IsNaN(required);
+        if (_requiredEditable)
+        {
+            required = 0.95;
+            RequiredBox.Text = "0.95";
+        }
+        RequiredLabel.IsVisible = !_requiredEditable;
+        RequiredBox.IsVisible = _requiredEditable;
+
+        _controller.UpdateReference(refPixels, refMask, required);
 
         int nonZero = 0;
         foreach (var b in refMask)
@@ -330,7 +341,7 @@ public partial class TestOutputWindow : Window
         ReferenceStatusLabel.Text = $"{label} - {source.Width}×{source.Height} native, "
             + $"{nonZero * 100.0 / pixelCount:0.0}% opaque";
 
-        RequiredLabel.Text = double.IsNaN(required) ? "-" : required.ToString("F4");
+        RequiredLabel.Text = required.ToString("F4");
         HighestLabel.Text = "-";
         CurrentLabel.Text = "-";
         _controller.ResetHighest();
@@ -346,7 +357,32 @@ public partial class TestOutputWindow : Window
         CurrentLabel.Text = "-";
         HighestLabel.Text = "-";
         RequiredLabel.Text = "-";
+        _requiredEditable = false;
+        RequiredLabel.IsVisible = true;
+        RequiredBox.IsVisible = false;
         ClearMatch();
+    }
+
+    private void RequiredBox_TextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (!_requiredEditable)
+        {
+            return;
+        }
+
+        if (double.TryParse(RequiredBox.Text, System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out var value)
+            && value is >= 0.0 and <= 1.0)
+        {
+            _controller.UpdateRequired(value);
+            RequiredBox.Classes.Remove("Invalid");
+        }
+        else
+        {
+            // 0 never triggers, so a half-typed value doesn't fire false matches
+            _controller.UpdateRequired(0.0);
+            RequiredBox.Classes.Add("Invalid");
+        }
     }
 
     // Refresh also reopens the selected source, which brings back one that stopped sending

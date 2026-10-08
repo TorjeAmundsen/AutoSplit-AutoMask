@@ -329,10 +329,10 @@ public partial class PresetEditor : Window
                         ? ""
                         : Path.GetFullPath(Path.Combine(source.PresetFolder, split.Savestate)),
                     SavestateInstructions = split.SavestateInstructions,
-                    ThresholdEnabled = true,
+                    ThresholdEnabled = split.Threshold.HasValue,
                     // Round to 2 decimal places to match the TextBox display precision and avoid
                     // float → double conversion noise causing false dirty comparisons.
-                    Threshold = Math.Round((double)split.Threshold, 2),
+                    Threshold = Math.Round((double)(split.Threshold ?? 0.95f), 2),
                     // Treat as explicitly set only when value differs from the record default
                     PauseTimeEnabled = Math.Abs(split.PauseTime - 3.0f) > 0.001f,
                     PauseTime = Math.Round((double)split.PauseTime, 2),
@@ -1029,8 +1029,8 @@ public partial class PresetEditor : Window
             {
                 Name = split.Name,
                 MaskAbsolutePath = maskAbsolutePath,
-                ThresholdEnabled = true,
-                Threshold = Math.Round((double)split.Threshold, 2),
+                ThresholdEnabled = split.Threshold.HasValue,
+                Threshold = Math.Round((double)(split.Threshold ?? 0.95f), 2),
                 PauseTimeEnabled = Math.Abs(split.PauseTime - 3.0f) > 0.001f,
                 PauseTime = Math.Round((double)split.PauseTime, 2),
                 DelayEnabled = split.Delay > 0,
