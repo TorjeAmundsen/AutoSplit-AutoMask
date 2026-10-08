@@ -1,6 +1,6 @@
 ﻿{
   "$schema": "../preset-schema.json",
-  "presetName": "Classic Kakariko route (Gohma Clip)",
+  "presetName": "Classic Kakariko route (Gohma Clip, Swordless)",
   "gameName": "The Legend of Zelda: Ocarina of Time",
   "splits": [
     {
