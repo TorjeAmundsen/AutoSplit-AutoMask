@@ -148,9 +148,9 @@ public partial class ImportSplitsDialog : Window
     {
         var parts = new List<string>();
 
-        if (Math.Abs(split.Threshold - 0.95f) > 0.001f)
+        if (split.Threshold is { } threshold)
         {
-            parts.Add($"Threshold: {split.Threshold}");
+            parts.Add($"Threshold: {threshold}");
         }
 
         if (Math.Abs(split.PauseTime - 3.0f) > 0.001f)

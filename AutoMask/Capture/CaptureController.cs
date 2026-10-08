@@ -59,6 +59,11 @@ public sealed class CaptureController : IAsyncDisposable
         Interlocked.Exchange(ref _highest, 0.0);
     }
 
+    public void UpdateRequired(double required)
+    {
+        UpdateState(s => s with { Required = required });
+    }
+
     public void UpdateCrop(CropRect rect)
     {
         UpdateState(s => s with { Crop = rect });

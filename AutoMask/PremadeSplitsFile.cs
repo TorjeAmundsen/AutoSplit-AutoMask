@@ -13,7 +13,7 @@ public record PremadeSplit
     string Name,
     string Description = "",
     string BaseImage = "",
-    float Threshold = 0.95f,
+    float? Threshold = null,
     float PauseTime = 3.0f,
     uint Delay = 0,
     bool Dummy = false,
